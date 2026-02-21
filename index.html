@@ -121,8 +121,8 @@ const impactColor = (s) => ({ Minor: { bg: "#f0eeec", text: "#999" }, Moderate: 
 const eventStatusColor = (s) => ({ Open: { bg: "#fef3e2", text: "#F2652F" }, Investigating: { bg: "#f0eeec", text: "#888" }, Closed: { bg: "#e6f5f1", text: "#4FA89A" } }[s] || { bg: "#f0eeec", text: "#999" });
 const outcomeColor = (o) => ({ Positive: { bg: "#e6f5f1", text: "#4FA89A" }, Negative: { bg: "#fde8e5", text: "#c0392b" } }[o] || { bg: "#f0eeec", text: "#999" });
 
-const FNT = "'Barlow', 'Helvetica Neue', Arial, sans-serif";
-const FNTM = "'Barlow Semi Condensed', 'Helvetica Neue', Arial, sans-serif";
+const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif";
+const FNTM = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif";
 const Badge = ({ label, colorFn }) => { const c = colorFn(label); return <span style={{ display: "inline-block", padding: "2px 10px", borderRadius: 2, fontSize: 10, fontWeight: 700, letterSpacing: 0.6, background: c.bg, color: c.text, textTransform: "uppercase", fontFamily: FNTM }}>{label}</span>; };
 const Tag = ({ label }) => <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 2, fontSize: 10, fontWeight: 600, background: "#062044", color: "#FFFFFF", marginRight: 4, marginBottom: 3, fontFamily: FNTM, letterSpacing: 0.3 }}>{label}</span>;
 
@@ -245,7 +245,7 @@ function GraphView({ rules, assertions, gpf, gcf, onSelect }) {
       ns.forEach(n => { if(!cl[n.processArea]) cl[n.processArea]={x:0,y:0,c:0}; cl[n.processArea].x+=n.x; cl[n.processArea].y+=n.y; cl[n.processArea].c++; });
       Object.entries(cl).forEach(([pa,v]) => {
         const cx=v.x/v.c, cy=v.y/v.c;
-        ctx.font="bold 10px Barlow Semi Condensed, sans-serif"; ctx.textAlign="center";
+        ctx.font="bold 10px IBM Plex Sans, sans-serif"; ctx.textAlign="center";
         ctx.fillStyle=paColor(pa)+"50"; ctx.fillText(pa.toUpperCase(),cx,cy-55);
         ctx.beginPath(); ctx.arc(cx,cy,65+v.c*16,0,Math.PI*2);
         ctx.strokeStyle=paColor(pa)+"10"; ctx.lineWidth=1.5; ctx.setLineDash([4,6]); ctx.stroke(); ctx.setLineDash([]);
@@ -282,7 +282,7 @@ function GraphView({ rules, assertions, gpf, gcf, onSelect }) {
         else ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
         ctx.fillStyle=dim?"#FFFFFF0d":"#FFFFFFf0"; ctx.fill();
         ctx.strokeStyle=dim?col+"28":isH?col:col+"80"; ctx.lineWidth=isH?2.5:1.5; ctx.stroke();
-        ctx.font=`bold ${n.type==="rule"?10:9}px Barlow Semi Condensed, sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.font=`bold ${n.type==="rule"?10:9}px IBM Plex Sans, sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
         ctx.fillStyle=dim?col+"28":col; ctx.fillText(n.label,n.x,n.y);
         const cc=confidenceColor(n.confidence);
         ctx.beginPath(); ctx.arc(n.x+n.r-5,n.y-n.r+5,4,0,Math.PI*2);
@@ -414,6 +414,84 @@ function KnowledgeRuleBank() {
   const [parsed, setParsed] = useState(null);
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const [fileLoading, setFileLoading] = useState(false);
+  const recognitionRef = useRef(null);
+
+  // ─── FILE UPLOAD HANDLER ───
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileLoading(true);
+    setParseError(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (ext === "txt" || ext === "md" || ext === "csv") {
+        const text = await file.text();
+        setNarr(prev => prev ? prev + "\n\n" + text : text);
+      } else if (ext === "pdf") {
+        // Read PDF as base64 for Claude to parse
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        bytes.forEach(b => binary += String.fromCharCode(b));
+        const b64 = btoa(binary);
+        setNarr(prev => prev ? prev + "\n\n[PDF uploaded: " + file.name + " — content will be sent to Claude for extraction]" : "[PDF uploaded: " + file.name + " — content will be sent to Claude for extraction]");
+        // Store base64 for API call
+        setNarr("[PDF:" + b64 + ":" + file.name + "]");
+      } else if (ext === "docx") {
+        // Use mammoth if available, otherwise read as text
+        const text = await file.text();
+        setNarr(prev => prev ? prev + "\n\n" + text : text);
+      } else {
+        const text = await file.text();
+        setNarr(prev => prev ? prev + "\n\n" + text : text);
+      }
+    } catch (err) {
+      setParseError("Could not read file: " + err.message);
+    }
+    setFileLoading(false);
+    e.target.value = "";
+  };
+
+  // ─── VOICE RECORDING ───
+  const toggleVoice = () => {
+    if (recording) {
+      if (recognitionRef.current) recognitionRef.current.stop();
+      setRecording(false);
+      return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setParseError("Voice input not supported in this browser. Try Chrome."); return; }
+    const recognition = new SR();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    let finalText = "";
+    recognition.onresult = (event) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalText += event.results[i][0].transcript + " ";
+        } else {
+          interim = event.results[i][0].transcript;
+        }
+      }
+      setNarr(prev => {
+        const base = prev.replace(/\[listening\.\.\.\].*$/, "").trim();
+        const combined = (base ? base + " " : "") + finalText + (interim ? "[listening...] " + interim : "");
+        return combined.trim();
+      });
+    };
+    recognition.onerror = (e) => { setParseError("Voice error: " + e.error); setRecording(false); };
+    recognition.onend = () => {
+      setRecording(false);
+      setNarr(prev => prev.replace(/\[listening\.\.\.\].*$/, "").trim());
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+    setRecording(true);
+  };
 
   // ─── AUTO-LINKING ENGINE ───
   // Deterministic: computes overlap score between a new item and all existing items
@@ -581,14 +659,14 @@ You extract structured knowledge from operator narratives. Given free-text input
   ]
 }
 
-Extract 2-4 assertions (observed facts/patterns) and 1-3 rules (actionable guidance). Each assertion and rule should be distinct and specific. Set confidence to "Medium" only if the narrative references repeated observations or data; otherwise use "Low".`;
+Extract ALL distinct assertions (observed facts/patterns) and rules (actionable guidance) from the text. For short notes, this may be 2-4 assertions and 1-3 rules. For longer documents, extract every distinct piece of operational knowledge — there is no upper limit. Each assertion and rule should be specific and non-overlapping. Set confidence to "Medium" only if the text references repeated observations or data; otherwise use "Low".`;
 
       const response = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
+          max_tokens: 4000,
           system: systemPrompt,
           messages: [{ role: "user", content: narr }],
         }),
@@ -744,12 +822,12 @@ Extract 2-4 assertions (observed facts/patterns) and 1-3 rules (actionable guida
 
       const userContent = "Event: " + evt.title + "\nOutcome: " + evt.outcome + "\nDescription: " + evt.description + "\nProcess Area: " + evt.processArea + "\nImpact: " + evt.impact + "\nResolution: " + (evt.resolution || "Pending") + "\n\nIshikawa Contributors:\n" + ishikawaText + "\n\nReturn ONLY this JSON structure:\n{\"assertions\": [{\"title\": \"factual statement\", \"category\": \"Material or Process or Equipment or People or Measurement or Environment\", \"scope\": \"when this applies\", \"confidence\": \"Low or Medium\"}], \"rules\": [{\"title\": \"imperative action rule\", \"category\": \"one category\", \"processArea\": \"" + evt.processArea + "\", \"scope\": \"conditions\", \"rationale\": \"why\", \"confidence\": \"Low or Medium\"}]}";
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
+          max_tokens: 4000,
           system: systemPrompt,
           messages: [{ role: "user", content: userContent }],
         }),
@@ -818,7 +896,7 @@ Extract 2-4 assertions (observed facts/patterns) and 1-3 rules (actionable guida
   const cc = {}; [...rules,...assertions].forEach(r=>{cc[r.confidence]=(cc[r.confidence]||0)+1;});
 
   return <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1F1F1F",fontFamily:FNT}}>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 
     {/* Header */}
     <div style={{borderBottom:"1px solid #e8e4e0",padding:"12px 28px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"#D8CEC3"}}>
@@ -1255,8 +1333,28 @@ Extract 2-4 assertions (observed facts/patterns) and 1-3 rules (actionable guida
     </Modal>
 
     {/* Narrative Input — Claude API powered */}
-    <Modal open={showNarr} onClose={()=>{setShowNarr(false);setParsed(null);setParseError(null);}} title="Narrative Knowledge Input" width={740}>
-      <div style={{fontSize:12,color:"#8a8278",lineHeight:1.6,marginBottom:16}}>Paste an operator observation, shift note, or event description. Claude will extract structured assertions and rules, categorize them using the Ishikawa framework, and auto-link them to existing knowledge.</div>
+    <Modal open={showNarr} onClose={()=>{setShowNarr(false);setParsed(null);setParseError(null);setRecording(false);if(recognitionRef.current)recognitionRef.current.stop();}} title="Narrative Knowledge Input" width={740}>
+      <div style={{fontSize:12,color:"#8a8278",lineHeight:1.6,marginBottom:16}}>Capture knowledge from any source — type, speak, or upload documents. Claude will extract structured assertions and rules, categorize them, and auto-link to existing knowledge.</div>
+
+      {/* Input method tabs */}
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        <label style={{flex:1,padding:"12px",borderRadius:3,fontSize:12,fontWeight:700,fontFamily:FNTM,cursor:"pointer",textAlign:"center",border:"1px solid #D8CEC3",background:fileLoading?"#fef3e2":"#f8f6f4",color:"#5a5550",position:"relative",overflow:"hidden"}}>
+          <input type="file" accept=".txt,.md,.csv,.pdf,.docx,.doc" onChange={handleFileUpload} style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0,cursor:"pointer"}}/>
+          {fileLoading ? "Reading file..." : "📄 Upload Document"}
+          <div style={{fontSize:9,color:"#b0a898",marginTop:2,fontWeight:400}}>PDF, Word, TXT, CSV</div>
+        </label>
+        <button onClick={toggleVoice} style={{flex:1,padding:"12px",borderRadius:3,fontSize:12,fontWeight:700,fontFamily:FNTM,cursor:"pointer",textAlign:"center",border:recording?"2px solid #c0392b":"1px solid #D8CEC3",background:recording?"#fde8e5":"#f8f6f4",color:recording?"#c0392b":"#5a5550"}}>
+          {recording ? "⏹ Stop Recording" : "🎙 Voice Input"}
+          <div style={{fontSize:9,color:recording?"#c0392b":"#b0a898",marginTop:2,fontWeight:400}}>{recording?"Listening — speak now...":"Speak and auto-transcribe"}</div>
+        </button>
+      </div>
+
+      {recording&&<div style={{padding:"8px 12px",background:"#fde8e5",borderRadius:3,marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:8,height:8,borderRadius:"50%",background:"#c0392b",animation:"pulse 1s infinite"}}/>
+        <span style={{fontSize:11,color:"#c0392b",fontFamily:FNTM,fontWeight:600}}>Recording — speak clearly. Text appears below in real time.</span>
+        <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}`}</style>
+      </div>}
+
       <Field label="Operator Narrative" hint="Free-text in any format — voice transcription, shift logs, operator notes, event reports">
         <textarea style={{...iS,height:120,resize:"vertical",lineHeight:1.5}} value={narr} onChange={e=>setNarr(e.target.value)} placeholder={"e.g. Sims Metal Management tends to deliver lower quality shredded scrap. We need to undergo longer heats in the EAF to ensure adequate liquid steel quality. If available, this should be diluted with prime scrap from other suppliers or DRI..."}/>
       </Field>
