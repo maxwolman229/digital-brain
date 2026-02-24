@@ -173,15 +173,18 @@ function TypeaheadInput({ value, onChange, options, placeholder }) {
 }
 
 // ─── GRAPH VIEW ───
-function GraphView({ rules, assertions, gpf, gcf, onSelect }) {
+function GraphView({ rules, assertions, gpf, gcf, onSelect, focusNodeId }) {
   const canvasRef = useRef(null);
   const nodesRef = useRef([]);
   const edgesRef = useRef([]);
   const animRef = useRef(null);
   const dragRef = useRef(null);
   const hovRef = useRef(null);
+  const focusRef = useRef(focusNodeId);
   const [tip, setTip] = useState(null);
   const szRef = useRef({ w: 800, h: 600 });
+
+  useEffect(() => { focusRef.current = focusNodeId; }, [focusNodeId]);
 
   useEffect(() => {
     const all = [...rules, ...assertions];
@@ -272,15 +275,17 @@ function GraphView({ rules, assertions, gpf, gcf, onSelect }) {
         ctx.strokeStyle=paColor(pa)+"10"; ctx.lineWidth=1.5; ctx.setLineDash([4,6]); ctx.stroke(); ctx.setLineDash([]);
       });
       const hov = hovRef.current;
+      const focId = focusRef.current;
+      const focConnected = focId ? new Set(es.filter(e=>e.s===focId||e.t===focId).flatMap(e=>[e.s,e.t])) : null;
       // edges
       es.forEach(e => {
         const a=nm[e.s], b=nm[e.t]; if(!a||!b) return;
         const hl = hov && (hov.id===e.s||hov.id===e.t);
+        const fl = focId && (e.s===focId||e.t===focId);
         const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
         const dx=b.x-a.x, dy=b.y-a.y, nx=-dy*0.08, ny=dx*0.08;
         ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx+nx,my+ny,b.x,b.y);
-        ctx.strokeStyle=hl?"#4FA89A88":"#D8CEC380"; ctx.lineWidth=hl?2.5:1; ctx.stroke();
-        // arrow
+        ctx.strokeStyle=(hl||fl)?"#4FA89A88":focId&&!fl?"#D8CEC318":"#D8CEC380"; ctx.lineWidth=(hl||fl)?2.5:1; ctx.stroke();
         const at=0.5,dt=0.01;
         const px=(1-at)*(1-at)*a.x+2*(1-at)*at*(mx+nx)+at*at*b.x;
         const py=(1-at)*(1-at)*a.y+2*(1-at)*at*(my+ny)+at*at*b.y;
@@ -289,15 +294,17 @@ function GraphView({ rules, assertions, gpf, gcf, onSelect }) {
         const ang=Math.atan2(py2-py,px2-px);
         ctx.save(); ctx.translate(px,py); ctx.rotate(ang);
         ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(-4,-4); ctx.lineTo(-4,4); ctx.closePath();
-        ctx.fillStyle=hl?"#4FA89A70":"#D8CEC360"; ctx.fill(); ctx.restore();
+        ctx.fillStyle=(hl||fl)?"#4FA89A70":"#D8CEC360"; ctx.fill(); ctx.restore();
       });
       // nodes
       ns.forEach(n => {
         const isH=hov&&hov.id===n.id;
         const isC=hov&&es.some(e=>(e.s===hov.id&&e.t===n.id)||(e.t===hov.id&&e.s===n.id));
-        const dim=hov&&!isH&&!isC;
+        const isFoc = focId && n.id===focId;
+        const isFocC = focConnected && focConnected.has(n.id);
+        const dim=(hov&&!isH&&!isC)||(focId&&!isFoc&&!isFocC);
         const col=paColor(n.processArea);
-        if(isH){ctx.beginPath();ctx.arc(n.x,n.y,n.r+10,0,Math.PI*2);const g=ctx.createRadialGradient(n.x,n.y,n.r,n.x,n.y,n.r+10);g.addColorStop(0,col+"25");g.addColorStop(1,"transparent");ctx.fillStyle=g;ctx.fill();}
+        if(isH||isFoc){ctx.beginPath();ctx.arc(n.x,n.y,n.r+(isFoc?14:10),0,Math.PI*2);const g=ctx.createRadialGradient(n.x,n.y,n.r,n.x,n.y,n.r+(isFoc?14:10));g.addColorStop(0,(isFoc?"#F2652F":col)+"35");g.addColorStop(1,"transparent");ctx.fillStyle=g;ctx.fill();}
         ctx.beginPath();
         if(n.type==="rule"){const s=n.r,x=n.x-s,y=n.y-s,w=s*2,h=s*2,cr=7;ctx.moveTo(x+cr,y);ctx.lineTo(x+w-cr,y);ctx.quadraticCurveTo(x+w,y,x+w,y+cr);ctx.lineTo(x+w,y+h-cr);ctx.quadraticCurveTo(x+w,y+h,x+w-cr,y+h);ctx.lineTo(x+cr,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-cr);ctx.lineTo(x,y+cr);ctx.quadraticCurveTo(x,y,x+cr,y);}
         else ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
@@ -368,6 +375,7 @@ function KnowledgeRuleBank() {
   const [fProc, setFProc] = useState([]);
   const [gpf, setGpf] = useState([]);
   const [gcf, setGcf] = useState([]);
+  const [focusGraph, setFocusGraph] = useState(null);
   const tog = (a, s, v) => s(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v]);
 
   const filtered = (view === "rules" ? rules : view === "assertions" ? assertions : []).filter(i => {
@@ -956,7 +964,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         {view!=="graph"&&<div style={{position:"relative",marginBottom:20}}><input placeholder="Search rules, tags, scope…" value={search} onChange={e=>setSearch(e.target.value)} style={{...iS,paddingLeft:32,fontSize:11}}/><span style={{position:"absolute",left:10,top:8,color:"#b0a898",fontSize:13}}>⌕</span></div>}
 
         <div style={{marginBottom:24}}>
-          {["rules","assertions","events","health","graph"].map(v=><button key={v} onClick={()=>{setView(v);setSel(null);}} style={{display:"block",width:"100%",padding:"8px 12px",marginBottom:2,borderRadius:3,fontSize:12,fontWeight:view===v?700:400,background:view===v?"#f0eeec":"transparent",color:view===v?"#062044":"#555",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FNTM}}>
+          {["rules","assertions","events","health","graph"].map(v=><button key={v} onClick={()=>{setView(v);setSel(null);if(v!=="graph")setFocusGraph(null);}} style={{display:"block",width:"100%",padding:"8px 12px",marginBottom:2,borderRadius:3,fontSize:12,fontWeight:view===v?700:400,background:view===v?"#f0eeec":"transparent",color:view===v?"#062044":"#555",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FNTM}}>
             {v==="rules"?"◆ ":v==="assertions"?"◇ ":v==="events"?"● ":v==="health"?"♥ ":"⬡ "}{v==="graph"?"Relationship Graph":v==="events"?"Events":v==="health"?"Knowledge Health":v.charAt(0).toUpperCase()+v.slice(1)}
             {v==="health"?((contradictions.length+staleItems.length+confidenceDrifts.length)>0?<span style={{float:"right",background:"#F2652F",color:"#fff",fontSize:9,fontWeight:800,padding:"1px 6px",borderRadius:8,fontFamily:FNTM}}>{contradictions.length+staleItems.length+confidenceDrifts.length}</span>:null):
             v!=="graph"&&<span style={{float:"right",color:"#D8CEC3",fontSize:11}}>{v==="rules"?rules.length:v==="assertions"?assertions.length:events.length}</span>}
@@ -1049,7 +1057,12 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           </div>)}
         </div>}
 
-        {view==="graph"&&<div style={{flex:1,position:"relative"}}><GraphView rules={rules} assertions={assertions} gpf={gpf} gcf={gcf} onSelect={i=>setSel(i)}/></div>}
+        {view==="graph"&&<div style={{flex:1,position:"relative"}}>
+          {focusGraph&&<div style={{position:"absolute",top:12,left:12,zIndex:5,padding:"6px 12px",background:"#F2652F",color:"#fff",borderRadius:3,fontSize:11,fontFamily:FNTM,fontWeight:700,display:"flex",alignItems:"center",gap:8}}>
+            Focused on {focusGraph} <button onClick={()=>setFocusGraph(null)} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:13,padding:0}}>✕</button>
+          </div>}
+          <GraphView rules={rules} assertions={assertions} gpf={gpf} gcf={gcf} onSelect={i=>setSel(i)} focusNodeId={focusGraph}/>
+        </div>}
 
         {/* Knowledge Health View */}
         {view==="health"&&<div style={{flex:1,padding:"20px 28px",overflow:"auto"}}>
@@ -1211,6 +1224,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           <div style={{display:"flex",gap:6}}>
             <button onClick={()=>openEdit(sel)} style={{padding:"4px 10px",borderRadius:4,fontSize:11,background:"#f0eeec",border:"1px solid #D8CEC3",color:"#8a8278",cursor:"pointer",fontFamily:FNTM}}>Edit</button>
             <button onClick={()=>setShowVer(sel)} style={{padding:"4px 10px",borderRadius:4,fontSize:11,background:"transparent",border:"1px solid #D8CEC3",color:"#b0a898",cursor:"pointer",fontFamily:FNTM}}>History</button>
+            <button onClick={()=>{setFocusGraph(sel.id);setView("graph");}} style={{padding:"4px 10px",borderRadius:4,fontSize:11,background:"transparent",border:"1px solid #4FA89A",color:"#4FA89A",cursor:"pointer",fontFamily:FNTM,fontWeight:600}}>View in Graph</button>
             <button onClick={()=>setSel(null)} style={{background:"none",border:"none",color:"#b0a898",fontSize:16,cursor:"pointer"}}>✕</button>
           </div>
         </div>
