@@ -1,28 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Knowledge Rule Bank — Danieli</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23F2652F' width='100' height='100' rx='15'/><text fill='white' x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='50' font-weight='900'>KB</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Semi+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEREOS Digital Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Barlow', sans-serif; background: #FFFFFF; }
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #D8CEC3; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #b0a898; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: #f4f1ed; }
 </style>
 </head>
 <body>
 <div id="root"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
-
 
 const INITIAL_RULES = [
   { id: "R-001", title: "Dilute Sims shredded scrap with prime scrap or DRI", type: "rule", status: "Proposed", confidence: "Medium", category: "Material", processArea: "EAF", scope: "Supplier = Sims Metal Management; Process = EAF", rationale: "Improves liquid steel quality and reduces downstream risk", evidence: [{ type: "human_note", text: "Original operator observation", date: "2025-02-10" }], linkedAssertions: ["A-001"], tags: ["scrap", "sims", "eaf", "dilution"], createdBy: "Max Wolman", createdAt: "2025-02-10T09:00:00Z", versions: [{ version: 1, date: "2025-02-10T09:00:00Z", author: "Max Wolman", change: "Initial capture from operator note", snapshot: "When charging shredded scrap from Sims Metal Management, dilute the charge with prime scrap or DRI when available." }] },
@@ -361,8 +355,12 @@ function KnowledgeRuleBank() {
   const [assertions, setAssertions] = useState(INITIAL_ASSERTIONS);
   const [events, setEvents] = useState(INITIAL_EVENTS);
   const [search, setSearch] = useState("");
-  const [view, setView] = useState("rules");
+  const [view, setView] = useState("query");
   const [sel, setSel] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showVer, setShowVer] = useState(null);
@@ -445,36 +443,54 @@ function KnowledgeRuleBank() {
   const [parseError, setParseError] = useState(null);
   const [recording, setRecording] = useState(false);
   const [fileLoading, setFileLoading] = useState(false);
+  const [narrPhotos, setNarrPhotos] = useState([]);
+  const [eventPhotos, setEventPhotos] = useState([]);
   const recognitionRef = useRef(null);
 
+  // ─── PHOTO HANDLER ───
+  const handlePhoto = (e, target) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const b64 = reader.result;
+        if (target === "narrative") setNarrPhotos(p => [...p, { name: file.name, data: b64 }]);
+        else setEventPhotos(p => [...p, { name: file.name, data: b64 }]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
   // ─── FILE UPLOAD HANDLER ───
+  const [uploadedDoc, setUploadedDoc] = useState(null);
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileLoading(true);
     setParseError(null);
+    setUploadedDoc(null);
     try {
       const ext = file.name.split(".").pop().toLowerCase();
-      if (ext === "txt" || ext === "md" || ext === "csv") {
-        const text = await file.text();
-        setNarr(prev => prev ? prev + "\n\n" + text : text);
-      } else if (ext === "pdf") {
-        // Read PDF as base64 for Claude to parse
+      if (ext === "pdf") {
         const buffer = await file.arrayBuffer();
         const bytes = new Uint8Array(buffer);
         let binary = "";
         bytes.forEach(b => binary += String.fromCharCode(b));
         const b64 = btoa(binary);
-        setNarr(prev => prev ? prev + "\n\n[PDF uploaded: " + file.name + " — content will be sent for extraction]" : "[PDF uploaded: " + file.name + " — content will be sent for extraction]");
-        // Store base64 for API call
-        setNarr("[PDF:" + b64 + ":" + file.name + "]");
-      } else if (ext === "docx") {
-        // Use mammoth if available, otherwise read as text
-        const text = await file.text();
-        setNarr(prev => prev ? prev + "\n\n" + text : text);
+        setUploadedDoc({ name: file.name, data: b64, type: "pdf" });
+        setNarr("[PDF uploaded: " + file.name + "] — click Extract to process");
+      } else if (ext === "docx" || ext === "doc" || ext === "xlsx" || ext === "xls") {
+        // Binary files — can't read as text, tell user to use PDF
+        setParseError("." + ext + " files are not directly supported. Please save as PDF and upload that instead, or paste the text content directly.");
       } else {
+        // Text-based files (txt, md, csv, etc.)
         const text = await file.text();
-        setNarr(prev => prev ? prev + "\n\n" + text : text);
+        if (!text.trim()) {
+          setParseError("File appears to be empty.");
+        } else {
+          setNarr(prev => prev && !prev.startsWith("[PDF") ? prev + "\n\n" + text : text);
+        }
       }
     } catch (err) {
       setParseError("Could not read file: " + err.message);
@@ -654,6 +670,84 @@ function KnowledgeRuleBank() {
     return computed !== item.confidence && item.status !== "Retired" && item.status !== "Superseded";
   });
 
+  // ─── CHAT INTERFACE — operator asks, system answers from knowledge bank ───
+  const sendChat = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    const userMsg = { role: "user", text: chatInput, time: new Date().toISOString() };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput("");
+    setChatLoading(true);
+
+    try {
+      // Build knowledge bank context — only Active and Proposed rules, all assertions, recent events
+      const activeRules = rules.filter(r => r.status !== "Retired" && r.status !== "Superseded");
+      const recentEvents = events.slice(0, 10);
+
+      const knowledgeContext = `KNOWLEDGE BANK — ${activeRules.length} rules, ${assertions.length} assertions, ${recentEvents.length} recent events.
+
+RULES:
+${activeRules.map(r => `[${r.id}] (${r.status}, ${r.confidence}) ${r.title} | Process: ${r.processArea} | Scope: ${r.scope || "General"} | Rationale: ${r.rationale || "N/A"} | Tags: ${(r.tags||[]).join(", ")}`).join("\n")}
+
+ASSERTIONS:
+${assertions.map(a => `[${a.id}] (${a.confidence}) ${a.title} | Process: ${a.processArea} | Scope: ${a.scope || "General"} | Linked rules: ${(a.linkedRules||[]).join(", ")}`).join("\n")}
+
+EVENTS:
+${recentEvents.map(e => `[${e.id}] (${e.outcome}, ${e.impact}) ${e.title} | Date: ${e.date?.split("T")[0]} | Process: ${e.processArea} | Description: ${e.description?.slice(0,200)} | Resolution: ${e.resolution || "None"} | Linked rules: ${(e.linkedRules||[]).join(", ")}`).join("\n")}`;
+
+      const systemPrompt = `You are the NEREOS Digital Brain — an operational knowledge assistant for a steel plant. You answer questions ONLY from the knowledge bank provided below. You do not guess or improvise.
+
+${knowledgeContext}
+
+RESPONSE RULES:
+1. When an operator describes their situation, identify ALL relevant rules, assertions, and events. Reference them by ID.
+2. For each relevant rule, explain WHY it applies to their specific situation. Be concrete.
+3. If past events are relevant (similar conditions led to problems), WARN about them with specifics.
+4. If there are contradictions or confidence concerns in relevant rules, mention them.
+5. If nothing in the knowledge bank matches, say so clearly — "No rules in the knowledge bank cover this situation" — and suggest they file this as a knowledge gap.
+6. Keep responses concise and actionable. This is a plant floor briefing, not an essay.
+7. Use plain language. Operators read this on a phone or tablet between tasks.
+8. NEVER invent rules or knowledge not in the bank. NEVER say "generally in steelmaking..." — only reference what's documented above.
+9. Reference rule IDs like [R-003] so operators can look them up.`;
+
+      // Build conversation history for multi-turn
+      const apiMessages = [];
+      const recentChat = chatMessages.slice(-8); // Keep last 8 messages for context
+      recentChat.forEach(m => {
+        apiMessages.push({ role: m.role === "user" ? "user" : "assistant", content: m.text });
+      });
+      apiMessages.push({ role: "user", content: chatInput });
+
+      const response = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2000,
+          system: systemPrompt,
+          messages: apiMessages,
+        }),
+      });
+      const data = await response.json();
+      if (!data.content || !Array.isArray(data.content)) {
+        throw new Error(data.error?.message || "API error");
+      }
+      const replyText = data.content.map(b => b.type === "text" ? b.text : "").join("");
+
+      // Extract referenced rule/event IDs from response
+      const refIds = [...replyText.matchAll(/\[(R-\d+|A-\d+|E-\d+)\]/g)].map(m => m[1]);
+
+      setChatMessages(prev => [...prev, { role: "assistant", text: replyText, time: new Date().toISOString(), refs: refIds }]);
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: "assistant", text: "⚠ Could not connect to knowledge engine. Error: " + err.message + "\n\nYou can still browse rules manually in the Rules tab.", time: new Date().toISOString(), refs: [] }]);
+    }
+    setChatLoading(false);
+  };
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, chatLoading]);
+
   // ─── CLAUDE API NARRATIVE PARSER ───
   const parseNarr = async () => {
     setParsing(true);
@@ -690,6 +784,24 @@ You extract structured knowledge from operator narratives. Given free-text input
 
 Extract ALL distinct assertions (observed facts/patterns) and rules (actionable guidance) from the text. For short notes, this may be 2-4 assertions and 1-3 rules. For longer documents, extract every distinct piece of operational knowledge — there is no upper limit. Each assertion and rule should be specific and non-overlapping. Set confidence to "Medium" only if the text references repeated observations or data; otherwise use "Low".`;
 
+      // Build message content — PDF as document, text as text, photos as images
+      const messageContent = [];
+      if (uploadedDoc) {
+        messageContent.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: uploadedDoc.data } });
+        messageContent.push({ type: "text", text: "Extract all operational knowledge from this document." + (narr && !narr.startsWith("[PDF") ? " Additional context: " + narr : "") });
+      } else {
+        if (narrPhotos.length > 0) {
+          narrPhotos.forEach(p => {
+            const mediaType = p.data.startsWith("data:image/png") ? "image/png" : "image/jpeg";
+            const b64data = p.data.split(",")[1];
+            messageContent.push({ type: "image", source: { type: "base64", media_type: mediaType, data: b64data } });
+          });
+          messageContent.push({ type: "text", text: narr || "Extract knowledge from these images." });
+        } else {
+          messageContent.push({ type: "text", text: narr });
+        }
+      }
+
       const response = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -697,10 +809,14 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           model: "claude-sonnet-4-20250514",
           max_tokens: 4000,
           system: systemPrompt,
-          messages: [{ role: "user", content: narr }],
+          messages: [{ role: "user", content: messageContent.length === 1 && messageContent[0].type === "text" ? messageContent[0].text : messageContent }],
         }),
       });
       const data = await response.json();
+      if (!data.content || !Array.isArray(data.content)) {
+        console.error("API response:", JSON.stringify(data).slice(0, 500));
+        throw new Error(data.error?.message || (data.type === "error" ? data.error?.message || "API error: " + (data.error?.type || "unknown") : "Unexpected response: " + JSON.stringify(data).slice(0, 200)));
+      }
       const text = data.content.map(b => b.type === "text" ? b.text : "").join("");
       const clean = text.replace(/```json|```/g, "").trim();
       const result = JSON.parse(clean);
@@ -785,7 +901,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
 
     setAssertions(p => [...p, ...newAssertions]);
     setRules(p => [...p, ...newRules]);
-    setNarr(""); setParsed(null); setShowNarr(false);
+    setNarr(""); setParsed(null); setShowNarr(false); setUploadedDoc(null);
   };
 
   // ─── EVENT REPORTING ───
@@ -824,21 +940,25 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
       description: evForm.description, ishikawa: cleanIshikawa,
       resolution: evForm.resolution, linkedRules: [], linkedAssertions: [],
       generatedRules: [], generatedAssertions: [],
+      photos: eventPhotos.map(p => ({ ...p })),
       reportedBy: evForm.reportedBy || "System",
       tags: evForm.tags.split(",").map(t => t.trim()).filter(Boolean),
       createdAt: now,
     };
     setEvents(p => [...p, ni]);
     setEvForm(eventEmpty);
+    setEventPhotos([]);
     setShowEvent(false);
   };
 
   // Generate rules + assertions from event via Claude API
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState(null);
+  const [genParsed, setGenParsed] = useState(null);
   const generateFromEvent = async (evt) => {
     setGenerating(true);
     setGenError(null);
+    setGenParsed(null);
     try {
       const ishikawaText = ISHIKAWA_CATS.map(c => {
         const items = (evt.ishikawa || {})[c] || [];
@@ -862,55 +982,62 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         }),
       });
       const data = await response.json();
+      if (!data.content || !Array.isArray(data.content)) {
+        console.error("Event API response:", JSON.stringify(data).slice(0, 500));
+        throw new Error(data.error?.message || "API error: " + JSON.stringify(data).slice(0, 200));
+      }
       const text = data.content.map(b => b.type === "text" ? b.text : "").join("");
       const clean = text.replace(/```json|```/g, "").trim();
       const result = JSON.parse(clean);
-      const now = new Date().toISOString();
-      const dateStr = now.split("T")[0];
-
-      const newAssertions = (result.assertions || []).map((a, i) => ({
-        id: "A-" + String(assertions.length + i + 1).padStart(3, "0"), title: a.title, type: "assertion",
-        category: a.category || "Process", scope: a.scope || "", confidence: a.confidence || "Low",
-        processArea: evt.processArea,
-        evidence: [{ type: "event_analysis", text: "Generated from event " + evt.id + ": " + evt.title, date: dateStr }],
-        linkedRules: [], createdBy: "Event " + evt.id, createdAt: now,
-        tags: evt.tags || [],
-        versions: [{ version: 1, date: now, author: "Event Analysis", change: "Auto-generated from event " + evt.id, snapshot: a.title }],
-      }));
-
-      const newRules = (result.rules || []).map((r, i) => ({
-        id: "R-" + String(rules.length + i + 1).padStart(3, "0"), title: r.title, type: "rule",
-        status: "Proposed", confidence: r.confidence || "Low", category: r.category || "Process",
-        processArea: r.processArea || evt.processArea, scope: r.scope || "",
-        rationale: r.rationale || "",
-        evidence: [{ type: "event_analysis", text: "Generated from event " + evt.id + ": " + evt.title, date: dateStr }],
-        linkedAssertions: newAssertions.map(a => a.id), tags: evt.tags || [],
-        createdBy: "Event " + evt.id, createdAt: now,
-        versions: [{ version: 1, date: now, author: "Event Analysis", change: "Auto-generated from event " + evt.id, snapshot: r.title }],
-      }));
-
-      // Auto-link
-      const allA = [...assertions, ...newAssertions];
-      const allR = [...rules, ...newRules];
-      newRules.forEach(nr => { const links = computeLinks(nr, allR, allA); nr.linkedAssertions = [...new Set([...nr.linkedAssertions, ...links.map(l => l.id)])]; });
-      newAssertions.forEach(na => { const links = computeLinks(na, allR, allA); na.linkedRules = links.map(l => l.id); });
-
-      setAssertions(p => [...p, ...newAssertions]);
-      setRules(p => [...p, ...newRules]);
-
-      // Update event with generated IDs
-      setEvents(p => p.map(item => item.id !== evt.id ? item : {
-        ...item,
-        generatedRules: [...(item.generatedRules || []), ...newRules.map(r => r.id)],
-        generatedAssertions: [...(item.generatedAssertions || []), ...newAssertions.map(a => a.id)],
-      }));
-
-      setShowEventDetail({ ...evt, generatedRules: [...(evt.generatedRules||[]), ...newRules.map(r=>r.id)], generatedAssertions: [...(evt.generatedAssertions||[]), ...newAssertions.map(a=>a.id)] });
+      setGenParsed({ assertions: result.assertions || [], rules: result.rules || [], eventId: evt.id, processArea: evt.processArea, tags: evt.tags || [] });
     } catch (err) {
       console.error("Generate error:", err);
       setGenError(String(err));
     }
     setGenerating(false);
+  };
+
+  const acceptGenerated = () => {
+    if (!genParsed || !showEventDetail) return;
+    const now = new Date().toISOString();
+    const dateStr = now.split("T")[0];
+    const evt = showEventDetail;
+
+    const newAssertions = genParsed.assertions.map((a, i) => ({
+      id: "A-" + String(assertions.length + i + 1).padStart(3, "0"), title: a.title, type: "assertion",
+      category: a.category || "Process", scope: a.scope || "", confidence: a.confidence || "Low",
+      processArea: genParsed.processArea,
+      evidence: [{ type: "event_analysis", text: "Generated from event " + genParsed.eventId + ": " + evt.title, date: dateStr }],
+      linkedRules: [], createdBy: "Event " + genParsed.eventId, createdAt: now,
+      tags: genParsed.tags || [],
+      versions: [{ version: 1, date: now, author: "Event Analysis", change: "Auto-generated from event " + genParsed.eventId, snapshot: a.title }],
+    }));
+
+    const newRules = genParsed.rules.map((r, i) => ({
+      id: "R-" + String(rules.length + i + 1).padStart(3, "0"), title: r.title, type: "rule",
+      status: "Proposed", confidence: r.confidence || "Low", category: r.category || "Process",
+      processArea: r.processArea || genParsed.processArea, scope: r.scope || "",
+      rationale: r.rationale || "",
+      evidence: [{ type: "event_analysis", text: "Generated from event " + genParsed.eventId + ": " + evt.title, date: dateStr }],
+      linkedAssertions: newAssertions.map(a => a.id), tags: genParsed.tags || [],
+      createdBy: "Event " + genParsed.eventId, createdAt: now,
+      versions: [{ version: 1, date: now, author: "Event Analysis", change: "Auto-generated from event " + genParsed.eventId, snapshot: r.title }],
+    }));
+
+    const allA = [...assertions, ...newAssertions];
+    const allR = [...rules, ...newRules];
+    newRules.forEach(nr => { const links = computeLinks(nr, allR, allA); nr.linkedAssertions = [...new Set([...nr.linkedAssertions, ...links.map(l => l.id)])]; });
+    newAssertions.forEach(na => { const links = computeLinks(na, allR, allA); na.linkedRules = links.map(l => l.id); });
+
+    setAssertions(p => [...p, ...newAssertions]);
+    setRules(p => [...p, ...newRules]);
+    setEvents(p => p.map(item => item.id !== evt.id ? item : {
+      ...item,
+      generatedRules: [...(item.generatedRules || []), ...newRules.map(r => r.id)],
+      generatedAssertions: [...(item.generatedAssertions || []), ...newAssertions.map(a => a.id)],
+    }));
+    setShowEventDetail({ ...evt, generatedRules: [...(evt.generatedRules||[]), ...newRules.map(r=>r.id)], generatedAssertions: [...(evt.generatedAssertions||[]), ...newAssertions.map(a=>a.id)] });
+    setGenParsed(null);
   };
 
   const handleExport = () => {
@@ -961,17 +1088,35 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
     <div style={{display:"flex",minHeight:"calc(100vh - 110px)"}}>
       {/* Sidebar */}
       <div style={{width:220,borderRight:"1px solid #e8e4e0",padding:"20px 16px",flexShrink:0,overflow:"auto"}}>
-        {view!=="graph"&&<div style={{position:"relative",marginBottom:20}}><input placeholder="Search rules, tags, scope…" value={search} onChange={e=>setSearch(e.target.value)} style={{...iS,paddingLeft:32,fontSize:11}}/><span style={{position:"absolute",left:10,top:8,color:"#b0a898",fontSize:13}}>⌕</span></div>}
+        {view!=="graph"&&view!=="query"&&<div style={{position:"relative",marginBottom:20}}><input placeholder="Search rules, tags, scope…" value={search} onChange={e=>setSearch(e.target.value)} style={{...iS,paddingLeft:32,fontSize:11}}/><span style={{position:"absolute",left:10,top:8,color:"#b0a898",fontSize:13}}>⌕</span></div>}
 
         <div style={{marginBottom:24}}>
-          {["rules","assertions","events","health","graph"].map(v=><button key={v} onClick={()=>{setView(v);setSel(null);if(v!=="graph")setFocusGraph(null);}} style={{display:"block",width:"100%",padding:"8px 12px",marginBottom:2,borderRadius:3,fontSize:12,fontWeight:view===v?700:400,background:view===v?"#f0eeec":"transparent",color:view===v?"#062044":"#555",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FNTM}}>
-            {v==="rules"?"◆ ":v==="assertions"?"◇ ":v==="events"?"● ":v==="health"?"♥ ":"⬡ "}{v==="graph"?"Relationship Graph":v==="events"?"Events":v==="health"?"Knowledge Health":v.charAt(0).toUpperCase()+v.slice(1)}
+          {["query","rules","assertions","events","health","graph"].map(v=><button key={v} onClick={()=>{setView(v);setSel(null);if(v!=="graph")setFocusGraph(null);}} style={{display:"block",width:"100%",padding:"8px 12px",marginBottom:2,borderRadius:3,fontSize:12,fontWeight:view===v?700:400,background:view===v?"#f0eeec":"transparent",color:view===v?"#062044":"#555",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FNTM}}>
+            {v==="query"?"⌕ ":v==="rules"?"◆ ":v==="assertions"?"◇ ":v==="events"?"● ":v==="health"?"♥ ":"⬡ "}{v==="query"?"Query":v==="graph"?"Relationship Graph":v==="events"?"Events":v==="health"?"Knowledge Health":v.charAt(0).toUpperCase()+v.slice(1)}
             {v==="health"?((contradictions.length+staleItems.length+confidenceDrifts.length)>0?<span style={{float:"right",background:"#F2652F",color:"#fff",fontSize:9,fontWeight:800,padding:"1px 6px",borderRadius:8,fontFamily:FNTM}}>{contradictions.length+staleItems.length+confidenceDrifts.length}</span>:null):
-            v!=="graph"&&<span style={{float:"right",color:"#D8CEC3",fontSize:11}}>{v==="rules"?rules.length:v==="assertions"?assertions.length:events.length}</span>}
+            v!=="graph"&&v!=="query"&&<span style={{float:"right",color:"#D8CEC3",fontSize:11}}>{v==="rules"?rules.length:v==="assertions"?assertions.length:events.length}</span>}
           </button>)}
         </div>
 
-        {view!=="graph"&&view!=="events"&&<>
+        {view==="query"&&<div style={{marginTop:8}}>
+          <div style={{fontSize:10,color:"#4FA89A",textTransform:"uppercase",letterSpacing:1.2,marginBottom:12,fontFamily:FNTM,fontWeight:700}}>ASK THE KNOWLEDGE BANK</div>
+          <div style={{fontSize:11,color:"#8a8278",fontFamily:FNTM,lineHeight:1.7}}>
+            Tell the system what you're about to do. Include:<br/><br/>
+            <span style={{fontWeight:600,color:"#5a5550"}}>• Grade / product</span><br/>
+            <span style={{fontWeight:600,color:"#5a5550"}}>• Scrap source / charge</span><br/>
+            <span style={{fontWeight:600,color:"#5a5550"}}>• Process area</span><br/>
+            <span style={{fontWeight:600,color:"#5a5550"}}>• Anything unusual</span><br/><br/>
+            Answers come strictly from the validated knowledge bank. Every rule ID is clickable.
+          </div>
+          {chatMessages.length>0&&<button onClick={()=>setChatMessages([])} style={{marginTop:16,width:"100%",padding:"8px 12px",borderRadius:3,fontSize:11,background:"transparent",border:"1px solid #D8CEC3",color:"#8a8278",cursor:"pointer",fontFamily:FNTM,fontWeight:600}}>New Conversation</button>}
+          <div style={{marginTop:16,padding:"10px 12px",background:"#f0eeec",borderRadius:3,fontSize:10,color:"#5a5550",fontFamily:FNTM,lineHeight:1.5}}>
+            <span style={{fontWeight:700}}>Knowledge bank:</span><br/>
+            {rules.filter(r=>r.status==="Active").length} active rules · {rules.filter(r=>r.status==="Proposed").length} proposed<br/>
+            {assertions.length} assertions · {events.length} events
+          </div>
+        </div>}
+
+        {view!=="graph"&&view!=="events"&&view!=="query"&&<>
           {view==="rules"&&<PillFilter label="Status" options={STATUSES} selected={fStatus} onToggle={v=>tog(fStatus,setFStatus,v)} colorFn={statusColor}/>}
           <PillFilter label="Confidence" options={CONFIDENCES} selected={fConf} onToggle={v=>tog(fConf,setFConf,v)} colorFn={confidenceColor}/>
           <PillFilter label="Category" options={["Material","Process","Equipment","People","Measurement","Environment"]} selected={fCat} onToggle={v=>tog(fCat,setFCat,v)}/>
@@ -998,6 +1143,113 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
 
       {/* Main */}
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        {/* Chat Interface — Home Screen */}
+        {view==="query"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          {/* Chat messages */}
+          <div style={{flex:1,overflow:"auto",padding:"24px 28px"}}>
+            <div style={{maxWidth:720,margin:"0 auto"}}>
+              {chatMessages.length===0&&<div style={{textAlign:"center",paddingTop:60}}>
+                <div style={{fontSize:28,fontWeight:700,color:"#1F1F1F",fontFamily:FNT,marginBottom:6}}>Query</div>
+                <div style={{fontSize:13,color:"#8a8278",fontFamily:FNTM,lineHeight:1.7,marginBottom:32,maxWidth:480,margin:"0 auto"}}>
+                  Describe what you're about to do. The system will brief you on everything the knowledge bank says about your situation.
+                </div>
+                {/* Quick prompts */}
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center",marginBottom:40}}>
+                  {[
+                    "Running HSLA on strand 2, 60% Sims scrap",
+                    "EAF heat with high-residual shredded scrap",
+                    "Casting crack-sensitive grade, what should I check?",
+                    "Ladle going to high-alloy heat, refractory concerns",
+                  ].map(q=>
+                    <button key={q} onClick={()=>{setChatInput(q);}} style={{padding:"10px 16px",borderRadius:6,fontSize:12,background:"#FFFFFF",border:"1px solid #e8e4e0",color:"#5a5550",cursor:"pointer",fontFamily:FNTM,fontWeight:500,lineHeight:1.4,textAlign:"left",maxWidth:280,transition:"all 0.12s"}}
+                      onMouseEnter={e=>{e.currentTarget.style.background="#062044";e.currentTarget.style.color="#fff";e.currentTarget.style.borderColor="#062044";}}
+                      onMouseLeave={e=>{e.currentTarget.style.background="#FFFFFF";e.currentTarget.style.color="#5a5550";e.currentTarget.style.borderColor="#e8e4e0";}}>
+                      {q}
+                    </button>
+                  )}
+                </div>
+                {/* Stats */}
+                <div style={{display:"flex",gap:16,justifyContent:"center",fontSize:11,fontFamily:FNTM,color:"#b0a898"}}>
+                  <span>Knowledge bank: <span style={{color:"#F2652F",fontWeight:700}}>{rules.filter(r=>r.status==="Active").length}</span> active rules</span>
+                  <span>·</span>
+                  <span><span style={{color:"#062044",fontWeight:700}}>{assertions.length}</span> assertions</span>
+                  <span>·</span>
+                  <span><span style={{color:"#1F1F1F",fontWeight:700}}>{events.length}</span> events on record</span>
+                </div>
+              </div>}
+
+              {/* Message thread */}
+              {chatMessages.map((msg, i) => <div key={i} style={{marginBottom:16,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start"}}>
+                <div style={{
+                  maxWidth:"85%",
+                  padding:"14px 18px",
+                  borderRadius:msg.role==="user"?"12px 12px 2px 12px":"12px 12px 12px 2px",
+                  background:msg.role==="user"?"#062044":"#FFFFFF",
+                  color:msg.role==="user"?"#FFFFFF":"#1F1F1F",
+                  border:msg.role==="user"?"none":"1px solid #e8e4e0",
+                  fontSize:13,
+                  fontFamily:FNTM,
+                  lineHeight:1.7,
+                  whiteSpace:"pre-wrap",
+                  wordBreak:"break-word",
+                }}>
+                  {msg.role==="assistant"?msg.text.split(/(\[(?:R|A|E)-\d+\])/).map((part,j)=>{
+                    const idMatch = part.match(/^\[(R|A|E)-(\d+)\]$/);
+                    if(idMatch){
+                      const fullId = idMatch[1]+"-"+idMatch[2];
+                      const item = idMatch[1]==="R"?rules.find(r=>r.id===fullId):idMatch[1]==="A"?assertions.find(a=>a.id===fullId):events.find(e=>e.id===fullId);
+                      return <span key={j} onClick={()=>{
+                        if(idMatch[1]==="R"){setView("rules");setSel(item);}
+                        else if(idMatch[1]==="A"){setView("assertions");setSel(item);}
+                        else{setView("events");setShowEventDetail(item);}
+                      }} style={{color:"#4FA89A",fontWeight:700,cursor:"pointer",textDecoration:"underline",textDecorationColor:"#4FA89A40"}}>{part}</span>;
+                    }
+                    return <span key={j}>{part}</span>;
+                  }):msg.text}
+                </div>
+                <div style={{fontSize:9,color:"#D8CEC3",fontFamily:FNTM,marginTop:4,paddingLeft:4,paddingRight:4}}>
+                  {msg.role==="user"?"You":DOMAIN.name+" Knowledge"} · {new Date(msg.time).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
+                </div>
+              </div>)}
+
+              {/* Loading indicator */}
+              {chatLoading&&<div style={{marginBottom:16,display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
+                <div style={{padding:"14px 18px",borderRadius:"12px 12px 12px 2px",background:"#FFFFFF",border:"1px solid #e8e4e0",fontSize:13,fontFamily:FNTM,color:"#b0a898",display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{display:"flex",gap:4}}>
+                    <div style={{width:6,height:6,borderRadius:"50%",background:"#062044",animation:"chatdot 1.2s infinite",animationDelay:"0s"}}/>
+                    <div style={{width:6,height:6,borderRadius:"50%",background:"#062044",animation:"chatdot 1.2s infinite",animationDelay:"0.2s"}}/>
+                    <div style={{width:6,height:6,borderRadius:"50%",background:"#062044",animation:"chatdot 1.2s infinite",animationDelay:"0.4s"}}/>
+                  </div>
+                  <span>Searching knowledge bank…</span>
+                  <style>{`@keyframes chatdot{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}`}</style>
+                </div>
+              </div>}
+              <div ref={chatEndRef}/>
+            </div>
+          </div>
+
+          {/* Input bar — fixed at bottom */}
+          <div style={{borderTop:"1px solid #e8e4e0",padding:"16px 28px",background:"#FFFFFF"}}>
+            <div style={{maxWidth:720,margin:"0 auto",display:"flex",gap:10,alignItems:"center"}}>
+              <input
+                type="text"
+                style={{...iS,flex:1,height:44,fontSize:13,padding:"0 14px",borderRadius:8,border:"1.5px solid #D8CEC3",fontFamily:FNTM}}
+                value={chatInput}
+                onChange={e=>setChatInput(e.target.value)}
+                placeholder="e.g. Running HSLA on strand 2, 60% Sims scrap…"
+                onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();sendChat();}}}
+              />
+              <button onClick={sendChat} disabled={!chatInput.trim()||chatLoading} style={{padding:"10px 20px",borderRadius:8,fontSize:13,background:chatInput.trim()&&!chatLoading?"#062044":"#D8CEC3",border:"none",color:"#FFFFFF",cursor:chatInput.trim()&&!chatLoading?"pointer":"default",fontFamily:FNTM,fontWeight:800,letterSpacing:0.5,flexShrink:0,height:44}}>
+                {chatLoading?"…":"Query"}
+              </button>
+            </div>
+            <div style={{maxWidth:720,margin:"6px auto 0",fontSize:9,color:"#D8CEC3",fontFamily:FNTM}}>
+              Answers strictly from the validated knowledge bank. Rule IDs are clickable.
+            </div>
+          </div>
+        </div>}
+
+        {/* Rules / Assertions list */}
         {(view==="rules"||view==="assertions")&&<div style={{flex:1,padding:"20px 28px",overflow:"auto"}}>
           <div style={{fontSize:10,color:"#b0a898",fontFamily:FNTM,marginBottom:12,letterSpacing:0.8}}>{filtered.length} {view.toUpperCase()} · SORTED BY DATE</div>
           {filtered.length===0&&<div style={{padding:40,textAlign:"center",color:"#D8CEC3"}}>No {view} match your filters.</div>}
@@ -1368,7 +1620,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
     </Modal>
 
     {/* Narrative Input */}
-    <Modal open={showNarr} onClose={()=>{setShowNarr(false);setParsed(null);setParseError(null);setRecording(false);if(recognitionRef.current)recognitionRef.current.stop();}} title="Narrative Knowledge Input" width={740}>
+    <Modal open={showNarr} onClose={()=>{setShowNarr(false);setParsed(null);setParseError(null);setRecording(false);setNarrPhotos([]);setUploadedDoc(null);if(recognitionRef.current)recognitionRef.current.stop();}} title="Narrative Knowledge Input" width={740}>
       <div style={{fontSize:12,color:"#8a8278",lineHeight:1.6,marginBottom:16}}>Capture knowledge from any source — type, speak, or upload documents. System will extract structured assertions and rules, categorize them, and auto-link to existing knowledge.</div>
 
       {/* Input method tabs */}
@@ -1378,11 +1630,33 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           {fileLoading ? "Reading file..." : "Upload Document"}
           <div style={{fontSize:9,color:"#b0a898",marginTop:2,fontWeight:400}}>PDF, Word, TXT, CSV</div>
         </label>
+        <label style={{flex:1,padding:"12px",borderRadius:3,fontSize:12,fontWeight:700,fontFamily:FNTM,cursor:"pointer",textAlign:"center",border:"1px solid #D8CEC3",background:"#f8f6f4",color:"#5a5550",position:"relative",overflow:"hidden"}}>
+          <input type="file" accept="image/*" capture="environment" multiple onChange={e=>handlePhoto(e,"narrative")} style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0,cursor:"pointer"}}/>
+          Take Photo
+          <div style={{fontSize:9,color:"#b0a898",marginTop:2,fontWeight:400}}>Camera or gallery</div>
+        </label>
         <button onClick={toggleVoice} style={{flex:1,padding:"12px",borderRadius:3,fontSize:12,fontWeight:700,fontFamily:FNTM,cursor:"pointer",textAlign:"center",border:recording?"2px solid #c0392b":"1px solid #D8CEC3",background:recording?"#fde8e5":"#f8f6f4",color:recording?"#c0392b":"#5a5550"}}>
           {recording ? "Stop Recording" : "Voice Input"}
           <div style={{fontSize:9,color:recording?"#c0392b":"#b0a898",marginTop:2,fontWeight:400}}>{recording?"Listening — speak now...":"Speak and auto-transcribe"}</div>
         </button>
       </div>
+
+      {uploadedDoc&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:"#e8edf4",border:"1px solid #062044 20",borderRadius:3,marginBottom:12}}>
+        <span style={{fontSize:20}}>PDF</span>
+        <div style={{flex:1}}>
+          <div style={{fontSize:12,color:"#062044",fontFamily:FNTM,fontWeight:700}}>{uploadedDoc.name}</div>
+          <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM}}>Document ready for extraction</div>
+        </div>
+        <button onClick={()=>{setUploadedDoc(null);setNarr("");}} style={{background:"none",border:"none",color:"#c0392b",cursor:"pointer",fontSize:14}}>✕</button>
+      </div>}
+
+      {narrPhotos.length>0&&<div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+        {narrPhotos.map((p,i)=><div key={i} style={{position:"relative",width:80,height:80,borderRadius:3,overflow:"hidden",border:"1px solid #D8CEC3"}}>
+          <img src={p.data} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+          <button onClick={()=>setNarrPhotos(prev=>prev.filter((_,j)=>j!==i))} style={{position:"absolute",top:2,right:2,width:18,height:18,borderRadius:"50%",background:"rgba(0,0,0,0.6)",color:"#fff",border:"none",cursor:"pointer",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        </div>)}
+        <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,alignSelf:"center"}}>{narrPhotos.length} photo{narrPhotos.length>1?"s":""} attached</div>
+      </div>}
 
       {recording&&<div style={{padding:"8px 12px",background:"#fde8e5",borderRadius:3,marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
         <div style={{width:8,height:8,borderRadius:"50%",background:"#c0392b",animation:"pulse 1s infinite"}}/>
@@ -1467,7 +1741,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
     </Modal>
 
     {/* Event Detail Modal */}
-    <Modal open={!!showEventDetail} onClose={()=>{setShowEventDetail(null);setGenError(null);}} title={`Event ${showEventDetail?.id||""}`} width={760}>
+    <Modal open={!!showEventDetail} onClose={()=>{setShowEventDetail(null);setGenError(null);setGenParsed(null);}} title={`Event ${showEventDetail?.id||""}`} width={760}>
       {showEventDetail&&<div>
         <div style={{display:"flex",gap:8,marginBottom:12}}>
           <Badge label={showEventDetail.outcome} colorFn={outcomeColor}/>
@@ -1478,6 +1752,16 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         </div>
         <h3 style={{fontSize:16,color:"#062044",fontWeight:700,lineHeight:1.4,marginBottom:12,fontFamily:FNT}}>{showEventDetail.title}</h3>
         <div style={{fontSize:12,color:"#5a5550",lineHeight:1.6,marginBottom:16,padding:"10px 14px",background:"#f8f6f4",borderRadius:3,border:`1px solid ${showEventDetail.outcome==="Positive"?"#4FA89A15":"#D8CEC380"}`}}>{showEventDetail.description}</div>
+
+        {/* Photo evidence */}
+        {(showEventDetail.photos||[]).length>0&&<div style={{marginBottom:16}}>
+          <div style={{fontSize:10,color:"#8a8278",textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontFamily:FNTM}}>Photo Evidence ({showEventDetail.photos.length})</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {showEventDetail.photos.map((p,i)=><div key={i} style={{width:120,height:120,borderRadius:3,overflow:"hidden",border:"1px solid #D8CEC3",cursor:"pointer"}} onClick={()=>window.open(p.data,"_blank")}>
+              <img src={p.data} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            </div>)}
+          </div>
+        </div>}
 
         {/* Ishikawa display — adapts label to outcome */}
         <div style={{fontSize:10,color:"#F2652F",textTransform:"uppercase",letterSpacing:1.2,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>{showEventDetail.outcome==="Positive"?"SUCCESS FACTOR ANALYSIS — ISHIKAWA":"ROOT CAUSE ANALYSIS — ISHIKAWA"}</div>
@@ -1527,9 +1811,41 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           Analyzing event...
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>}
-        <button type="button" onClick={()=>{setGenError(null);generateFromEvent(showEventDetail);}} disabled={generating} style={{width:"100%",padding:"12px 0",borderRadius:3,fontSize:13,background:generating?"#e8e4e0":"#F2652F",border:"none",color:generating?"#8a8278":"#FFFFFF",cursor:generating?"not-allowed":"pointer",fontFamily:FNTM,fontWeight:800,letterSpacing:0.4}}>
-          {generating?"Generating...":`Generate ${showEventDetail.outcome==="Positive"?"Best-Practice":"Preventive"} Rules & Assertions`}
-        </button>
+
+        {/* Editable review of generated results */}
+        {genParsed&&<div style={{marginTop:12}}>
+          <div style={{fontSize:10,color:"#4FA89A",textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontFamily:FNTM,fontWeight:700}}>ASSERTIONS ({genParsed.assertions.length}) — edit before accepting</div>
+          {genParsed.assertions.map((a,i)=><div key={i} style={{padding:"10px 12px",background:"#f8f6f4",borderRadius:3,marginBottom:6,border:"1px solid #D8CEC3"}}>
+            <input value={a.title} onChange={e=>{const u={...genParsed,assertions:genParsed.assertions.map((x,j)=>j===i?{...x,title:e.target.value}:x)};setGenParsed(u);}} style={{...iS,fontSize:12,fontWeight:500,marginBottom:6,background:"#fff"}}/>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <TypeaheadInput value={a.category} onChange={v=>{const u={...genParsed,assertions:genParsed.assertions.map((x,j)=>j===i?{...x,category:v}:x)};setGenParsed(u);}} options={CATEGORIES} placeholder="Category"/>
+              <select value={a.confidence} onChange={e=>{const u={...genParsed,assertions:genParsed.assertions.map((x,j)=>j===i?{...x,confidence:e.target.value}:x)};setGenParsed(u);}} style={{...iS,width:110,cursor:"pointer"}}>{CONFIDENCES.map(c=><option key={c} value={c}>{c}</option>)}</select>
+              <input value={a.scope||""} onChange={e=>{const u={...genParsed,assertions:genParsed.assertions.map((x,j)=>j===i?{...x,scope:e.target.value}:x)};setGenParsed(u);}} style={{...iS,flex:1,fontSize:11}} placeholder="Scope"/>
+              <button onClick={()=>{const u={...genParsed,assertions:genParsed.assertions.filter((_,j)=>j!==i)};setGenParsed(u);}} style={{background:"none",border:"none",color:"#c0392b",cursor:"pointer",fontSize:14,padding:"0 4px"}}>✕</button>
+            </div>
+          </div>)}
+
+          <div style={{fontSize:10,color:"#4FA89A",textTransform:"uppercase",letterSpacing:1,marginBottom:8,marginTop:16,fontFamily:FNTM,fontWeight:700}}>RULES ({genParsed.rules.length}) — edit before accepting</div>
+          {genParsed.rules.map((r,i)=><div key={i} style={{padding:"10px 12px",background:"#f8f6f4",borderRadius:3,marginBottom:6,border:"1px solid #D8CEC3"}}>
+            <input value={r.title} onChange={e=>{const u={...genParsed,rules:genParsed.rules.map((x,j)=>j===i?{...x,title:e.target.value}:x)};setGenParsed(u);}} style={{...iS,fontSize:12,fontWeight:500,marginBottom:4,background:"#fff"}}/>
+            <input value={r.rationale||""} onChange={e=>{const u={...genParsed,rules:genParsed.rules.map((x,j)=>j===i?{...x,rationale:e.target.value}:x)};setGenParsed(u);}} style={{...iS,fontSize:11,fontStyle:"italic",marginBottom:6,background:"#fff"}} placeholder="Rationale"/>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <TypeaheadInput value={r.category} onChange={v=>{const u={...genParsed,rules:genParsed.rules.map((x,j)=>j===i?{...x,category:v}:x)};setGenParsed(u);}} options={CATEGORIES} placeholder="Category"/>
+              <TypeaheadInput value={r.processArea} onChange={v=>{const u={...genParsed,rules:genParsed.rules.map((x,j)=>j===i?{...x,processArea:v}:x)};setGenParsed(u);}} options={PROCESS_AREAS} placeholder="Process area"/>
+              <select value={r.confidence} onChange={e=>{const u={...genParsed,rules:genParsed.rules.map((x,j)=>j===i?{...x,confidence:e.target.value}:x)};setGenParsed(u);}} style={{...iS,width:110,cursor:"pointer"}}>{CONFIDENCES.map(c=><option key={c} value={c}>{c}</option>)}</select>
+              <button onClick={()=>{const u={...genParsed,rules:genParsed.rules.filter((_,j)=>j!==i)};setGenParsed(u);}} style={{background:"none",border:"none",color:"#c0392b",cursor:"pointer",fontSize:14,padding:"0 4px"}}>✕</button>
+            </div>
+          </div>)}
+
+          <div style={{padding:"10px 14px",background:"#fef3e2",border:"1px solid #F2652F30",borderRadius:3,marginTop:12,fontSize:11,color:"#F2652F",fontFamily:FNTM,lineHeight:1.5}}>
+            AI-extracted — review and edit above before accepting. All items will be created with status "Proposed".
+          </div>
+          <button onClick={acceptGenerated} style={{width:"100%",padding:"10px 0",borderRadius:3,fontSize:13,marginTop:8,background:"#F2652F",border:"none",color:"#FFFFFF",cursor:"pointer",fontFamily:FNTM,fontWeight:700}}>Accept & Store {genParsed.assertions.length} Assertions + {genParsed.rules.length} Rules</button>
+        </div>}
+
+        {!genParsed&&!generating&&<button type="button" onClick={()=>{setGenError(null);generateFromEvent(showEventDetail);}} disabled={generating} style={{width:"100%",padding:"12px 0",borderRadius:3,fontSize:13,background:"#F2652F",border:"none",color:"#FFFFFF",cursor:generating?"not-allowed":"pointer",fontFamily:FNTM,fontWeight:800,letterSpacing:0.4}}>
+          {`Generate ${showEventDetail.outcome==="Positive"?"Best-Practice":"Preventive"} Rules & Assertions`}
+        </button>}
       </div>}
     </Modal>
 
@@ -1552,6 +1868,23 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         <Field label="Reported By"><input style={iS} value={evForm.reportedBy} onChange={e=>setEvForm({...evForm,reportedBy:e.target.value})} placeholder="Name"/></Field>
       </div>
       <Field label="Description"><textarea style={{...iS,height:70,resize:"vertical",lineHeight:1.5}} value={evForm.description} onChange={e=>setEvForm({...evForm,description:e.target.value})} placeholder={evForm.outcome==="Positive"?"What went well? Include heat numbers, product grades, conditions that drove success...":"What happened? Include heat numbers, product grades, timing..."}/></Field>
+
+      {/* Photo evidence */}
+      <div style={{marginBottom:16}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <label style={{padding:"6px 14px",borderRadius:3,fontSize:11,fontWeight:700,fontFamily:FNTM,cursor:"pointer",border:"1px solid #D8CEC3",background:"#f8f6f4",color:"#5a5550",position:"relative",overflow:"hidden"}}>
+            <input type="file" accept="image/*" capture="environment" multiple onChange={e=>handlePhoto(e,"event")} style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0,cursor:"pointer"}}/>
+            + Add Photo Evidence
+          </label>
+          <span style={{fontSize:10,color:"#b0a898",fontFamily:FNTM}}>Defects, conditions, equipment, whiteboard notes</span>
+        </div>
+        {eventPhotos.length>0&&<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {eventPhotos.map((p,i)=><div key={i} style={{position:"relative",width:80,height:80,borderRadius:3,overflow:"hidden",border:"1px solid #D8CEC3"}}>
+            <img src={p.data} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            <button onClick={()=>setEventPhotos(prev=>prev.filter((_,j)=>j!==i))} style={{position:"absolute",top:2,right:2,width:18,height:18,borderRadius:"50%",background:"rgba(0,0,0,0.6)",color:"#fff",border:"none",cursor:"pointer",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          </div>)}
+        </div>}
+      </div>
 
       {/* Ishikawa input grid */}
       <div style={{fontSize:10,color:"#F2652F",textTransform:"uppercase",letterSpacing:1.2,marginBottom:10,fontFamily:FNTM,fontWeight:700,marginTop:8}}>{evForm.outcome==="Positive"?"SUCCESS FACTOR ANALYSIS — ISHIKAWA":"ROOT CAUSE ANALYSIS — ISHIKAWA"}</div>
@@ -1579,7 +1912,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
   </div>;
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(KnowledgeRuleBank));
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(KnowledgeRuleBank));
 </script>
 </body>
 </html>
