@@ -472,6 +472,7 @@ function KnowledgeRuleBank() {
   const [showAskTeam, setShowAskTeam] = useState(false);
   const [askForm, setAskForm] = useState({question:"",detail:"",processArea:"EAF",askedBy:""});
   const [selQuestion, setSelQuestion] = useState(null);
+  const [showAnswerModal, setShowAnswerModal] = useState(null);
   const [answerText, setAnswerText] = useState("");
   const [extractingFromAnswer, setExtractingFromAnswer] = useState(null);
   const [search, setSearch] = useState("");
@@ -1332,7 +1333,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
                 </div>
                 <div style={{fontSize:9,color:"#D8CEC3",fontFamily:FNTM,marginTop:4,paddingLeft:4,paddingRight:4,display:"flex",alignItems:"center",gap:8}}>
                   {msg.role==="user"?"You":DOMAIN.name+" Knowledge"} · {new Date(msg.time).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
-                  {msg.role==="assistant"&&!chatLoading&&<button onClick={()=>{setAskForm({question:chatMessages.filter(m=>m.role==="user").slice(-1)[0]?.text||"",detail:"",processArea:"EAF",askedBy:""});setShowAskTeam(true);}} style={{background:"none",border:"1px solid #D8CEC3",borderRadius:3,padding:"2px 8px",fontSize:9,color:"#8a8278",cursor:"pointer",fontFamily:FNTM,fontWeight:600,marginLeft:4}}>? Ask the Team</button>}
+                  {msg.role==="assistant"&&!chatLoading&&<button onClick={()=>{setAskForm({question:chatMessages.filter(m=>m.role==="user").slice(-1)[0]?.text||"",detail:"",processArea:"",askedBy:""});setShowAskTeam(true);}} style={{background:"none",border:"1px solid #D8CEC3",borderRadius:3,padding:"2px 8px",fontSize:9,color:"#8a8278",cursor:"pointer",fontFamily:FNTM,fontWeight:600,marginLeft:4}}>? Ask the Team</button>}
                 </div>
               </div>)}
 
@@ -1599,12 +1600,12 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
               <div style={{fontSize:10,color:"#b0a898",fontFamily:FNTM,marginBottom:4,letterSpacing:0.8}}>{questions.length} QUESTIONS · {questions.filter(q=>q.status==="open").length} OPEN</div>
               <div style={{fontSize:12,color:"#5a5550",fontFamily:FNTM,lineHeight:1.5}}>Questions operators couldn't answer from the knowledge bank. Experienced team members can respond to close knowledge gaps.</div>
             </div>
-            <button onClick={()=>{setAskForm({question:"",detail:"",processArea:"EAF",askedBy:""});setShowAskTeam(true);}} style={{padding:"7px 14px",borderRadius:3,fontSize:12,background:"#062044",border:"none",color:"#FFFFFF",cursor:"pointer",fontFamily:FNTM,fontWeight:800,letterSpacing:0.4,flexShrink:0}}>+ Ask a Question</button>
+            <button onClick={()=>{setAskForm({question:"",detail:"",processArea:"",askedBy:""});setShowAskTeam(true);}} style={{padding:"7px 14px",borderRadius:3,fontSize:12,background:"#062044",border:"none",color:"#FFFFFF",cursor:"pointer",fontFamily:FNTM,fontWeight:800,letterSpacing:0.4,flexShrink:0}}>+ Ask a Question</button>
           </div>
 
           {questions.filter(q=>q.status==="open").length>0&&<div style={{marginBottom:24}}>
             <div style={{fontSize:11,color:"#F2652F",textTransform:"uppercase",letterSpacing:1,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>? AWAITING ANSWERS</div>
-            {questions.filter(q=>q.status==="open").map(q=><div key={q.id} onClick={()=>setSelQuestion(selQuestion?.id===q.id?null:q)} style={{padding:"16px 20px",marginBottom:8,background:selQuestion?.id===q.id?"#f0eeec":"#FFFFFF",border:selQuestion?.id===q.id?"1px solid #F2652F40":"1px solid #e8e4e0",borderRadius:3,cursor:"pointer",transition:"all 0.12s"}}>
+            {questions.filter(q=>q.status==="open").map(q=><div key={q.id} onClick={()=>{setShowAnswerModal(q);setAnswerText("");}} style={{padding:"16px 20px",marginBottom:8,background:"#FFFFFF",border:"1px solid #e8e4e0",borderRadius:3,cursor:"pointer",transition:"all 0.12s"}} onMouseEnter={e=>e.currentTarget.style.background="#f8f6f4"} onMouseLeave={e=>e.currentTarget.style.background="#FFFFFF"}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
                 <div style={{display:"flex",gap:8,alignItems:"center"}}>
                   <span style={{fontSize:11,color:"#b0a898",fontFamily:FNTM,fontWeight:600}}>{q.id}</span>
@@ -1615,19 +1616,12 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
               </div>
               <div style={{fontSize:14,color:"#1F1F1F",fontWeight:500,lineHeight:1.4,marginBottom:6}}>{q.question}</div>
               <div style={{fontSize:11,color:"#8a8278",fontFamily:FNTM}}>Asked by {q.askedBy}</div>
-              {selQuestion?.id===q.id&&<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid #e8e4e0"}}>
-                <div style={{fontSize:12,color:"#5a5550",lineHeight:1.6,marginBottom:12,fontStyle:"italic"}}>{q.detail}</div>
-                <div style={{display:"flex",gap:8}}>
-                  <input value={answerText} onChange={e=>setAnswerText(e.target.value)} placeholder="Share what you know about this..." style={{flex:1,padding:"8px 12px",borderRadius:3,border:"1px solid #D8CEC3",fontSize:12,fontFamily:FNTM}} onKeyDown={e=>{if(e.key==="Enter")e.stopPropagation();}}/>
-                  <button onClick={()=>{if(!answerText.trim())return;setQuestions(prev=>prev.map(qq=>qq.id===q.id?{...qq,status:"answered",responses:[...qq.responses,{by:"You",text:answerText,date:new Date().toISOString()}]}:qq));setAnswerText("");}} style={{padding:"8px 16px",borderRadius:3,fontSize:12,background:"#4FA89A",border:"none",color:"#FFFFFF",cursor:"pointer",fontFamily:FNTM,fontWeight:700,flexShrink:0}}>Answer</button>
-                </div>
-              </div>}
             </div>)}
           </div>}
 
           {questions.filter(q=>q.status==="answered").length>0&&<div>
             <div style={{fontSize:11,color:"#4FA89A",textTransform:"uppercase",letterSpacing:1,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>✓ ANSWERED</div>
-            {questions.filter(q=>q.status==="answered").map(q=><div key={q.id} onClick={()=>setSelQuestion(selQuestion?.id===q.id?null:q)} style={{padding:"16px 20px",marginBottom:8,background:selQuestion?.id===q.id?"#f0eeec":"#FFFFFF",border:"1px solid #e8e4e0",borderRadius:3,cursor:"pointer",transition:"all 0.12s"}}>
+            {questions.filter(q=>q.status==="answered").map(q=><div key={q.id} onClick={()=>{setShowAnswerModal(q);setAnswerText("");}} style={{padding:"16px 20px",marginBottom:8,background:"#FFFFFF",border:"1px solid #e8e4e0",borderRadius:3,cursor:"pointer",transition:"all 0.12s"}} onMouseEnter={e=>e.currentTarget.style.background="#f8f6f4"} onMouseLeave={e=>e.currentTarget.style.background="#FFFFFF"}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
                 <div style={{display:"flex",gap:8,alignItems:"center"}}>
                   <span style={{fontSize:11,color:"#b0a898",fontFamily:FNTM,fontWeight:600}}>{q.id}</span>
@@ -1637,71 +1631,13 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
                 <span style={{fontSize:10,color:"#D8CEC3",fontFamily:FNTM}}>{new Date(q.askedAt).toLocaleDateString()}</span>
               </div>
               <div style={{fontSize:14,color:"#1F1F1F",fontWeight:500,lineHeight:1.4,marginBottom:6}}>{q.question}</div>
-              <div style={{fontSize:11,color:"#8a8278",fontFamily:FNTM}}>Asked by {q.askedBy} · Answered by {q.responses[0]?.by}</div>
-              {selQuestion?.id===q.id&&<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid #e8e4e0"}}>
-                <div style={{fontSize:12,color:"#5a5550",lineHeight:1.6,marginBottom:12,fontStyle:"italic"}}>{q.detail}</div>
-                {q.responses.map((r,ri)=><div key={ri} style={{padding:"12px 14px",background:"#e6f5f1",borderRadius:3,marginBottom:6,borderLeft:"3px solid #4FA89A"}}>
-                  <div style={{fontSize:12,color:"#1F1F1F",lineHeight:1.6}}>{r.text}</div>
-                  <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,marginTop:6}}>— {r.by} · {new Date(r.date).toLocaleDateString()}</div>
-                </div>)}
-
-                {/* Generated rules/assertions from this question */}
-                {(q.generatedRules||[]).length>0&&<div style={{marginTop:10}}>
-                  <div style={{fontSize:9,color:"#4FA89A",fontFamily:FNTM,fontWeight:700,letterSpacing:1,marginBottom:4}}>GENERATED RULES</div>
-                  {q.generatedRules.map(rid=>{const r=rules.find(x=>x.id===rid);return r?<div key={rid} onClick={(e)=>{e.stopPropagation();setView("rules");setSel(r);}} style={{padding:"6px 10px",background:"#f8f6f4",borderRadius:3,marginBottom:4,fontSize:11,color:"#062044",cursor:"pointer",border:"1px solid #e8e4e0"}}><span style={{color:"#4FA89A",fontWeight:700}}>{rid}</span> {r.title}</div>:null;})}
-                </div>}
-                {(q.generatedAssertions||[]).length>0&&<div style={{marginTop:6}}>
-                  <div style={{fontSize:9,color:"#4FA89A",fontFamily:FNTM,fontWeight:700,letterSpacing:1,marginBottom:4}}>GENERATED ASSERTIONS</div>
-                  {q.generatedAssertions.map(aid=>{const a=assertions.find(x=>x.id===aid);return a?<div key={aid} onClick={(e)=>{e.stopPropagation();setView("assertions");setSel(a);}} style={{padding:"6px 10px",background:"#f8f6f4",borderRadius:3,marginBottom:4,fontSize:11,color:"#062044",cursor:"pointer",border:"1px solid #e8e4e0"}}><span style={{color:"#4FA89A",fontWeight:700}}>{aid}</span> {a.title}</div>:null;})}
-                </div>}
-
-                {/* Extract knowledge button */}
-                <button onClick={async(e)=>{
-                  e.stopPropagation();
-                  setExtractingFromAnswer(q.id);
-                  try {
-                    const answerContent = q.responses.map(r=>r.text).join("\n");
-                    const resp = await fetch("/api/claude", {
-                      method:"POST", headers:{"Content-Type":"application/json"},
-                      body: JSON.stringify({
-                        model:"claude-sonnet-4-20250514", max_tokens:2000,
-                        messages:[{role:"user",content:`Extract structured knowledge from this Q&A exchange at a steel plant.
-
-QUESTION: ${q.question}
-CONTEXT: ${q.detail}
-PROCESS AREA: ${q.processArea}
-ANSWER: ${answerContent}
-
-Return ONLY a JSON object (no markdown, no backticks) with:
-{
-  "assertions": [{"title": "factual observation statement", "confidence": "Medium"}],
-  "rules": [{"title": "actionable directive statement", "rationale": "why this rule exists", "confidence": "Medium"}]
-}
-Extract 1-3 assertions (factual observations) and 1-3 rules (actionable directives) from the answer. Be specific and operational.`}]
-                      })
-                    });
-                    const data = await resp.json();
-                    const txt = data.content?.map(b=>b.type==="text"?b.text:"").join("")||"";
-                    const clean = txt.replace(/\`\`\`json|\`\`\`/g,"").trim();
-                    const parsed = JSON.parse(clean);
-                    const now = new Date().toISOString();
-                    const newRules = (parsed.rules||[]).map((r,i)=>{
-                      const id = "R-"+String(rules.length+1+i).padStart(3,"0");
-                      return {id, title:r.title, type:"rule", status:"Proposed", confidence:r.confidence||"Medium", category:"Process", processArea:q.processArea, scope:"", rationale:r.rationale||"", evidence:[{type:"human_note",text:"From team answer to "+q.id+": "+q.question,date:now.split("T")[0]}], linkedAssertions:[], linkedRules:[], tags:["from-question",q.id.toLowerCase()], createdBy:q.responses[0]?.by||"System", createdAt:now, sourceQuestion:q.id, versions:[{version:1,date:now,author:q.responses[0]?.by||"System",change:"Extracted from open question "+q.id,snapshot:r.title}]};
-                    });
-                    const newAssertions = (parsed.assertions||[]).map((a,i)=>{
-                      const id = "A-"+String(assertions.length+1+i).padStart(3,"0");
-                      return {id, title:a.title, type:"assertion", status:"Proposed", confidence:a.confidence||"Medium", category:"Process", processArea:q.processArea, scope:"", rationale:"", evidence:[{type:"human_note",text:"From team answer to "+q.id+": "+q.question,date:now.split("T")[0]}], linkedAssertions:[], linkedRules:[], tags:["from-question",q.id.toLowerCase()], createdBy:q.responses[0]?.by||"System", createdAt:now, sourceQuestion:q.id, versions:[{version:1,date:now,author:q.responses[0]?.by||"System",change:"Extracted from open question "+q.id,snapshot:a.title}]};
-                    });
-                    if(newRules.length>0) setRules(prev=>[...prev,...newRules]);
-                    if(newAssertions.length>0) setAssertions(prev=>[...prev,...newAssertions]);
-                    setQuestions(prev=>prev.map(qq=>qq.id===q.id?{...qq, generatedRules:[...(qq.generatedRules||[]),...newRules.map(r=>r.id)], generatedAssertions:[...(qq.generatedAssertions||[]),...newAssertions.map(a=>a.id)]}:qq));
-                  } catch(err) { console.error("Extract error:",err); }
-                  setExtractingFromAnswer(null);
-                }} disabled={extractingFromAnswer===q.id} style={{marginTop:10,width:"100%",padding:"10px 0",borderRadius:3,fontSize:12,background:extractingFromAnswer===q.id?"#f0eeec":"#062044",border:"none",color:extractingFromAnswer===q.id?"#8a8278":"#FFFFFF",cursor:extractingFromAnswer===q.id?"default":"pointer",fontFamily:FNTM,fontWeight:700,letterSpacing:0.4}}>
-                  {extractingFromAnswer===q.id?"Extracting knowledge...":"Extract Rules & Assertions from Answer →"}
-                </button>
-              </div>}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontSize:11,color:"#8a8278",fontFamily:FNTM}}>Asked by {q.askedBy} · Answered by {q.responses[0]?.by}</div>
+                <div style={{display:"flex",gap:4}}>
+                  {(q.generatedRules||[]).length>0&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:2,background:"#e6f5f1",color:"#4FA89A",fontFamily:FNTM,fontWeight:700}}>{q.generatedRules.length} rule{q.generatedRules.length>1?"s":""}</span>}
+                  {(q.generatedAssertions||[]).length>0&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:2,background:"#e6f5f1",color:"#4FA89A",fontFamily:FNTM,fontWeight:700}}>{q.generatedAssertions.length} assertion{q.generatedAssertions.length>1?"s":""}</span>}
+                </div>
+              </div>
             </div>)}
           </div>}
         </div>}
@@ -2159,6 +2095,105 @@ Extract 1-3 assertions (factual observations) and 1-3 rules (actionable directiv
       <button onClick={handleAddEvent} disabled={!evForm.title} style={{width:"100%",padding:"10px 0",borderRadius:3,fontSize:13,background:evForm.title?(evForm.outcome==="Positive"?"#4FA89A":"#c0392b"):"#f0eeec",border:"none",color:evForm.title?"#FFFFFF":"#444",cursor:evForm.title?"pointer":"not-allowed",fontFamily:FNTM,fontWeight:800,marginTop:8,letterSpacing:0.4}}>File Event Report</button>
     </Modal>
 
+    {/* Answer / View Question Modal */}
+    <Modal open={!!showAnswerModal} onClose={()=>{setShowAnswerModal(null);setAnswerText("");}} title={showAnswerModal?`${showAnswerModal.id} — ${showAnswerModal.status==="open"?"Answer this Question":"Question Detail"}`:""} width={680}>
+      {showAnswerModal&&<>
+        <div style={{fontSize:15,color:"#1F1F1F",fontWeight:600,lineHeight:1.5,marginBottom:12}}>{showAnswerModal.question}</div>
+        <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+          <span style={{fontSize:9,padding:"2px 8px",borderRadius:2,background:showAnswerModal.status==="open"?"#fef3e2":"#e6f5f1",color:showAnswerModal.status==="open"?"#F2652F":"#4FA89A",fontWeight:700,fontFamily:FNTM}}>{showAnswerModal.status==="open"?"OPEN":"ANSWERED"}</span>
+          <Tag label={showAnswerModal.processArea}/>
+          <span style={{fontSize:10,color:"#8a8278",fontFamily:FNTM}}>Asked by {showAnswerModal.askedBy} · {new Date(showAnswerModal.askedAt).toLocaleDateString()}</span>
+        </div>
+
+        {showAnswerModal.detail&&<div style={{padding:"12px 16px",background:"#f8f6f4",borderRadius:3,marginBottom:16,border:"1px solid #e8e4e0"}}>
+          <div style={{fontSize:10,color:"#b0a898",fontFamily:FNTM,fontWeight:700,letterSpacing:0.8,marginBottom:4}}>CONTEXT</div>
+          <div style={{fontSize:12,color:"#5a5550",lineHeight:1.6}}>{showAnswerModal.detail}</div>
+        </div>}
+
+        {/* Existing responses */}
+        {showAnswerModal.responses.length>0&&<div style={{marginBottom:16}}>
+          <div style={{fontSize:10,color:"#4FA89A",fontFamily:FNTM,fontWeight:700,letterSpacing:0.8,marginBottom:8}}>RESPONSES</div>
+          {showAnswerModal.responses.map((r,ri)=><div key={ri} style={{padding:"12px 14px",background:"#e6f5f1",borderRadius:3,marginBottom:6,borderLeft:"3px solid #4FA89A"}}>
+            <div style={{fontSize:12,color:"#1F1F1F",lineHeight:1.6}}>{r.text}</div>
+            <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,marginTop:6}}>— {r.by} · {new Date(r.date).toLocaleDateString()}</div>
+          </div>)}
+        </div>}
+
+        {/* Generated rules/assertions from this question */}
+        {(showAnswerModal.generatedRules||[]).length>0&&<div style={{marginBottom:12}}>
+          <div style={{fontSize:10,color:"#4FA89A",fontFamily:FNTM,fontWeight:700,letterSpacing:0.8,marginBottom:6}}>GENERATED RULES</div>
+          {showAnswerModal.generatedRules.map(rid=>{const r=rules.find(x=>x.id===rid);return r?<div key={rid} onClick={()=>{setShowAnswerModal(null);setView("rules");setSel(r);}} style={{padding:"8px 12px",background:"#f8f6f4",borderRadius:3,marginBottom:4,fontSize:12,color:"#062044",cursor:"pointer",border:"1px solid #e8e4e0",display:"flex",alignItems:"center",gap:8}}><span style={{color:"#4FA89A",fontWeight:700,flexShrink:0}}>{rid}</span><span style={{flex:1}}>{r.title}</span><Badge label={r.status} colorFn={statusColor}/></div>:null;})}
+        </div>}
+        {(showAnswerModal.generatedAssertions||[]).length>0&&<div style={{marginBottom:12}}>
+          <div style={{fontSize:10,color:"#4FA89A",fontFamily:FNTM,fontWeight:700,letterSpacing:0.8,marginBottom:6}}>GENERATED ASSERTIONS</div>
+          {showAnswerModal.generatedAssertions.map(aid=>{const a=assertions.find(x=>x.id===aid);return a?<div key={aid} onClick={()=>{setShowAnswerModal(null);setView("assertions");setSel(a);}} style={{padding:"8px 12px",background:"#f8f6f4",borderRadius:3,marginBottom:4,fontSize:12,color:"#062044",cursor:"pointer",border:"1px solid #e8e4e0",display:"flex",alignItems:"center",gap:8}}><span style={{color:"#4FA89A",fontWeight:700,flexShrink:0}}>{aid}</span><span style={{flex:1}}>{a.title}</span><Badge label={a.confidence} colorFn={confidenceColor}/></div>:null;})}
+        </div>}
+
+        {/* Add answer input */}
+        <div style={{borderTop:"1px solid #e8e4e0",paddingTop:16,marginTop:8}}>
+          <Field label={showAnswerModal.responses.length>0?"Add Another Response":"Your Answer"} hint="Share what you know — be specific and operational">
+            <textarea style={{...iS,height:90,resize:"vertical",lineHeight:1.5}} value={answerText} onChange={e=>setAnswerText(e.target.value)} placeholder="e.g. Full DRI needs a flat power profile — no need for the bore-in phase you use with scrap. Start at 80% power and hold steady..."/>
+          </Field>
+          <button onClick={()=>{
+            if(!answerText.trim())return;
+            const updatedQ = {...showAnswerModal, status:"answered", responses:[...showAnswerModal.responses,{by:"You",text:answerText,date:new Date().toISOString()}]};
+            setQuestions(prev=>prev.map(qq=>qq.id===showAnswerModal.id?updatedQ:qq));
+            setShowAnswerModal(updatedQ);
+            setAnswerText("");
+          }} disabled={!answerText.trim()} style={{width:"100%",padding:"10px 0",borderRadius:3,fontSize:13,background:answerText.trim()?"#4FA89A":"#f0eeec",border:"none",color:answerText.trim()?"#FFFFFF":"#444",cursor:answerText.trim()?"pointer":"not-allowed",fontFamily:FNTM,fontWeight:800,letterSpacing:0.4}}>Submit Answer</button>
+        </div>
+
+        {/* Extract knowledge button — only show if there are responses */}
+        {showAnswerModal.responses.length>0&&<button onClick={async()=>{
+          setExtractingFromAnswer(showAnswerModal.id);
+          try {
+            const q = showAnswerModal;
+            const answerContent = q.responses.map(r=>r.text).join("\n");
+            const resp = await fetch("/api/claude", {
+              method:"POST", headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({
+                model:"claude-sonnet-4-20250514", max_tokens:2000,
+                messages:[{role:"user",content:`Extract structured knowledge from this Q&A exchange at a steel plant.
+
+QUESTION: ${q.question}
+CONTEXT: ${q.detail}
+PROCESS AREA: ${q.processArea}
+ANSWER: ${answerContent}
+
+Return ONLY a JSON object (no markdown, no backticks) with:
+{
+  "assertions": [{"title": "factual observation statement", "confidence": "Medium"}],
+  "rules": [{"title": "actionable directive statement", "rationale": "why this rule exists", "confidence": "Medium"}]
+}
+Extract 1-3 assertions (factual observations) and 1-3 rules (actionable directives) from the answer. Be specific and operational.`}]
+              })
+            });
+            const data = await resp.json();
+            const txt = data.content?.map(b=>b.type==="text"?b.text:"").join("")||"";
+            const clean = txt.replace(/\`\`\`json|\`\`\`/g,"").trim();
+            const parsed = JSON.parse(clean);
+            const now = new Date().toISOString();
+            const newRules = (parsed.rules||[]).map((r,i)=>{
+              const id = "R-"+String(rules.length+1+i).padStart(3,"0");
+              return {id, title:r.title, type:"rule", status:"Proposed", confidence:r.confidence||"Medium", category:"Process", processArea:q.processArea, scope:"", rationale:r.rationale||"", evidence:[{type:"human_note",text:"From team answer to "+q.id+": "+q.question,date:now.split("T")[0]}], linkedAssertions:[], linkedRules:[], tags:["from-question",q.id.toLowerCase()], createdBy:q.responses[0]?.by||"System", createdAt:now, sourceQuestion:q.id, versions:[{version:1,date:now,author:q.responses[0]?.by||"System",change:"Extracted from open question "+q.id,snapshot:r.title}]};
+            });
+            const newAssertions = (parsed.assertions||[]).map((a,i)=>{
+              const id = "A-"+String(assertions.length+1+i).padStart(3,"0");
+              return {id, title:a.title, type:"assertion", status:"Proposed", confidence:a.confidence||"Medium", category:"Process", processArea:q.processArea, scope:"", rationale:"", evidence:[{type:"human_note",text:"From team answer to "+q.id+": "+q.question,date:now.split("T")[0]}], linkedAssertions:[], linkedRules:[], tags:["from-question",q.id.toLowerCase()], createdBy:q.responses[0]?.by||"System", createdAt:now, sourceQuestion:q.id, versions:[{version:1,date:now,author:q.responses[0]?.by||"System",change:"Extracted from open question "+q.id,snapshot:a.title}]};
+            });
+            if(newRules.length>0) setRules(prev=>[...prev,...newRules]);
+            if(newAssertions.length>0) setAssertions(prev=>[...prev,...newAssertions]);
+            const updatedQ = {...showAnswerModal, generatedRules:[...(showAnswerModal.generatedRules||[]),...newRules.map(r=>r.id)], generatedAssertions:[...(showAnswerModal.generatedAssertions||[]),...newAssertions.map(a=>a.id)]};
+            setQuestions(prev=>prev.map(qq=>qq.id===q.id?updatedQ:qq));
+            setShowAnswerModal(updatedQ);
+          } catch(err) { console.error("Extract error:",err); }
+          setExtractingFromAnswer(null);
+        }} disabled={extractingFromAnswer===showAnswerModal.id} style={{marginTop:10,width:"100%",padding:"10px 0",borderRadius:3,fontSize:12,background:extractingFromAnswer===showAnswerModal.id?"#f0eeec":"#062044",border:"none",color:extractingFromAnswer===showAnswerModal.id?"#8a8278":"#FFFFFF",cursor:extractingFromAnswer===showAnswerModal.id?"default":"pointer",fontFamily:FNTM,fontWeight:700,letterSpacing:0.4}}>
+          {extractingFromAnswer===showAnswerModal.id?"Extracting knowledge...":"Extract Rules & Assertions from Answer →"}
+        </button>}
+      </>}
+    </Modal>
+
     {/* Ask the Team Modal */}
     <Modal open={showAskTeam} onClose={()=>setShowAskTeam(false)} title="Ask the Team" width={600}>
       <div style={{fontSize:12,color:"#8a8278",lineHeight:1.6,marginBottom:16}}>The knowledge bank couldn't fully answer your question. Describe what you need in detail — experienced team members will see this in the Open Questions queue and can contribute their knowledge.</div>
@@ -2173,9 +2208,7 @@ Extract 1-3 assertions (factual observations) and 1-3 rules (actionable directiv
 
       <div style={{display:"flex",gap:12}}>
         <Field label="Process Area" style={{flex:1}}>
-          <select style={{...iS,cursor:"pointer"}} value={askForm.processArea} onChange={e=>setAskForm({...askForm,processArea:e.target.value})}>
-            {PROCESS_AREAS.map(p=><option key={p} value={p}>{p}</option>)}
-          </select>
+          <TypeaheadInput value={askForm.processArea} onChange={v=>setAskForm({...askForm,processArea:v})} options={PROCESS_AREAS} placeholder="Type process area..."/>
         </Field>
         <Field label="Your Name" style={{flex:1}}>
           <input style={iS} value={askForm.askedBy} onChange={e=>setAskForm({...askForm,askedBy:e.target.value})} placeholder="e.g. D. Novak"/>
@@ -2188,7 +2221,7 @@ Extract 1-3 assertions (factual observations) and 1-3 rules (actionable directiv
           id:"Q-"+String(questions.length+1).padStart(3,"0"),
           question:askForm.question,
           detail:askForm.detail,
-          processArea:askForm.processArea,
+          processArea:askForm.processArea||"General",
           askedBy:askForm.askedBy||"Anonymous",
           askedAt:new Date().toISOString(),
           status:"open",
@@ -2198,7 +2231,7 @@ Extract 1-3 assertions (factual observations) and 1-3 rules (actionable directiv
         };
         setQuestions(prev=>[newQ,...prev]);
         setShowAskTeam(false);
-        setAskForm({question:"",detail:"",processArea:"EAF",askedBy:""});
+        setAskForm({question:"",detail:"",processArea:"",askedBy:""});
       }} disabled={!askForm.question.trim()} style={{width:"100%",padding:"10px 0",borderRadius:3,fontSize:13,background:askForm.question.trim()?"#062044":"#f0eeec",border:"none",color:askForm.question.trim()?"#FFFFFF":"#444",cursor:askForm.question.trim()?"pointer":"not-allowed",fontFamily:FNTM,fontWeight:800,marginTop:8,letterSpacing:0.4}}>Submit Question to Team</button>
     </Modal>
   </div>;
