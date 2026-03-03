@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NEREOS Digital Brain</title>
+<title>MD1 Digital Brain</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -800,7 +800,7 @@ ${assertions.map(a => `[${a.id}] (${a.confidence}) ${a.title} | Process: ${a.pro
 EVENTS:
 ${recentEvents.map(e => `[${e.id}] (${e.outcome}, ${e.impact}) ${e.title} | Date: ${e.date?.split("T")[0]} | Process: ${e.processArea} | Description: ${e.description?.slice(0,200)} | Resolution: ${e.resolution || "None"} | Linked rules: ${(e.linkedRules||[]).join(", ")}`).join("\n")}`;
 
-      const systemPrompt = `You are the NEREOS Digital Brain — an operational knowledge assistant for a steel plant. You answer questions ONLY from the knowledge bank provided below. You do not guess or improvise.
+      const systemPrompt = `You are the MD1 Digital Brain — an operational knowledge assistant for a steel plant. You answer questions ONLY from the knowledge bank provided below. You do not guess or improvise.
 
 ${knowledgeContext}
 
@@ -1164,7 +1164,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
     <div style={{borderBottom:"1px solid #e8e4e0",padding:"12px 28px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"#D8CEC3"}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
-          <div style={{fontSize:28,fontWeight:700,color:"#1F1F1F",fontFamily:"'IBM Plex Sans', sans-serif",letterSpacing:2,lineHeight:1}}>NEREOS</div>
+          <div style={{fontSize:28,fontWeight:700,color:"#062044",fontFamily:"'IBM Plex Sans', sans-serif",letterSpacing:2,lineHeight:1}}>MD1</div>
           <div style={{fontSize:9,color:"#5a5550",fontFamily:FNTM,letterSpacing:2.5,textTransform:"uppercase",marginTop:3,paddingLeft:1}}>Digital Brain</div>
         </div>
       </div>
