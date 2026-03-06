@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MD1 Digital Brain</title>
+<title>MD1 Knowledge Bank</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -21,9 +21,9 @@ const { useState, useEffect, useRef } = React;
 const INITIAL_RULES = [
   { id: "R-001", title: "Dilute Sims shredded scrap with prime scrap or DRI", type: "rule", status: "Proposed", confidence: "Medium", category: "Material", processArea: "EAF", scope: "Supplier = Sims Metal Management; Process = EAF", rationale: "Improves liquid steel quality and reduces downstream risk", evidence: [{ type: "human_note", text: "Original operator observation", date: "2025-02-10" }], linkedAssertions: ["A-001"], tags: ["scrap", "sims", "eaf", "dilution"], createdBy: "Max Wolman", createdAt: "2025-02-10T09:00:00Z", versions: [{ version: 1, date: "2025-02-10T09:00:00Z", author: "Max Wolman", change: "Initial capture from operator note", snapshot: "When charging shredded scrap from Sims Metal Management, dilute the charge with prime scrap or DRI when available." }] },
   { id: "R-002", title: "Plan longer EAF heats for undiluted Sims scrap", type: "rule", status: "Proposed", confidence: "Medium", category: "Process", processArea: "EAF", scope: "EAF heats dominated by Sims shredded scrap", rationale: "Additional refining time required to reach acceptable quality", evidence: [{ type: "human_note", text: "Original operator observation", date: "2025-02-10" }], linkedAssertions: ["A-001", "A-002"], tags: ["scrap", "sims", "eaf", "heat-time"], createdBy: "Max Wolman", createdAt: "2025-02-10T09:15:00Z", versions: [{ version: 1, date: "2025-02-10T09:15:00Z", author: "Max Wolman", change: "Initial capture", snapshot: "If Sims shredded scrap is used without sufficient dilution, plan for longer EAF heat times." }] },
-  { id: "R-003", title: "Reduce casting speed for undiluted low-quality scrap", type: "rule", status: "Active", confidence: "High", category: "Process", processArea: "Casting", scope: "Casting following heats with undiluted shredded scrap", rationale: "Slower casting reduces cracking risk under marginal conditions", evidence: [{ type: "human_note", text: "Original operator observation", date: "2025-02-10" }, { type: "event_corroboration", text: "Corroborated by E-001 and E-003", date: "2025-02-11" }], linkedAssertions: ["A-002", "A-003"], tags: ["casting", "speed", "defects", "cracking"], createdBy: "Max Wolman", createdAt: "2025-02-10T09:30:00Z", versions: [{ version: 1, date: "2025-02-10T09:30:00Z", author: "Max Wolman", change: "Initial capture", snapshot: "If lower quality scrap cannot be diluted, anticipate higher casting defect risk and reduce casting speed." }, { version: 2, date: "2025-02-12T08:00:00Z", author: "L. Chen", change: "Promoted to Active after E-001 and E-003 confirmed effectiveness", snapshot: "Reduce casting speed when undiluted low-quality scrap is used." }] },
+  { id: "R-003", title: "Reduce casting speed 15% when Sims scrap exceeds 50% of charge", type: "rule", status: "Verified", confidence: "High", category: "Process", processArea: "Casting", scope: "Casting following heats with undiluted shredded scrap", rationale: "Slower casting reduces cracking risk under marginal conditions", evidence: [{ type: "human_note", text: "Original operator observation", date: "2025-02-10" }, { type: "event_corroboration", text: "Corroborated by E-001 and E-003", date: "2025-02-11" }], linkedAssertions: ["A-002", "A-003"], tags: ["casting", "speed", "defects", "cracking"], createdBy: "Max Wolman", createdAt: "2025-02-10T09:30:00Z", versions: [{ version: 1, date: "2025-02-10T09:30:00Z", author: "Max Wolman", change: "Initial capture", snapshot: "If lower quality scrap cannot be diluted, anticipate higher casting defect risk and reduce casting speed." }, { version: 2, date: "2025-02-12T08:00:00Z", author: "L. Chen", change: "Promoted to Active after E-001 and E-003 confirmed effectiveness", snapshot: "Reduce casting speed when undiluted low-quality scrap is used." }] },
   { id: "R-004", title: "Monitor slag foaming when using high-residual scrap", type: "rule", status: "Active", confidence: "High", category: "Process", processArea: "EAF", scope: "EAF heats with high Cu/Sn residual scrap", rationale: "High residuals affect slag behavior and energy efficiency", evidence: [{ type: "human_note", text: "Metallurgist observation across 50+ heats", date: "2025-01-15" }], linkedAssertions: ["A-001", "A-004"], tags: ["slag", "residuals", "eaf", "foaming"], createdBy: "J. Martinez", createdAt: "2025-01-15T14:00:00Z", versions: [{ version: 1, date: "2025-01-15T14:00:00Z", author: "J. Martinez", change: "Initial capture from metallurgist review", snapshot: "Monitor slag foaming behavior closely when using high-residual scrap charges." }] },
-  { id: "R-005", title: "Adjust mold oscillation for crack-sensitive grades", type: "rule", status: "Active", confidence: "High", category: "Equipment", processArea: "Casting", scope: "Continuous casting of peritectic and HSLA grades", rationale: "Oscillation tuning reduces surface crack formation", evidence: [{ type: "human_note", text: "Quality team review of defect data 2024 Q3-Q4", date: "2024-12-20" }], linkedAssertions: ["A-003"], tags: ["casting", "mold", "oscillation", "cracks"], createdBy: "L. Chen", createdAt: "2024-12-20T10:00:00Z", versions: [{ version: 1, date: "2024-12-20T10:00:00Z", author: "L. Chen", change: "Initial capture from quality review", snapshot: "Adjust mold oscillation parameters when casting crack-sensitive grades." }] },
+  { id: "R-005", title: "Extend EAF refining by 5-8 min when copper exceeds 0.20%", type: "rule", status: "Established", confidence: "High", category: "Equipment", processArea: "Casting", scope: "Continuous casting of peritectic and HSLA grades", rationale: "Oscillation tuning reduces surface crack formation", evidence: [{ type: "human_note", text: "Quality team review of defect data 2024 Q3-Q4", date: "2024-12-20" }], linkedAssertions: ["A-003"], tags: ["casting", "mold", "oscillation", "cracks"], createdBy: "L. Chen", createdAt: "2024-12-20T10:00:00Z", versions: [{ version: 1, date: "2024-12-20T10:00:00Z", author: "L. Chen", change: "Initial capture from quality review", snapshot: "Adjust mold oscillation parameters when casting crack-sensitive grades." }] },
   { id: "R-006", title: "Verify ladle refractory life before high-alloy heats", type: "rule", status: "Active", confidence: "Medium", category: "Equipment", processArea: "Ladle Furnace", scope: "Ladle Furnace processing for high-alloy grades", rationale: "Worn refractories increase steel contamination risk", evidence: [{ type: "human_note", text: "Shift supervisor incident report", date: "2025-02-01" }], linkedAssertions: ["A-002", "A-006"], tags: ["ladle", "refractory", "alloy", "contamination"], createdBy: "D. Okonkwo", createdAt: "2025-02-01T08:30:00Z", versions: [{ version: 1, date: "2025-02-01T08:30:00Z", author: "D. Okonkwo", change: "Initial capture", snapshot: "Check ladle refractory campaign life before routing high-alloy heats." }] },
   { id: "R-007", title: "Confirm chemistry before tapping — never tap on estimated values", type: "rule", status: "Active", confidence: "Verified", category: "Measurement", processArea: "EAF", scope: "All EAF heats, especially HSLA and alloy grades", rationale: "Tapping on estimated chemistry has led to multiple off-spec heats requiring ladle correction", evidence: [{ type: "human_note", text: "Quality manager directive after Q4 2024 audit", date: "2024-11-30" }, { type: "event_corroboration", text: "Three incidents in Nov 2024 traced to estimated taps", date: "2024-12-01" }], linkedAssertions: ["A-005"], tags: ["chemistry", "spectrometer", "tapping", "quality"], createdBy: "R. Patel", createdAt: "2024-11-30T10:00:00Z", versions: [{ version: 1, date: "2024-11-30T10:00:00Z", author: "R. Patel", change: "Initial — mandatory rule from quality audit", snapshot: "Always confirm spectrometer chemistry before EAF tap." }] },
   { id: "R-008", title: "Inspect scrap for moisture and sealed containers before charging", type: "rule", status: "Active", confidence: "Verified", category: "Material", processArea: "Scrap Yard", scope: "All incoming scrap, especially during wet weather or after outdoor storage", rationale: "Moisture in scrap causes steam explosions in the EAF — safety critical", evidence: [{ type: "human_note", text: "HSE mandatory procedure — updated annually", date: "2024-06-01" }], linkedAssertions: ["A-007"], tags: ["scrap", "safety", "moisture", "charging", "explosion"], createdBy: "HSE Team", createdAt: "2024-06-01T00:00:00Z", versions: [{ version: 1, date: "2024-06-01T00:00:00Z", author: "HSE Team", change: "Annual review — no changes", snapshot: "Inspect all scrap for moisture and sealed containers before EAF charging." }] },
@@ -32,13 +32,15 @@ const INITIAL_RULES = [
   { id: "R-011", title: "Increase tundish preheat time by 15 min after lining change", type: "rule", status: "Proposed", confidence: "Medium", category: "Equipment", processArea: "Casting", scope: "First sequence after tundish reline", rationale: "New linings absorb more heat — insufficient preheat causes temperature drop in first heat", evidence: [{ type: "human_note", text: "Casting foreman observation over 3 reline cycles", date: "2025-02-05" }], linkedAssertions: ["A-009"], tags: ["tundish", "preheat", "lining", "temperature", "casting"], createdBy: "A. Kowalski", createdAt: "2025-02-05T13:00:00Z", versions: [{ version: 1, date: "2025-02-05T13:00:00Z", author: "A. Kowalski", change: "Initial from casting floor observation", snapshot: "Add 15 minutes to tundish preheat after a lining change." }] },
   { id: "R-012", title: "Cap EAF power at 85% during final refining with high-Cu scrap", type: "rule", status: "Proposed", confidence: "Low", category: "Process", processArea: "EAF", scope: "EAF heats with Cu content > 0.25%", rationale: "Full power in final refining with high Cu causes excessive electrode consumption and unstable arc", evidence: [{ type: "human_note", text: "Electrical engineer observation — needs more data", date: "2025-02-14" }], linkedAssertions: ["A-004"], tags: ["eaf", "power", "copper", "electrode", "refining"], createdBy: "S. Volkov", createdAt: "2025-02-14T16:00:00Z", versions: [{ version: 1, date: "2025-02-14T16:00:00Z", author: "S. Volkov", change: "Initial — preliminary observation, needs validation", snapshot: "Limit EAF power to 85% during final refining when Cu exceeds 0.25%." }] },
   { id: "R-013", title: "Use argon stirring instead of nitrogen for low-N grades", type: "rule", status: "Active", confidence: "Verified", category: "Process", processArea: "Ladle Furnace", scope: "Grades with N specification < 80ppm", rationale: "Nitrogen stirring adds 15-25ppm N pickup — pushes low-N grades out of spec", evidence: [{ type: "human_note", text: "Metallurgist — confirmed across 200+ heats in 2024", date: "2024-09-15" }], linkedAssertions: ["A-010"], tags: ["argon", "nitrogen", "stirring", "ladle", "chemistry"], createdBy: "J. Martinez", createdAt: "2024-09-15T10:00:00Z", versions: [{ version: 1, date: "2024-09-15T10:00:00Z", author: "J. Martinez", change: "Initial — well established practice", snapshot: "Always use argon for ladle stirring on low-nitrogen grade specifications." }] },
-  { id: "R-014", title: "Delay rolling start if billet surface temp below 1050°C", type: "rule", status: "Active", confidence: "High", category: "Process", processArea: "Rolling", scope: "All grades entering the rolling mill", rationale: "Rolling below 1050°C increases roll force and risk of surface tearing", evidence: [{ type: "human_note", text: "Rolling mill supervisor — standard operating knowledge", date: "2024-08-01" }], linkedAssertions: ["A-008"], tags: ["rolling", "temperature", "surface", "tearing"], createdBy: "M. Novak", createdAt: "2024-08-01T07:00:00Z", versions: [{ version: 1, date: "2024-08-01T07:00:00Z", author: "M. Novak", change: "Initial — established practice", snapshot: "Do not start rolling if billet surface temperature is below 1050°C." }] },
-  { id: "R-015", title: "Recalibrate spectrometer after every 50 samples or shift change", type: "rule", status: "Active", confidence: "Verified", category: "Measurement", processArea: "Quality Lab", scope: "All spectrometer analysis", rationale: "Drift accumulates after ~50 samples causing systematic bias in chemistry results", evidence: [{ type: "human_note", text: "Lab manager calibration study", date: "2024-07-15" }], linkedAssertions: ["A-005"], tags: ["spectrometer", "calibration", "quality", "chemistry", "drift"], createdBy: "R. Patel", createdAt: "2024-07-15T12:00:00Z", versions: [{ version: 1, date: "2024-07-15T12:00:00Z", author: "R. Patel", change: "Initial from calibration study", snapshot: "Recalibrate spectrometer every 50 samples or at shift change." }] },
-  { id: "R-016", title: "Do not exceed 8 heats per tundish sequence on peritectic grades", type: "rule", status: "Active", confidence: "High", category: "Equipment", processArea: "Casting", scope: "Continuous casting of peritectic steel grades (0.09–0.17% C)", rationale: "Tundish wear after 8 heats compromises flow control and nozzle alignment on sensitive grades", evidence: [{ type: "human_note", text: "Casting engineer — based on nozzle inspection data", date: "2025-01-10" }], linkedAssertions: ["A-009"], tags: ["tundish", "peritectic", "sequence", "nozzle", "casting"], createdBy: "A. Kowalski", createdAt: "2025-01-10T14:00:00Z", versions: [{ version: 1, date: "2025-01-10T14:00:00Z", author: "A. Kowalski", change: "Initial from nozzle inspection analysis", snapshot: "Limit tundish sequence to 8 heats for peritectic grades." }] },
+  { id: "R-014", title: "Delay rolling start if billet surface temp below 1050°C", type: "rule", status: "Verified", confidence: "High", category: "Process", processArea: "Rolling", scope: "All grades entering the rolling mill", rationale: "Rolling below 1050°C increases roll force and risk of surface tearing", evidence: [{ type: "human_note", text: "Rolling mill supervisor — standard operating knowledge", date: "2024-08-01" }], linkedAssertions: ["A-008"], tags: ["rolling", "temperature", "surface", "tearing"], createdBy: "M. Novak", createdAt: "2024-08-01T07:00:00Z", versions: [{ version: 1, date: "2024-08-01T07:00:00Z", author: "M. Novak", change: "Initial — established practice", snapshot: "Do not start rolling if billet surface temperature is below 1050°C." }] },
+  { id: "R-015", title: "Recalibrate spectrometer after every 50 samples or shift change", type: "rule", status: "Established", confidence: "Very High", category: "Measurement", processArea: "Quality Lab", scope: "All spectrometer analysis", rationale: "Drift accumulates after ~50 samples causing systematic bias in chemistry results", evidence: [{ type: "human_note", text: "Lab manager calibration study", date: "2024-07-15" }], linkedAssertions: ["A-005"], tags: ["spectrometer", "calibration", "quality", "chemistry", "drift"], createdBy: "R. Patel", createdAt: "2024-07-15T12:00:00Z", versions: [{ version: 1, date: "2024-07-15T12:00:00Z", author: "R. Patel", change: "Initial from calibration study", snapshot: "Recalibrate spectrometer every 50 samples or at shift change." }] },
+  { id: "R-016", title: "Do not exceed 8 heats per tundish sequence on peritectic grades", type: "rule", status: "Established", confidence: "High", category: "Equipment", processArea: "Casting", scope: "Continuous casting of peritectic steel grades (0.09–0.17% C)", rationale: "Tundish wear after 8 heats compromises flow control and nozzle alignment on sensitive grades", evidence: [{ type: "human_note", text: "Casting engineer — based on nozzle inspection data", date: "2025-01-10" }], linkedAssertions: ["A-009"], tags: ["tundish", "peritectic", "sequence", "nozzle", "casting"], createdBy: "A. Kowalski", createdAt: "2025-01-10T14:00:00Z", versions: [{ version: 1, date: "2025-01-10T14:00:00Z", author: "A. Kowalski", change: "Initial from nozzle inspection analysis", snapshot: "Limit tundish sequence to 8 heats for peritectic grades." }] },
   { id: "R-017", title: "Pre-heat alloy additions to 200°C minimum before wire feeding", type: "rule", status: "Proposed", confidence: "Low", category: "Material", processArea: "Ladle Furnace", scope: "Ladle Furnace alloy additions in winter months", rationale: "Cold alloy wire causes localized freezing at injection point — suspected link to inclusion clusters", evidence: [{ type: "human_note", text: "Metallurgist hypothesis — two incidents observed", date: "2025-02-18" }], linkedAssertions: ["A-006"], tags: ["alloy", "wire-feed", "temperature", "inclusions", "ladle"], createdBy: "J. Martinez", createdAt: "2025-02-18T11:00:00Z", versions: [{ version: 1, date: "2025-02-18T11:00:00Z", author: "J. Martinez", change: "Initial — hypothesis needs validation", snapshot: "Pre-heat alloy wire to 200°C before feeding into ladle during cold months." }] },
-  { id: "R-018", title: "Log all scrap deliveries with supplier certificate within 2 hours of receipt", type: "rule", status: "Active", confidence: "Verified", category: "Measurement", processArea: "Scrap Yard", scope: "All incoming scrap deliveries", rationale: "Traceability requirement — links charge composition to downstream quality issues", evidence: [{ type: "human_note", text: "Quality system audit requirement", date: "2024-04-01" }], linkedAssertions: ["A-007"], tags: ["scrap", "traceability", "logging", "supplier", "certificate"], createdBy: "R. Patel", createdAt: "2024-04-01T08:00:00Z", versions: [{ version: 1, date: "2024-04-01T08:00:00Z", author: "R. Patel", change: "Initial — ISO compliance requirement", snapshot: "Log all scrap deliveries with supplier cert within 2 hours." }] },
+  { id: "R-018", title: "Log all scrap deliveries with supplier certificate within 2 hours of receipt", type: "rule", status: "Verified", confidence: "High", category: "Measurement", processArea: "Scrap Yard", scope: "All incoming scrap deliveries", rationale: "Traceability requirement — links charge composition to downstream quality issues", evidence: [{ type: "human_note", text: "Quality system audit requirement", date: "2024-04-01" }], linkedAssertions: ["A-007"], tags: ["scrap", "traceability", "logging", "supplier", "certificate"], createdBy: "R. Patel", createdAt: "2024-04-01T08:00:00Z", versions: [{ version: 1, date: "2024-04-01T08:00:00Z", author: "R. Patel", change: "Initial — ISO compliance requirement", snapshot: "Log all scrap deliveries with supplier cert within 2 hours." }] },
   { id: "R-019", title: "Notify shift supervisor before switching scrap supplier mid-campaign", type: "rule", status: "Active", confidence: "Medium", category: "People", processArea: "EAF", scope: "Multi-heat campaigns with consistent grade targets", rationale: "Supplier switch changes residual profile — may require process adjustments that only supervisor can authorize", evidence: [{ type: "human_note", text: "Lessons learned from E-002", date: "2025-02-13" }], linkedAssertions: ["A-001", "A-004"], tags: ["scrap", "supplier", "supervisor", "communication", "campaign"], createdBy: "D. Okonkwo", createdAt: "2025-02-13T09:00:00Z", versions: [{ version: 1, date: "2025-02-13T09:00:00Z", author: "D. Okonkwo", change: "Initial — from lessons learned session", snapshot: "Always notify shift supervisor before changing scrap supplier during a production campaign." }] },
   { id: "R-020", title: "Run SEN alignment check before every new tundish sequence", type: "rule", status: "Proposed", confidence: "Medium", category: "Equipment", processArea: "Casting", scope: "Submerged entry nozzle (SEN) setup at sequence start", rationale: "Misaligned SEN causes asymmetric flow in mold leading to shell thinning and breakouts", evidence: [{ type: "human_note", text: "Casting engineer recommendation after breakout analysis", date: "2025-02-20" }], linkedAssertions: ["A-009"], tags: ["sen", "nozzle", "alignment", "breakout", "casting", "tundish"], createdBy: "A. Kowalski", createdAt: "2025-02-20T10:00:00Z", versions: [{ version: 1, date: "2025-02-20T10:00:00Z", author: "A. Kowalski", change: "Initial from breakout root cause analysis", snapshot: "Check SEN alignment before starting each new tundish sequence." }] },
+  { id: "R-021", title: "Increase casting speed to standard rate once mold level stabilises", type: "rule", status: "Active", confidence: "Medium", category: "Process", processArea: "Casting", scope: "All grades after mold level stabilisation", rationale: "Throughput recovery — slower speeds reduce daily tonnage", evidence: [{ type: "human_note", text: "Production manager directive", date: "2025-01-05" }], linkedAssertions: [], tags: ["casting", "speed", "throughput", "mold"], createdBy: "Production Manager", createdAt: "2025-01-05T08:00:00Z", versions: [{ version: 1, date: "2025-01-05T08:00:00Z", author: "Production Manager", change: "Initial", snapshot: "Return to standard casting speed once mold is stable." }] },
+  { id: "R-022", title: "Use nitrogen stirring gas when argon supply is low", type: "rule", status: "Active", confidence: "Low", category: "Process", processArea: "Ladle Furnace", scope: "Ladle furnace stirring during argon shortages", rationale: "Maintain production continuity when argon unavailable", evidence: [{ type: "human_note", text: "Shift supervisor workaround during supply disruption", date: "2025-02-01" }], linkedAssertions: [], tags: ["nitrogen", "argon", "stirring", "ladle", "gas"], createdBy: "T. Williams", createdAt: "2025-02-01T16:00:00Z", versions: [{ version: 1, date: "2025-02-01T16:00:00Z", author: "T. Williams", change: "Initial — supply disruption workaround", snapshot: "Use nitrogen stirring when argon is not available." }] },
 ];
 
 const INITIAL_ASSERTIONS = [
@@ -46,20 +48,20 @@ const INITIAL_ASSERTIONS = [
   { id: "A-002", title: "Insufficient dilution increases cracking and casting defect risk", type: "assertion", category: "Material / Process", scope: "Casting following heats dominated by Sims shredded scrap", confidence: "High", processArea: "Casting", evidence: [{ type: "human_note", text: "Original operator note", date: "2025-02-10" }, { type: "event_corroboration", text: "Confirmed by E-001 and E-003", date: "2025-02-11" }], linkedRules: ["R-002", "R-003", "R-006"], createdBy: "Max Wolman", createdAt: "2025-02-10T09:10:00Z", versions: [{ version: 1, date: "2025-02-10T09:10:00Z", author: "Max Wolman", change: "Initial", snapshot: "Insufficient dilution increases cracking and casting defect risk" }] },
   { id: "A-003", title: "Slower casting speeds reduce defect risk under marginal conditions", type: "assertion", category: "Process", scope: "Casting under marginal chemistry or cleanliness conditions", confidence: "High", processArea: "Casting", evidence: [{ type: "human_note", text: "Original operator note", date: "2025-02-10" }, { type: "event_corroboration", text: "E-003 zero-defect campaign used reduced speed", date: "2025-02-11" }], linkedRules: ["R-003", "R-005", "R-010"], createdBy: "Max Wolman", createdAt: "2025-02-10T09:20:00Z", versions: [{ version: 1, date: "2025-02-10T09:20:00Z", author: "Max Wolman", change: "Initial", snapshot: "Slower casting speeds reduce defect risk under marginal conditions" }] },
   { id: "A-004", title: "High copper content (>0.25%) destabilizes EAF slag and increases electrode wear", type: "assertion", category: "Material", scope: "EAF heats with Cu-rich scrap sources", confidence: "Medium", processArea: "EAF", evidence: [{ type: "human_note", text: "Electrical engineer and metallurgist joint observation", date: "2025-02-14" }], linkedRules: ["R-004", "R-012", "R-019"], createdBy: "S. Volkov", createdAt: "2025-02-14T16:30:00Z", versions: [{ version: 1, date: "2025-02-14T16:30:00Z", author: "S. Volkov", change: "Initial", snapshot: "Cu > 0.25% causes slag instability and electrode overconsumption" }] },
-  { id: "A-005", title: "Spectrometer drift after 50 samples introduces systematic chemistry bias", type: "assertion", category: "Measurement", scope: "All spectrometer readings in Quality Lab", confidence: "Verified", processArea: "Quality Lab", evidence: [{ type: "human_note", text: "Lab manager calibration study across 6 months", date: "2024-07-15" }], linkedRules: ["R-007", "R-015"], createdBy: "R. Patel", createdAt: "2024-07-15T12:30:00Z", versions: [{ version: 1, date: "2024-07-15T12:30:00Z", author: "R. Patel", change: "Initial from calibration study", snapshot: "Spectrometer accuracy degrades measurably after ~50 samples" }] },
+  { id: "A-005", title: "Spectrometer drift after 50 samples introduces systematic chemistry bias", type: "assertion", category: "Measurement", scope: "All spectrometer readings in Quality Lab", confidence: "Very High", processArea: "Quality Lab", evidence: [{ type: "human_note", text: "Lab manager calibration study across 6 months", date: "2024-07-15" }], linkedRules: ["R-007", "R-015"], createdBy: "R. Patel", createdAt: "2024-07-15T12:30:00Z", versions: [{ version: 1, date: "2024-07-15T12:30:00Z", author: "R. Patel", change: "Initial from calibration study", snapshot: "Spectrometer accuracy degrades measurably after ~50 samples" }] },
   { id: "A-006", title: "Ladle thermal homogeneity requires 3–5 min arc time between alloy additions", type: "assertion", category: "Process", scope: "Ladle furnace refining", confidence: "High", processArea: "Ladle Furnace", evidence: [{ type: "human_note", text: "Metallurgist process study — temperature mapping", date: "2025-01-20" }], linkedRules: ["R-006", "R-009", "R-017"], createdBy: "J. Martinez", createdAt: "2025-01-20T11:30:00Z", versions: [{ version: 1, date: "2025-01-20T11:30:00Z", author: "J. Martinez", change: "Initial from temperature mapping study", snapshot: "Without 3-5 min reheat between additions, cold spots persist in the ladle" }] },
-  { id: "A-007", title: "Moisture in scrap is the primary cause of EAF charging explosions", type: "assertion", category: "Material", scope: "All scrap charged to EAF", confidence: "Verified", processArea: "Scrap Yard", evidence: [{ type: "human_note", text: "HSE incident database — 12 incidents over 5 years all traced to moisture", date: "2024-06-01" }], linkedRules: ["R-008", "R-018"], createdBy: "HSE Team", createdAt: "2024-06-01T00:00:00Z", versions: [{ version: 1, date: "2024-06-01T00:00:00Z", author: "HSE Team", change: "Initial — safety critical", snapshot: "All 12 EAF charging incidents in the past 5 years involved wet or sealed scrap" }] },
+  { id: "A-007", title: "Moisture in scrap is the primary cause of EAF charging explosions", type: "assertion", category: "Material", scope: "All scrap charged to EAF", confidence: "Very High", processArea: "Scrap Yard", evidence: [{ type: "human_note", text: "HSE incident database — 12 incidents over 5 years all traced to moisture", date: "2024-06-01" }], linkedRules: ["R-008", "R-018"], createdBy: "HSE Team", createdAt: "2024-06-01T00:00:00Z", versions: [{ version: 1, date: "2024-06-01T00:00:00Z", author: "HSE Team", change: "Initial — safety critical", snapshot: "All 12 EAF charging incidents in the past 5 years involved wet or sealed scrap" }] },
   { id: "A-008", title: "HSLA billets develop hydrogen cracks if held more than 4 hours before rolling", type: "assertion", category: "Process", scope: "HSLA grades between casting and rolling", confidence: "High", processArea: "Rolling", evidence: [{ type: "human_note", text: "Quality investigation — Jan 2025 rolling defects", date: "2025-01-28" }], linkedRules: ["R-010", "R-014"], createdBy: "L. Chen", createdAt: "2025-01-28T09:30:00Z", versions: [{ version: 1, date: "2025-01-28T09:30:00Z", author: "L. Chen", change: "Initial from defect investigation", snapshot: "Hydrogen diffuses to billet surface within 4 hours creating crack nucleation sites" }] },
   { id: "A-009", title: "Tundish wear accelerates after 8 heats compromising flow control on sensitive grades", type: "assertion", category: "Equipment", scope: "Tundish condition during multi-heat sequences", confidence: "High", processArea: "Casting", evidence: [{ type: "human_note", text: "Casting engineer — nozzle bore measurement data", date: "2025-01-10" }], linkedRules: ["R-011", "R-016", "R-020"], createdBy: "A. Kowalski", createdAt: "2025-01-10T14:30:00Z", versions: [{ version: 1, date: "2025-01-10T14:30:00Z", author: "A. Kowalski", change: "Initial from nozzle inspection data", snapshot: "Nozzle bore enlargement exceeds 15% after 8 heats — threshold for flow control issues" }] },
-  { id: "A-010", title: "Nitrogen stirring adds 15–25ppm N pickup per ladle treatment", type: "assertion", category: "Process", scope: "Ladle furnace stirring gas selection", confidence: "Verified", processArea: "Ladle Furnace", evidence: [{ type: "human_note", text: "Metallurgist — statistical analysis of 200+ heats comparing Ar vs N2 stirring", date: "2024-09-15" }], linkedRules: ["R-013"], createdBy: "J. Martinez", createdAt: "2024-09-15T10:30:00Z", versions: [{ version: 1, date: "2024-09-15T10:30:00Z", author: "J. Martinez", change: "Initial from statistical analysis", snapshot: "N2 stirring consistently adds 15-25ppm N — Ar stirring adds <3ppm" }] },
+  { id: "A-010", title: "Nitrogen stirring adds 15-25ppm N pickup per ladle treatment", type: "assertion", category: "Process", scope: "Ladle furnace stirring gas selection", confidence: "Very High", processArea: "Ladle Furnace", evidence: [{ type: "human_note", text: "Metallurgist — statistical analysis of 200+ heats comparing Ar vs N2 stirring", date: "2024-09-15" }], linkedRules: ["R-013"], createdBy: "J. Martinez", createdAt: "2024-09-15T10:30:00Z", versions: [{ version: 1, date: "2024-09-15T10:30:00Z", author: "J. Martinez", change: "Initial from statistical analysis", snapshot: "N2 stirring consistently adds 15-25ppm N — Ar stirring adds <3ppm" }] },
 ];
 
 // ─── DOMAIN CONFIG — Steel-first, but swap this object to adapt to any industry ───
 const DOMAIN = {
   name: "Steel",
   categories: ["Material", "Process", "Equipment", "People", "Measurement", "Environment", "Process / Material", "Material / Process"],
-  statuses: ["Proposed", "Active", "Superseded", "Retired"],
-  confidences: ["Low", "Medium", "High", "Verified"],
+  statuses: ["Proposed", "Active", "Verified", "Established", "Stale", "Contradicted", "Retired"],
+  confidences: ["Low", "Medium", "High", "Very High"],
   processAreas: ["EAF", "Casting", "Rolling", "Ladle Furnace", "Scrap Yard", "Quality Lab", "Other"],
   processAreaColors: { EAF: "#F2652F", Casting: "#062044", Rolling: "#4FA89A", "Ladle Furnace": "#F2652F", "Scrap Yard": "#8a8278", "Quality Lab": "#4FA89A", Other: "#999" },
   // Used in LLM prompt so it understands the domain
@@ -213,8 +215,8 @@ const CONFIDENCES = DOMAIN.confidences;
 const PROCESS_AREAS = DOMAIN.processAreas;
 
 const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-const confidenceColor = (c) => ({ Low: { bg: "#fde8e5", text: "#c0392b" }, Medium: { bg: "#fef3e2", text: "#e67e22" }, High: { bg: "#e6f5f1", text: "#4FA89A" }, Verified: { bg: "#e8edf4", text: "#062044" } }[c] || { bg: "#f0eeec", text: "#888" });
-const statusColor = (s) => ({ Proposed: { bg: "#fef3e2", text: "#F2652F" }, Active: { bg: "#e6f5f1", text: "#4FA89A" }, Superseded: { bg: "#f0eeec", text: "#999" }, Retired: { bg: "#f0eeec", text: "#bbb" } }[s] || { bg: "#f0eeec", text: "#999" });
+const confidenceColor = (c) => ({ Low: { bg: "#fde8e5", text: "#c0392b" }, Medium: { bg: "#fef3e2", text: "#e67e22" }, High: { bg: "#e6f5f1", text: "#4FA89A" }, "Very High": { bg: "#e8edf4", text: "#062044" } }[c] || { bg: "#f0eeec", text: "#888" });
+const statusColor = (s) => ({ Proposed: { bg: "#fef3e2", text: "#F2652F" }, Active: { bg: "#d4edda", text: "#28a745" }, Verified: { bg: "#a8d8b9", text: "#1e7e34" }, Established: { bg: "#155724", text: "#FFFFFF" }, Stale: { bg: "#fef3e2", text: "#F2652F" }, Contradicted: { bg: "#fde8e5", text: "#c0392b" }, Retired: { bg: "#f0eeec", text: "#999" } }[s] || { bg: "#f0eeec", text: "#999" });
 const paColor = (p) => (DOMAIN.processAreaColors[p] || "#999");
 
 const impactColor = (s) => ({ Minor: { bg: "#f0eeec", text: "#999" }, Moderate: { bg: "#fef3e2", text: "#F2652F" }, Significant: { bg: "#fde8e5", text: "#c0392b" }, Major: { bg: "#f9d6d0", text: "#a01010" } }[s] || { bg: "#f0eeec", text: "#999" });
@@ -412,7 +414,7 @@ function GraphView({ rules, assertions, gpf, gcf, onSelect, focusNodeId }) {
         ctx.strokeStyle=dim?col+"28":isH?col:col+"80"; ctx.lineWidth=isH?2.5:1.5; ctx.stroke();
         ctx.font=`bold ${n.type==="rule"?10:9}px IBM Plex Sans, sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
         ctx.fillStyle=dim?col+"28":col; ctx.fillText(n.label,n.x,n.y);
-        const cc=confidenceColor(n.confidence);
+        const cc=statusColor(n.status||"Active");
         ctx.beginPath(); ctx.arc(n.x+n.r-5,n.y-n.r+5,4,0,Math.PI*2);
         ctx.fillStyle=dim?cc.text+"18":cc.text; ctx.fill();
       });
@@ -443,14 +445,14 @@ function GraphView({ rules, assertions, gpf, gcf, onSelect, focusNodeId }) {
         {["EAF","Casting","Ladle Furnace"].map(pa=><span key={pa} style={{display:"flex",alignItems:"center",gap:3}}><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:paColor(pa)}}/> {pa}</span>)}
       </div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:5,borderTop:"1px solid #D8CEC3",paddingTop:5}}>
-        {["Low","Medium","High","Verified"].map(c=><span key={c} style={{display:"flex",alignItems:"center",gap:3}}><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:confidenceColor(c).text}}/> {c}</span>)}
+        {["Proposed","Active","Verified","Established"].map(s=><span key={s} style={{display:"flex",alignItems:"center",gap:3}}><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:statusColor(s).bg==="#155724"?"#155724":statusColor(s).text}}/> {s}</span>)}
       </div>
       <div style={{marginTop:6,color:"#b0a898",fontStyle:"italic"}}>Double-click node to inspect · Drag to reposition</div>
     </div>
     {tip&&<div style={{position:"absolute",left:Math.min(tip.x+14,szRef.current.w-270),top:Math.max(tip.y-12,10),background:"#FFFFFFf0",border:"1px solid #D8CEC3",borderRadius:3,padding:"10px 14px",maxWidth:260,pointerEvents:"none",boxShadow:"0 8px 24px rgba(6,32,68,0.15)"}}>
       <div style={{fontSize:11,fontWeight:700,color:paColor(tip.node.processArea),fontFamily:FNTM,marginBottom:4}}>{tip.node.label} · {tip.node.type.toUpperCase()}</div>
       <div style={{fontSize:11,color:"#1F1F1F",lineHeight:1.4,marginBottom:6}}>{tip.node.title}</div>
-      <div style={{display:"flex",gap:4}}><Badge label={tip.node.confidence} colorFn={confidenceColor}/>{tip.node.status&&<Badge label={tip.node.status} colorFn={statusColor}/>}</div>
+      <div style={{display:"flex",gap:4}}>{tip.node.status&&<Badge label={tip.node.status} colorFn={statusColor}/>}</div>
     </div>}
   </div>;
 }
@@ -475,6 +477,31 @@ function KnowledgeRuleBank() {
   const [showAnswerModal, setShowAnswerModal] = useState(null);
   const [answerText, setAnswerText] = useState("");
   const [extractingFromAnswer, setExtractingFromAnswer] = useState(null);
+  const [comments, setComments] = useState({
+    "R-001":[{by:"L. Chen",text:"Confirmed this on night shift last week. Definitely need the extra time.",date:"2025-02-10T08:00:00Z"}],
+    "R-003":[{by:"M. Rossi",text:"Also applies when using Turkish shredded. Same copper issues.",date:"2025-02-14T14:30:00Z"}],
+    "E-001":[{by:"J. Martinez",text:"We saw similar cracking on Heat #4790 two weeks earlier but didn't file it.",date:"2025-02-09T10:00:00Z"}]
+  });
+  const [newComment, setNewComment] = useState("");
+  const [verifications, setVerifications] = useState({
+    "R-001":["M. Rossi","K. Alvarez","D. Novak"],"R-003":["L. Chen","T. Williams"],"R-005":["M. Rossi"],
+    "A-001":["J. Martinez","S. Petrov"],"A-002":["L. Chen"]
+  });
+  const [showLinkEditor, setShowLinkEditor] = useState(null);
+  const [linkComment, setLinkComment] = useState("");
+  const [linkSearch, setLinkSearch] = useState("");
+  const [topPeriod, setTopPeriod] = useState("all");
+  const [showNotif, setShowNotif] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {text:"R-003 was promoted to Verified status", date:"2025-02-20T10:00:00Z", read:false, target:{view:"rules",id:"R-003"}},
+    {text:"M. Rossi commented on R-003: \"Also applies when using Turkish shredded\"", date:"2025-02-14T14:30:00Z", read:false, target:{view:"rules",id:"R-003"}},
+    {text:"L. Chen verified R-001 from experience", date:"2025-02-12T09:00:00Z", read:false, target:{view:"rules",id:"R-001"}},
+    {text:"R-005 was promoted to Established status", date:"2025-02-18T11:00:00Z", read:true, target:{view:"rules",id:"R-005"}},
+    {text:"New question Q-001 posted in EAF process area", date:"2025-02-15T22:10:00Z", read:true, target:{view:"questions",id:"Q-001"}},
+    {text:"J. Martinez commented on E-001: \"We saw similar cracking on Heat #4790\"", date:"2025-02-09T10:00:00Z", read:true, target:{view:"events",id:"E-001"}},
+    {text:"R-021 flagged as contradicting R-003 — review needed", date:"2025-02-22T08:00:00Z", read:false, target:{view:"health"}},
+  ]);
   const [search, setSearch] = useState("");
   const [view, setView] = useState("query");
   const [sel, setSel] = useState(null);
@@ -815,7 +842,7 @@ ${assertions.map(a => `[${a.id}] (${a.confidence}) ${a.title} | Process: ${a.pro
 EVENTS:
 ${recentEvents.map(e => `[${e.id}] (${e.outcome}, ${e.impact}) ${e.title} | Date: ${e.date?.split("T")[0]} | Process: ${e.processArea} | Description: ${e.description?.slice(0,200)} | Resolution: ${e.resolution || "None"} | Linked rules: ${(e.linkedRules||[]).join(", ")}`).join("\n")}`;
 
-      const systemPrompt = `You are the MD1 Digital Brain — an operational knowledge assistant for a steel plant. You answer questions ONLY from the knowledge bank provided below. You do not guess or improvise.
+      const systemPrompt = `You are the MD1 Knowledge Bank — an operational knowledge assistant for a steel plant. You answer questions ONLY from the knowledge bank provided below. You do not guess or improvise.
 
 ${knowledgeContext}
 
@@ -1029,7 +1056,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
   const eventEmpty = {
     title: "", processArea: "EAF", impact: "Moderate", outcome: "Negative", description: "",
     ishikawa: { Material: [""], Process: [""], Equipment: [""], People: [""], Measurement: [""], Environment: [""] },
-    resolution: "", reportedBy: "", tags: "",
+    resolution: "", reportedBy: "", tags: "", taggedPeople: [],
   };
   const [evForm, setEvForm] = useState(eventEmpty);
 
@@ -1063,6 +1090,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
       generatedRules: [], generatedAssertions: [],
       photos: eventPhotos.map(p => ({ ...p })),
       reportedBy: evForm.reportedBy || "System",
+      taggedPeople: evForm.taggedPeople || [],
       tags: evForm.tags.split(",").map(t => t.trim()).filter(Boolean),
       createdAt: now,
     };
@@ -1180,14 +1208,63 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
       <div style={{display:"flex",alignItems:"center",gap:14}}>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
           <div style={{fontSize:28,fontWeight:700,color:"#1F1F1F",fontFamily:"'IBM Plex Sans', sans-serif",letterSpacing:2,lineHeight:1}}>MD1</div>
-          <div style={{fontSize:9,color:"#5a5550",fontFamily:FNTM,letterSpacing:2.5,textTransform:"uppercase",marginTop:3,paddingLeft:1}}>Digital Brain</div>
+          <div style={{fontSize:9,color:"#5a5550",fontFamily:FNTM,letterSpacing:2.5,textTransform:"uppercase",marginTop:3,paddingLeft:1}}>Knowledge Bank</div>
         </div>
       </div>
-      <div style={{display:"flex",gap:8}}>
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
         <button onClick={()=>setShowEvent(true)} style={{padding:"7px 14px",borderRadius:3,fontSize:12,background:"transparent",border:"1px solid #8a827880",color:"#5a5550",cursor:"pointer",fontFamily:FNTM,fontWeight:700,letterSpacing:0.4}}>+ Report Event</button>
         <button onClick={()=>setShowNarr(true)} style={{padding:"7px 14px",borderRadius:3,fontSize:12,background:"transparent",border:"1px solid #F2652F",color:"#F2652F",cursor:"pointer",fontFamily:FNTM,fontWeight:700,letterSpacing:0.4}}>+ Narrative Input</button>
         <button onClick={()=>setShowAdd(true)} style={{padding:"7px 14px",borderRadius:3,fontSize:12,background:"#062044",border:"none",color:"#FFFFFF",cursor:"pointer",fontFamily:FNTM,fontWeight:800,letterSpacing:0.4}}>+ Add {view==="assertions"?"Assertion":"Rule"}</button>
-        <button onClick={handleExport} style={{padding:"7px 14px",borderRadius:3,fontSize:12,background:"transparent",border:"1px solid #8a827840",color:"#8a8278",cursor:"pointer",fontFamily:FNTM,fontWeight:600}}>Export JSON</button>
+        <div style={{width:1,height:24,background:"#b0a89840",margin:"0 4px"}}/>
+        <div style={{position:"relative"}}>
+          <button onClick={()=>setShowNotif(!showNotif)} style={{padding:"7px 10px",borderRadius:3,fontSize:14,background:"transparent",border:"1px solid #8a827840",color:"#5a5550",cursor:"pointer",position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a8278" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            {notifications.filter(n=>!n.read).length>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#F2652F",color:"#fff",fontSize:8,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifications.filter(n=>!n.read).length}</span>}
+          </button>
+          {showNotif&&<div style={{position:"absolute",top:38,right:0,width:320,background:"#fff",border:"1px solid #e8e4e0",borderRadius:6,boxShadow:"0 8px 24px rgba(0,0,0,0.12)",zIndex:999,maxHeight:400,overflow:"auto"}}>
+            <div style={{padding:"12px 16px",borderBottom:"1px solid #e8e4e0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:12,fontWeight:700,color:"#062044",fontFamily:FNTM}}>Notifications</span>
+              <button onClick={()=>setNotifications(prev=>prev.map(n=>({...n,read:true})))} style={{fontSize:9,color:"#8a8278",background:"none",border:"none",cursor:"pointer",fontFamily:FNTM}}>Mark all read</button>
+            </div>
+            {notifications.length===0&&<div style={{padding:20,textAlign:"center",color:"#D8CEC3",fontSize:11}}>No notifications</div>}
+            {notifications.map((n,i)=><div key={i} style={{padding:"10px 16px",borderBottom:"1px solid #f0eeec",background:n.read?"transparent":"#fef9f0",cursor:"pointer"}} onClick={()=>{
+              setNotifications(prev=>prev.map((x,j)=>j===i?{...x,read:true}:x));
+              setShowNotif(false);
+              if(n.target){
+                setView(n.target.view);
+                if(n.target.id){
+                  if(n.target.view==="rules"){const item=rules.find(r=>r.id===n.target.id);if(item)setSel(item);}
+                  else if(n.target.view==="assertions"){const item=assertions.find(a=>a.id===n.target.id);if(item)setSel(item);}
+                  else if(n.target.view==="events"){const item=events.find(e=>e.id===n.target.id);if(item)setShowEventDetail(item);}
+                  else if(n.target.view==="questions"){const item=questions.find(q=>q.id===n.target.id);if(item)setShowAnswerModal(item);}
+                }
+              }
+            }}>
+              <div style={{fontSize:11,color:"#1F1F1F",lineHeight:1.4}}>{n.text}</div>
+              <div style={{fontSize:9,color:"#b0a898",fontFamily:FNTM,marginTop:3}}>{new Date(n.date).toLocaleDateString()}</div>
+            </div>)}
+          </div>}
+        </div>
+        <div style={{position:"relative"}}>
+          <button onClick={()=>setShowProfile(!showProfile)} style={{padding:"5px 10px",borderRadius:3,fontSize:11,background:"transparent",border:"1px solid #8a827840",color:"#5a5550",cursor:"pointer",fontFamily:FNTM,fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width:22,height:22,borderRadius:"50%",background:"#062044",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800}}>MW</div>
+            Max W.
+          </button>
+          {showProfile&&<div style={{position:"absolute",top:38,right:0,width:280,background:"#fff",border:"1px solid #e8e4e0",borderRadius:6,boxShadow:"0 8px 24px rgba(0,0,0,0.12)",zIndex:999,padding:"16px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <div style={{width:36,height:36,borderRadius:"50%",background:"#062044",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800}}>MW</div>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:"#062044"}}>Max Wolman</div>
+                <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM}}>Admin · EAF Operations</div>
+              </div>
+            </div>
+            <div style={{borderTop:"1px solid #e8e4e0",paddingTop:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#5a5550",marginBottom:6}}><span>Rules contributed</span><span style={{fontWeight:700}}>{rules.filter(r=>r.createdBy==="Max Wolman").length}</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#5a5550",marginBottom:6}}><span>Verifications given</span><span style={{fontWeight:700}}>{Object.values(verifications).filter(v=>v.includes("You")).length}</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#5a5550",marginBottom:6}}><span>Comments made</span><span style={{fontWeight:700}}>{Object.values(comments).reduce((a,c)=>a+c.filter(x=>x.by==="You").length,0)}</span></div>
+            </div>
+          </div>}
+        </div>
       </div>
     </div>
 
@@ -1197,12 +1274,12 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
       <span><span style={{color:"#062044",fontWeight:700}}>{assertions.length}</span> Assertions</span>
       <span><span style={{color:"#1F1F1F",fontWeight:700}}>{events.length}</span> Events</span>
       <span style={{color:"#D8CEC3"}}>│</span>
-      {Object.entries(sc).map(([s,c])=><span key={s}><Badge label={s} colorFn={statusColor}/> <span style={{color:"#b0a898"}}>{c}</span></span>)}
+      {["Proposed","Active","Verified","Established"].map(s=>sc[s]?<span key={s}><Badge label={s} colorFn={statusColor}/> <span style={{color:"#b0a898"}}>{sc[s]}</span></span>:null)}
       <span style={{color:"#D8CEC3"}}>│</span>
-      {Object.entries(cc).map(([c,n])=><span key={c}><Badge label={c} colorFn={confidenceColor}/> <span style={{color:"#b0a898"}}>{n}</span></span>)}
-      {(contradictions.length+staleItems.length+confidenceDrifts.length)>0&&<>
+      
+      {(contradictions.length+staleItems.length)>0&&<>
         <span style={{color:"#D8CEC3"}}>│</span>
-        <span onClick={()=>setView("health")} style={{cursor:"pointer",color:"#F2652F",fontWeight:700}}>{contradictions.length>0&&"⚠ "+contradictions.length+" conflict"+(contradictions.length>1?"s":"")}{contradictions.length>0&&(staleItems.length+confidenceDrifts.length)>0?" · ":""}{staleItems.length>0&&staleItems.length+" stale"}{staleItems.length>0&&confidenceDrifts.length>0?" · ":""}{confidenceDrifts.length>0&&confidenceDrifts.length+" drift"+(confidenceDrifts.length>1?"s":"")}</span>
+        <span onClick={()=>setView("health")} style={{cursor:"pointer",color:"#F2652F",fontWeight:700}}>{contradictions.length>0&&"⚠ "+contradictions.length+" conflict"+(contradictions.length>1?"s":"")}{contradictions.length>0&&staleItems.length>0?" · ":""}{staleItems.length>0&&staleItems.length+" stale"}</span>
       </>}
     </div>
 
@@ -1214,7 +1291,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         <div style={{marginBottom:24}}>
           {["query","rules","assertions","events","health","graph","questions"].map(v=><button key={v} onClick={()=>{setView(v);setSel(null);setSelQuestion(null);if(v!=="graph")setFocusGraph(null);}} style={{display:"block",width:"100%",padding:"8px 12px",marginBottom:2,borderRadius:3,fontSize:12,fontWeight:view===v?700:400,background:view===v?"#f0eeec":"transparent",color:view===v?"#062044":"#555",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FNTM}}>
             {v==="query"?"⌕ ":v==="rules"?"◆ ":v==="assertions"?"◇ ":v==="events"?"● ":v==="health"?"♥ ":v==="questions"?"? ":"⬡ "}{v==="query"?"Query":v==="graph"?"Relationship Graph":v==="events"?"Events":v==="health"?"Knowledge Health":v==="questions"?"Open Questions":v.charAt(0).toUpperCase()+v.slice(1)}
-            {v==="health"?((contradictions.length+staleItems.length+confidenceDrifts.length)>0?<span style={{float:"right",background:"#F2652F",color:"#fff",fontSize:9,fontWeight:800,padding:"1px 6px",borderRadius:8,fontFamily:FNTM}}>{contradictions.length+staleItems.length+confidenceDrifts.length}</span>:null):
+            {v==="health"?((contradictions.length+staleItems.length)>0?<span style={{float:"right",background:"#F2652F",color:"#fff",fontSize:9,fontWeight:800,padding:"1px 6px",borderRadius:8,fontFamily:FNTM}}>{contradictions.length+staleItems.length}</span>:null):
             v==="questions"?(questions.filter(q=>q.status==="open").length>0?<span style={{float:"right",background:"#062044",color:"#fff",fontSize:9,fontWeight:800,padding:"1px 6px",borderRadius:8,fontFamily:FNTM}}>{questions.filter(q=>q.status==="open").length}</span>:null):
             v!=="graph"&&v!=="query"&&<span style={{float:"right",color:"#D8CEC3",fontSize:11}}>{v==="rules"?rules.length:v==="assertions"?assertions.length:events.length}</span>}
           </button>)}
@@ -1233,17 +1310,17 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           {chatMessages.length>0&&<button onClick={()=>setChatMessages([])} style={{marginTop:16,width:"100%",padding:"8px 12px",borderRadius:3,fontSize:11,background:"transparent",border:"1px solid #D8CEC3",color:"#8a8278",cursor:"pointer",fontFamily:FNTM,fontWeight:600}}>New Conversation</button>}
           <div style={{marginTop:16,padding:"10px 12px",background:"#f0eeec",borderRadius:3,fontSize:10,color:"#5a5550",fontFamily:FNTM,lineHeight:1.5}}>
             <span style={{fontWeight:700}}>Knowledge bank:</span><br/>
-            {rules.filter(r=>r.status==="Active").length} active rules · {rules.filter(r=>r.status==="Proposed").length} proposed<br/>
+            {rules.filter(r=>r.status==="Proposed").length} proposed · {rules.filter(r=>r.status==="Active").length} active · {rules.filter(r=>r.status==="Verified").length} verified · {rules.filter(r=>r.status==="Established").length} established<br/>
             {assertions.length} assertions · {events.length} events
           </div>
         </div>}
 
         {view!=="graph"&&view!=="events"&&view!=="query"&&<>
           {view==="rules"&&<PillFilter label="Status" options={STATUSES} selected={fStatus} onToggle={v=>tog(fStatus,setFStatus,v)} colorFn={statusColor}/>}
-          <PillFilter label="Confidence" options={CONFIDENCES} selected={fConf} onToggle={v=>tog(fConf,setFConf,v)} colorFn={confidenceColor}/>
+          
           <PillFilter label="Category" options={["Material","Process","Equipment","People","Measurement","Environment"]} selected={fCat} onToggle={v=>tog(fCat,setFCat,v)}/>
           <PillFilter label="Process Area" options={PROCESS_AREAS.slice(0,4)} selected={fProc} onToggle={v=>tog(fProc,setFProc,v)}/>
-          {(fStatus.length>0||fConf.length>0||fCat.length>0||fProc.length>0)&&<button onClick={()=>{setFStatus([]);setFConf([]);setFCat([]);setFProc([]);}} style={{marginTop:8,background:"none",border:"none",color:"#4FA89A",fontSize:11,cursor:"pointer",fontFamily:FNTM}}>✕ Clear filters</button>}
+          {(fStatus.length>0||fCat.length>0||fProc.length>0)&&<button onClick={()=>{setFStatus([]);setFCat([]);setFProc([]);}} style={{marginTop:8,background:"none",border:"none",color:"#4FA89A",fontSize:11,cursor:"pointer",fontFamily:FNTM}}>✕ Clear filters</button>}
         </>}
 
         {view==="events"&&<>
@@ -1251,7 +1328,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           <PillFilter label="Impact" options={IMPACTS} selected={fStatus} onToggle={v=>tog(fStatus,setFStatus,v)} colorFn={impactColor}/>
           <PillFilter label="Status" options={EVENT_STATUSES} selected={fConf} onToggle={v=>tog(fConf,setFConf,v)} colorFn={eventStatusColor}/>
           <PillFilter label="Process Area" options={PROCESS_AREAS.slice(0,4)} selected={fProc} onToggle={v=>tog(fProc,setFProc,v)}/>
-          {(fCat.length>0||fStatus.length>0||fConf.length>0||fProc.length>0)&&<button onClick={()=>{setFCat([]);setFStatus([]);setFConf([]);setFProc([]);}} style={{marginTop:8,background:"none",border:"none",color:"#4FA89A",fontSize:11,cursor:"pointer",fontFamily:FNTM}}>✕ Clear filters</button>}
+          {(fCat.length>0||fStatus.length>0||fProc.length>0)&&<button onClick={()=>{setFCat([]);setFStatus([]);setFProc([]);}} style={{marginTop:8,background:"none",border:"none",color:"#4FA89A",fontSize:11,cursor:"pointer",fontFamily:FNTM}}>✕ Clear filters</button>}
         </>}
 
         {view==="graph"&&<>
@@ -1383,11 +1460,10 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 <span style={{fontSize:11,color:"#b0a898",fontFamily:FNTM,fontWeight:600}}>{item.id}</span>
                 {item.status&&<Badge label={item.status} colorFn={statusColor}/>}
-                <Badge label={item.confidence} colorFn={confidenceColor}/>
-                {contradictions.some(c=>c.ruleA.id===item.id||c.ruleB.id===item.id)&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:2,background:"#fde8e5",color:"#c0392b",fontWeight:700,fontFamily:FNTM}}>⚠ CONFLICT</span>}
-                {checkStaleness(item).stale&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:2,background:"#fef3e2",color:"#F2652F",fontWeight:700,fontFamily:FNTM}}>STALE</span>}
+                {(verifications[item.id]||[]).length>0&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:2,background:"#e6f5f1",color:"#4FA89A",fontWeight:700,fontFamily:FNTM}}>✓ {(verifications[item.id]||[]).length}</span>}
+                {(comments[item.id]||[]).length>0&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:2,background:"#f0eeec",color:"#8a8278",fontWeight:700,fontFamily:FNTM}}>{(comments[item.id]||[]).length} comment{(comments[item.id]||[]).length>1?"s":""}</span>}
               </div>
-              <span style={{fontSize:10,color:"#D8CEC3",fontFamily:FNTM}}>{formatDate(item.createdAt)}</span>
+              <span style={{fontSize:9,color:"#D8CEC3",fontFamily:FNTM}}>created {formatDate(item.createdAt)}{item.versions?.length>1?" · edited "+formatDate(item.versions[item.versions.length-1]?.date):""}</span>
             </div>
             <div style={{fontSize:14,color:"#1F1F1F",fontWeight:500,lineHeight:1.4,marginBottom:8}}>{item.title}</div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -1443,153 +1519,123 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
 
         {/* Knowledge Health View */}
         {view==="health"&&<div style={{flex:1,padding:"20px 28px",overflow:"auto"}}>
-          {/* Health score summary */}
+          {/* Summary cards */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:24}}>
             <div style={{padding:"16px",background:contradictions.length>0?"#fde8e5":"#e6f5f1",borderRadius:3,border:"1px solid "+(contradictions.length>0?"#c0392b20":"#4FA89A20")}}>
               <div style={{fontSize:28,fontWeight:900,color:contradictions.length>0?"#c0392b":"#4FA89A",fontFamily:FNT}}>{contradictions.length}</div>
-              <div style={{fontSize:11,color:"#5a5550",fontFamily:FNTM,fontWeight:600}}>Contradictions</div>
-              <div style={{fontSize:10,color:"#8a8278",marginTop:2}}>Rules with opposing directives</div>
+              <div style={{fontSize:11,color:"#5a5550",fontFamily:FNTM,fontWeight:600}}>Contradicted</div>
             </div>
             <div style={{padding:"16px",background:staleItems.length>0?"#fef3e2":"#e6f5f1",borderRadius:3,border:"1px solid "+(staleItems.length>0?"#F2652F20":"#4FA89A20")}}>
               <div style={{fontSize:28,fontWeight:900,color:staleItems.length>0?"#F2652F":"#4FA89A",fontFamily:FNT}}>{staleItems.length}</div>
-              <div style={{fontSize:11,color:"#5a5550",fontFamily:FNTM,fontWeight:600}}>Stale Items</div>
-              <div style={{fontSize:10,color:"#8a8278",marginTop:2}}>No activity in {STALE_DAYS}+ days</div>
+              <div style={{fontSize:11,color:"#5a5550",fontFamily:FNTM,fontWeight:600}}>Stale</div>
             </div>
-            <div style={{padding:"16px",background:confidenceDrifts.length>0?"#fef3e2":"#e6f5f1",borderRadius:3,border:"1px solid "+(confidenceDrifts.length>0?"#F2652F20":"#4FA89A20")}}>
-              <div style={{fontSize:28,fontWeight:900,color:confidenceDrifts.length>0?"#F2652F":"#4FA89A",fontFamily:FNT}}>{confidenceDrifts.length}</div>
-              <div style={{fontSize:11,color:"#5a5550",fontFamily:FNTM,fontWeight:600}}>Confidence Drifts</div>
-              <div style={{fontSize:10,color:"#8a8278",marginTop:2}}>Label ≠ computed score</div>
+            <div style={{padding:"16px",background:"#e6f5f1",borderRadius:3,border:"1px solid #4FA89A20"}}>
+              <div style={{fontSize:28,fontWeight:900,color:"#4FA89A",fontFamily:FNT}}>{[...rules,...assertions].filter(i=>i.status!=="Retired"&&i.status!=="Stale"&&i.status!=="Contradicted").length}</div>
+              <div style={{fontSize:11,color:"#5a5550",fontFamily:FNTM,fontWeight:600}}>Active Knowledge</div>
             </div>
           </div>
 
-          {/* Contradictions */}
-          {contradictions.length>0&&<div style={{marginBottom:28}}>
-            <div style={{fontSize:11,color:"#c0392b",textTransform:"uppercase",letterSpacing:1,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>⚠ CONTRADICTIONS DETECTED</div>
-            <div style={{fontSize:12,color:"#5a5550",marginBottom:12,lineHeight:1.5}}>These rules share process area or category but contain opposing directives. Review and resolve — one may need to supersede the other, or their scopes may need refinement.</div>
-            {contradictions.map((c,i)=><div key={i} style={{padding:"14px 16px",background:"#fff",border:"1px solid #c0392b20",borderRadius:3,marginBottom:8}}>
-              <div style={{fontSize:10,color:"#c0392b",fontFamily:FNTM,fontWeight:700,marginBottom:6}}>CONFLICT IN {c.shared?.toUpperCase()}</div>
-              <div style={{display:"flex",gap:12,marginBottom:8}}>
-                <div style={{flex:1,padding:"8px 10px",background:"#f8f6f4",borderRadius:3,borderLeft:"3px solid #F2652F"}}>
-                  <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,fontWeight:600,marginBottom:2}}>{c.ruleA.id} · <Badge label={c.ruleA.confidence} colorFn={confidenceColor}/></div>
-                  <div style={{fontSize:12,color:"#1F1F1F",lineHeight:1.3}}>{c.ruleA.title}</div>
-                  {c.ruleA.scope&&<div style={{fontSize:10,color:"#b0a898",marginTop:3}}>Scope: {c.ruleA.scope}</div>}
-                </div>
-                <div style={{display:"flex",alignItems:"center",fontSize:16,color:"#c0392b",fontWeight:900}}>⇄</div>
-                <div style={{flex:1,padding:"8px 10px",background:"#f8f6f4",borderRadius:3,borderLeft:"3px solid #F2652F"}}>
-                  <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,fontWeight:600,marginBottom:2}}>{c.ruleB.id} · <Badge label={c.ruleB.confidence} colorFn={confidenceColor}/></div>
-                  <div style={{fontSize:12,color:"#1F1F1F",lineHeight:1.3}}>{c.ruleB.title}</div>
-                  {c.ruleB.scope&&<div style={{fontSize:10,color:"#b0a898",marginTop:3}}>Scope: {c.ruleB.scope}</div>}
-                </div>
-              </div>
-              <div style={{display:"flex",gap:6}}>
-                <button onClick={()=>{openEdit(c.ruleA);setView("rules");}} style={{padding:"4px 10px",fontSize:10,background:"#fff",border:"1px solid #D8CEC3",borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:600,color:"#5a5550"}}>Edit {c.ruleA.id}</button>
-                <button onClick={()=>{openEdit(c.ruleB);setView("rules");}} style={{padding:"4px 10px",fontSize:10,background:"#fff",border:"1px solid #D8CEC3",borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:600,color:"#5a5550"}}>Edit {c.ruleB.id}</button>
-              </div>
-            </div>)}
-          </div>}
+          {/* NEEDS REVIEW */}
+          {(contradictions.length>0||staleItems.length>0)&&<div style={{marginBottom:28}}>
+            <div style={{fontSize:14,color:"#c0392b",fontFamily:FNT,fontWeight:700,marginBottom:16}}>Needs Review</div>
 
-          {/* Confidence Drifts */}
-          {confidenceDrifts.length>0&&<div style={{marginBottom:28}}>
-            <div style={{fontSize:11,color:"#F2652F",textTransform:"uppercase",letterSpacing:1,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>CONFIDENCE RECALIBRATION NEEDED</div>
-            <div style={{fontSize:12,color:"#5a5550",marginBottom:12,lineHeight:1.5}}>Evidence score suggests a different confidence level than the current label. Items with strong event corroboration or multiple evidence sources may deserve promotion.</div>
-            {confidenceDrifts.map(item=>{
-              const score = healthScores[item.id]||0;
-              const computed = scoreToLabel(score);
-              const isUpgrade = CONFIDENCES.indexOf(computed)>CONFIDENCES.indexOf(item.confidence);
-              return <div key={item.id} style={{padding:"12px 16px",background:"#fff",border:"1px solid #D8CEC3",borderRadius:3,marginBottom:6,display:"flex",alignItems:"center",gap:12}}>
-                <div style={{flex:1,cursor:"pointer"}} onClick={()=>{setView(item.type==="rule"?"rules":"assertions");setSel(item);}}>
-                  <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
-                    <span style={{fontSize:11,color:"#4FA89A",fontFamily:FNTM,fontWeight:600,textDecoration:"underline"}}>{item.id}</span>
-                    {item.status&&<Badge label={item.status} colorFn={statusColor}/>}
+            {/* Contradicted subsection */}
+            {contradictions.length>0&&<div style={{marginBottom:20}}>
+              <div style={{fontSize:11,color:"#c0392b",textTransform:"uppercase",letterSpacing:1,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>CONTRADICTED</div>
+              {contradictions.map((c,i)=><div key={i} style={{padding:"14px 16px",background:"#fff",border:"1px solid #c0392b20",borderRadius:3,marginBottom:8}}>
+                <div style={{fontSize:10,color:"#c0392b",fontFamily:FNTM,fontWeight:700,marginBottom:6}}>CONFLICT IN {c.shared?.toUpperCase()}</div>
+                <div style={{display:"flex",gap:12,marginBottom:8}}>
+                  <div style={{flex:1,padding:"8px 10px",background:"#f8f6f4",borderRadius:3,borderLeft:"3px solid #F2652F"}}>
+                    <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,fontWeight:600,marginBottom:2}}>{c.ruleA.id}</div>
+                    <div style={{fontSize:12,color:"#1F1F1F",lineHeight:1.3}}>{c.ruleA.title}</div>
                   </div>
-                  <div style={{fontSize:13,color:"#1F1F1F",lineHeight:1.3}}>{item.title}</div>
+                  <div style={{display:"flex",alignItems:"center",fontSize:16,color:"#c0392b",fontWeight:900}}>⇄</div>
+                  <div style={{flex:1,padding:"8px 10px",background:"#f8f6f4",borderRadius:3,borderLeft:"3px solid #F2652F"}}>
+                    <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,fontWeight:600,marginBottom:2}}>{c.ruleB.id}</div>
+                    <div style={{fontSize:12,color:"#1F1F1F",lineHeight:1.3}}>{c.ruleB.title}</div>
+                  </div>
                 </div>
-                <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                  <Badge label={item.confidence} colorFn={confidenceColor}/>
-                  <span style={{fontSize:14,color:isUpgrade?"#4FA89A":"#c0392b"}}>{isUpgrade?"→":"→"}</span>
-                  <Badge label={computed} colorFn={confidenceColor}/>
-                  <span style={{fontSize:10,color:"#8a8278",fontFamily:FNTM}}>({score.toFixed(1)})</span>
+                <div style={{display:"flex",gap:6}}>
+                  <button onClick={()=>{openEdit(c.ruleA);setView("rules");}} style={{padding:"4px 10px",fontSize:10,background:"#fff",border:"1px solid #D8CEC3",borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:600,color:"#5a5550"}}>Edit {c.ruleA.id}</button>
+                  <button onClick={()=>{openEdit(c.ruleB);setView("rules");}} style={{padding:"4px 10px",fontSize:10,background:"#fff",border:"1px solid #D8CEC3",borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:600,color:"#5a5550"}}>Edit {c.ruleB.id}</button>
                 </div>
-                <button onClick={()=>{
-                  const u = p => p.map(r => r.id !== item.id ? r : {
-                    ...r, confidence: computed,
-                    versions: [...(r.versions||[]), { version: (r.versions||[]).length+1, date: new Date().toISOString(), author: "Health Engine", change: "Confidence recalibrated: "+item.confidence+" → "+computed+" (score: "+score.toFixed(1)+")", diffs: [{field:"confidence",from:item.confidence,to:computed}], fieldsChanged:["confidence"], snapshot: r.title }]
-                  });
-                  if(item.type==="rule") setRules(u); else setAssertions(u);
-                }} style={{padding:"4px 10px",fontSize:10,background:isUpgrade?"#e6f5f1":"#fef3e2",border:"1px solid "+(isUpgrade?"#4FA89A30":"#F2652F30"),borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:700,color:isUpgrade?"#4FA89A":"#F2652F",flexShrink:0}}>
-                  Accept
-                </button>
-              </div>;
-            })}
-          </div>}
+              </div>)}
+            </div>}
 
-          {/* Stale Items */}
-          {staleItems.length>0&&<div style={{marginBottom:28}}>
-            <div style={{fontSize:11,color:"#8a8278",textTransform:"uppercase",letterSpacing:1,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>STALE KNOWLEDGE — REVIEW NEEDED</div>
-            <div style={{fontSize:12,color:"#5a5550",marginBottom:12,lineHeight:1.5}}>These items haven't been updated or referenced by any event in over {STALE_DAYS} days. They may still be valid, but should be reviewed to confirm they remain current.</div>
-            {staleItems.map(item=>{
-              const st = checkStaleness(item);
-              return <div key={item.id} style={{padding:"12px 16px",background:"#fff",border:"1px solid #D8CEC3",borderRadius:3,marginBottom:6,display:"flex",alignItems:"center",gap:12}}>
-                <div style={{flex:1,cursor:"pointer"}} onClick={()=>{setView(item.type==="rule"?"rules":"assertions");setSel(item);}}>
-                  <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
-                    <span style={{fontSize:11,color:"#4FA89A",fontFamily:FNTM,fontWeight:600,textDecoration:"underline"}}>{item.id}</span>
-                    {item.status&&<Badge label={item.status} colorFn={statusColor}/>}
-                    <Badge label={item.confidence} colorFn={confidenceColor}/>
-                    <span style={{fontSize:10,color:"#F2652F",fontFamily:FNTM,fontWeight:600}}>{st.daysSince}d stale</span>
+            {/* Stale subsection */}
+            {staleItems.length>0&&<div style={{marginBottom:20}}>
+              <div style={{fontSize:11,color:"#F2652F",textTransform:"uppercase",letterSpacing:1,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>STALE</div>
+              {staleItems.map(item=>{
+                const st = checkStaleness(item);
+                return <div key={item.id} style={{padding:"12px 16px",background:"#fff",border:"1px solid #D8CEC3",borderRadius:3,marginBottom:6,display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{flex:1,cursor:"pointer"}} onClick={()=>{setView(item.type==="rule"?"rules":"assertions");setSel(item);}}>
+                    <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+                      <span style={{fontSize:11,color:"#4FA89A",fontFamily:FNTM,fontWeight:600,textDecoration:"underline"}}>{item.id}</span>
+                      <Badge label={item.status} colorFn={statusColor}/>
+                      <span style={{fontSize:10,color:"#F2652F",fontFamily:FNTM,fontWeight:600}}>{st.daysSince}d without activity</span>
+                    </div>
+                    <div style={{fontSize:13,color:"#1F1F1F",lineHeight:1.3}}>{item.title}</div>
                   </div>
-                  <div style={{fontSize:13,color:"#1F1F1F",lineHeight:1.3}}>{item.title}</div>
-                </div>
-                <div style={{display:"flex",gap:4,flexShrink:0}}>
-                  <button onClick={()=>{
-                    const u = p => p.map(r => r.id !== item.id ? r : {
-                      ...r, versions: [...(r.versions||[]), { version: (r.versions||[]).length+1, date: new Date().toISOString(), author: "Health Review", change: "Confirmed still valid after staleness review", diffs: [], fieldsChanged:[], snapshot: r.title }]
-                    });
-                    if(item.type==="rule") setRules(u); else setAssertions(u);
-                  }} style={{padding:"4px 10px",fontSize:10,background:"#e6f5f1",border:"1px solid #4FA89A30",borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:700,color:"#4FA89A"}}>
-                    Confirm Valid
-                  </button>
-                  <button onClick={()=>{
-                    const u = p => p.map(r => r.id !== item.id ? r : {
-                      ...r, status: "Retired",
-                      versions: [...(r.versions||[]), { version: (r.versions||[]).length+1, date: new Date().toISOString(), author: "Health Review", change: "Retired after staleness review — no longer applicable", diffs: [{field:"status",from:r.status,to:"Retired"}], fieldsChanged:["status"], snapshot: r.title }]
-                    });
-                    if(item.type==="rule") setRules(u); else setAssertions(u);
-                  }} style={{padding:"4px 10px",fontSize:10,background:"#fde8e5",border:"1px solid #c0392b20",borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:700,color:"#c0392b"}}>
-                    Retire
-                  </button>
-                </div>
-              </div>;
-            })}
+                  <div style={{display:"flex",gap:4,flexShrink:0}}>
+                    <button onClick={()=>{
+                      const u = p => p.map(r => r.id !== item.id ? r : {...r, versions: [...(r.versions||[]), { version: (r.versions||[]).length+1, date: new Date().toISOString(), author: "Health Review", change: "Confirmed still valid", diffs: [], fieldsChanged:[], snapshot: r.title }]});
+                      if(item.type==="rule") setRules(u); else setAssertions(u);
+                    }} style={{padding:"4px 10px",fontSize:10,background:"#e6f5f1",border:"1px solid #4FA89A30",borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:700,color:"#4FA89A"}}>Confirm Valid</button>
+                    <button onClick={()=>{
+                      const u = p => p.map(r => r.id !== item.id ? r : {...r, status: "Retired", versions: [...(r.versions||[]), { version: (r.versions||[]).length+1, date: new Date().toISOString(), author: "Health Review", change: "Retired after staleness review", diffs: [{field:"status",from:r.status,to:"Retired"}], fieldsChanged:["status"], snapshot: r.title }]});
+                      if(item.type==="rule") setRules(u); else setAssertions(u);
+                    }} style={{padding:"4px 10px",fontSize:10,background:"#fde8e5",border:"1px solid #c0392b20",borderRadius:3,cursor:"pointer",fontFamily:FNTM,fontWeight:700,color:"#c0392b"}}>Retire</button>
+                  </div>
+                </div>;
+              })}
+            </div>}
           </div>}
 
           {/* All clear */}
-          {contradictions.length===0&&staleItems.length===0&&confidenceDrifts.length===0&&<div style={{padding:"40px 0",textAlign:"center"}}>
-            <div style={{fontSize:32,marginBottom:8}}>✓</div>
-            <div style={{fontSize:16,color:"#4FA89A",fontWeight:800,fontFamily:FNT}}>Knowledge Bank is Healthy</div>
-            <div style={{fontSize:12,color:"#8a8278",marginTop:6,lineHeight:1.5}}>No contradictions, no stale items, all confidence levels aligned with evidence scores.</div>
+          {contradictions.length===0&&staleItems.length===0&&<div style={{padding:"20px 0",textAlign:"center",marginBottom:24}}>
+            <div style={{fontSize:24,marginBottom:4}}>✓</div>
+            <div style={{fontSize:14,color:"#4FA89A",fontWeight:700,fontFamily:FNT}}>No items need review</div>
           </div>}
 
-          {/* Confidence score table */}
-          <div style={{marginTop:8}}>
-            <div style={{fontSize:11,color:"#062044",textTransform:"uppercase",letterSpacing:1,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>EVIDENCE SCORES — ALL ACTIVE ITEMS</div>
-            <div style={{fontSize:10,color:"#8a8278",marginBottom:12,lineHeight:1.5,fontFamily:FNTM}}>
-              Weights: Human Note ×3 · Event Analysis ×2 · LLM Extraction ×1 · Lab Data ×4 · Validated ×5 · Links ×0.5 · Event refs ×1.5 · Versions ×0.5 (max 2)
+          {/* TOP KNOWLEDGE */}
+          <div style={{marginBottom:28}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <div style={{fontSize:14,color:"#062044",fontFamily:FNT,fontWeight:700}}>Top Knowledge</div>
+              <div style={{display:"flex",gap:4}}>
+                {["day","week","month","year","all"].map(p=><button key={p} onClick={()=>setTopPeriod(p)} style={{padding:"3px 10px",borderRadius:3,fontSize:10,fontFamily:FNTM,fontWeight:topPeriod===p?700:400,background:topPeriod===p?"#062044":"transparent",color:topPeriod===p?"#fff":"#8a8278",border:topPeriod===p?"none":"1px solid #D8CEC3",cursor:"pointer"}}>{p==="all"?"All Time":p.charAt(0).toUpperCase()+p.slice(1)}</button>)}
+              </div>
             </div>
-            {[...rules,...assertions].filter(i=>i.status!=="Retired"&&i.status!=="Superseded").sort((a,b)=>(healthScores[b.id]||0)-(healthScores[a.id]||0)).map(item=>{
-              const score = healthScores[item.id]||0;
-              const computed = scoreToLabel(score);
-              const match = computed === item.confidence;
-              return <div key={item.id} onClick={()=>{setView(item.type==="rule"?"rules":"assertions");setSel(item);}} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:3,marginBottom:3,background:match?"transparent":"#fef3e2",border:match?"1px solid transparent":"1px solid #F2652F15",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background=match?"#f8f6f4":"#fef3e2"} onMouseLeave={e=>e.currentTarget.style.background=match?"transparent":"#fef3e2"}>
-                <span style={{fontSize:10,color:"#4FA89A",fontFamily:FNTM,fontWeight:600,width:40,textDecoration:"underline"}}>{item.id}</span>
+            {(()=>{
+              const now = new Date();
+              const cutoff = topPeriod==="day"?new Date(now-86400000):topPeriod==="week"?new Date(now-604800000):topPeriod==="month"?new Date(now-2592000000):topPeriod==="year"?new Date(now-31536000000):new Date(0);
+              const items = [...rules,...assertions].filter(i=>i.status!=="Retired"&&new Date(i.createdAt)>=cutoff).map(i=>({
+                ...i,
+                score: (verifications[i.id]||[]).length*3 + (comments[i.id]||[]).length + ([...rules,...assertions].filter(x=>(x.linkedAssertions||x.linkedRules||[]).includes(i.id)).length)*2 + (i.versions||[]).length*0.5
+              })).sort((a,b)=>b.score-a.score).slice(0,20);
+              return items.length>0?items.map((item,idx)=><div key={item.id} onClick={()=>{setView(item.type==="rule"?"rules":"assertions");setSel(item);}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:3,marginBottom:3,background:"#fff",border:"1px solid #e8e4e0",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background="#f8f6f4"} onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
+                <span style={{fontSize:14,fontWeight:800,color:"#D8CEC3",fontFamily:FNT,width:24,textAlign:"right"}}>{idx+1}</span>
+                <span style={{fontSize:10,color:"#4FA89A",fontFamily:FNTM,fontWeight:600,width:40}}>{item.id}</span>
+                <Badge label={item.status} colorFn={statusColor}/>
                 <div style={{flex:1,fontSize:12,color:"#1F1F1F",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{item.title}</div>
-                <div style={{width:90,height:6,background:"#e8e4e0",borderRadius:3,overflow:"hidden",flexShrink:0}}>
-                  <div style={{height:"100%",width:Math.min(score/15*100,100)+"%",background:score>=12?"#062044":score>=7?"#4FA89A":score>=3?"#F2652F":"#c0392b",borderRadius:3,transition:"width 0.3s"}}></div>
-                </div>
-                <span style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,width:30,textAlign:"right"}}>{score.toFixed(1)}</span>
-                <Badge label={item.confidence} colorFn={confidenceColor}/>
-                {!match&&<span style={{fontSize:9,color:"#F2652F",fontFamily:FNTM}}>→{computed}</span>}
-              </div>;
-            })}
+                {(verifications[item.id]||[]).length>0&&<span style={{fontSize:9,color:"#4FA89A",fontFamily:FNTM}}>✓{(verifications[item.id]||[]).length}</span>}
+                {(comments[item.id]||[]).length>0&&<span style={{fontSize:9,color:"#8a8278",fontFamily:FNTM}}>{(comments[item.id]||[]).length}c</span>}
+              </div>):<div style={{padding:20,textAlign:"center",color:"#D8CEC3",fontSize:12}}>No knowledge items in this period.</div>;
+            })()}
+          </div>
+
+          {/* KNOWLEDGE ARCHIVE */}
+          <div>
+            <div style={{fontSize:14,color:"#8a8278",fontFamily:FNT,fontWeight:700,marginBottom:12}}>Knowledge Archive</div>
+            <div style={{fontSize:11,color:"#b0a898",fontFamily:FNTM,marginBottom:10,lineHeight:1.5}}>Retired knowledge is preserved for reference and can still be queried. These items are no longer active in the knowledge bank but remain part of the plant's institutional memory.</div>
+            {[...rules,...assertions].filter(i=>i.status==="Retired").length===0&&<div style={{padding:16,textAlign:"center",color:"#D8CEC3",fontSize:12}}>No retired knowledge yet.</div>}
+            {[...rules,...assertions].filter(i=>i.status==="Retired").map(item=><div key={item.id} onClick={()=>{setView(item.type==="rule"?"rules":"assertions");setSel(item);}} style={{padding:"10px 14px",background:"#f8f6f4",border:"1px solid #e8e4e0",borderRadius:3,marginBottom:4,cursor:"pointer",opacity:0.7}} onMouseEnter={e=>e.currentTarget.style.opacity="1"} onMouseLeave={e=>e.currentTarget.style.opacity="0.7"}>
+              <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+                <span style={{fontSize:10,color:"#b0a898",fontFamily:FNTM,fontWeight:600}}>{item.id}</span>
+                <Badge label="Retired" colorFn={statusColor}/>
+                <Tag label={item.processArea}/>
+              </div>
+              <div style={{fontSize:12,color:"#8a8278",lineHeight:1.3}}>{item.title}</div>
+            </div>)}
           </div>
         </div>}
 
@@ -1657,9 +1703,17 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         <h3 style={{fontSize:16,color:"#062044",fontWeight:700,lineHeight:1.4,marginBottom:16,fontFamily:FNT}}>{sel.title}</h3>
         <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20}}>
           {sel.status&&<Badge label={sel.status} colorFn={statusColor}/>}
-          <Badge label={sel.confidence} colorFn={confidenceColor}/>
           <Tag label={sel.category}/>{sel.processArea&&<Tag label={sel.processArea}/>}
         </div>
+
+        {/* Verify button */}
+        <div style={{marginBottom:18,display:"flex",gap:8,alignItems:"center"}}>
+          <button onClick={()=>{setVerifications(prev=>({...prev,[sel.id]:[...(prev[sel.id]||[]),"You"]}));}} disabled={(verifications[sel.id]||[]).includes("You")} style={{padding:"6px 14px",borderRadius:3,fontSize:11,background:(verifications[sel.id]||[]).includes("You")?"#e6f5f1":"#FFFFFF",border:"1px solid #4FA89A",color:"#4FA89A",cursor:(verifications[sel.id]||[]).includes("You")?"default":"pointer",fontFamily:FNTM,fontWeight:700}}>
+            {(verifications[sel.id]||[]).includes("You")?"✓ Verified":"✓ Verify from Experience"}
+          </button>
+          {(verifications[sel.id]||[]).length>0&&<span style={{fontSize:10,color:"#8a8278",fontFamily:FNTM}}>{(verifications[sel.id]||[]).length} verification{(verifications[sel.id]||[]).length>1?"s":""}: {(verifications[sel.id]||[]).join(", ")}</span>}
+        </div>
+
         <div style={{marginBottom:18}}><div style={{fontSize:10,color:"#b0a898",textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontFamily:FNTM}}>Scope</div><div style={{fontSize:12,color:"#5a5550",lineHeight:1.5}}>{sel.scope||"—"}</div></div>
         {sel.rationale&&<div style={{marginBottom:18}}><div style={{fontSize:10,color:"#b0a898",textTransform:"uppercase",letterSpacing:1,marginBottom:4,fontFamily:FNTM}}>Rationale</div><div style={{fontSize:12,color:"#5a5550",lineHeight:1.5}}>{sel.rationale}</div></div>}
         <div style={{marginBottom:18}}>
@@ -1677,28 +1731,67 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
             <div style={{fontSize:10,color:"#8a8278",fontFamily:FNTM,marginTop:4}}>Asked by {sq.askedBy} · {new Date(sq.askedAt).toLocaleDateString()}</div>
           </div>:<span style={{fontSize:11,color:"#D8CEC3"}}>{sel.sourceQuestion}</span>;})()}
         </div>}
+
+        {/* Linked items with edit capability */}
         <div style={{marginBottom:18}}>
-          <div style={{fontSize:10,color:"#b0a898",textTransform:"uppercase",letterSpacing:1,marginBottom:6,fontFamily:FNTM}}>Linked {sel.type==="rule"?"Assertions":"Rules"}</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+            <div style={{fontSize:10,color:"#b0a898",textTransform:"uppercase",letterSpacing:1,fontFamily:FNTM}}>Linked {sel.type==="rule"?"Assertions":"Rules"}</div>
+            <button onClick={()=>setShowLinkEditor(showLinkEditor?null:sel.id)} style={{fontSize:9,padding:"2px 8px",background:"transparent",border:"1px solid #D8CEC3",borderRadius:3,color:"#8a8278",cursor:"pointer",fontFamily:FNTM,fontWeight:600}}>{showLinkEditor===sel.id?"Done":"Edit Links"}</button>
+          </div>
           <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
             {(sel.linkedAssertions||sel.linkedRules||[]).map(lid=><span key={lid} onClick={e=>{e.stopPropagation();const t=[...rules,...assertions].find(x=>x.id===lid);if(t)setSel(t);}} style={{padding:"2px 8px",borderRadius:3,fontSize:11,background:"#f0eeec",color:"#4FA89A",cursor:"pointer",fontFamily:FNTM,fontWeight:600,border:"1px solid #4FA89A30"}}>{lid}</span>)}
             {(sel.linkedAssertions||sel.linkedRules||[]).length===0&&<span style={{fontSize:11,color:"#D8CEC3"}}>None linked</span>}
           </div>
-          {sel.autoLinkedReasons&&sel.autoLinkedReasons.length>0&&<div style={{marginTop:6,fontSize:10,color:"#4FA89A",fontFamily:FNTM,fontStyle:"italic"}}>Auto-linked by scope/tag similarity</div>}
-        </div>
-        {/* Suggest new links */}
-        {(()=>{
-          const existing = new Set(sel.linkedAssertions||sel.linkedRules||[]);
-          const suggestions = computeLinks(sel, rules, assertions).filter(s=>!existing.has(s.id));
-          if(suggestions.length===0) return null;
-          return <div style={{marginBottom:18}}>
-            <div style={{fontSize:10,color:"#4FA89A",textTransform:"uppercase",letterSpacing:1,marginBottom:6,fontFamily:FNTM}}>Suggested Links</div>
-            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-              {suggestions.slice(0,4).map(s=><span key={s.id} style={{padding:"2px 8px",borderRadius:3,fontSize:10,background:"#e6f5f1",color:"#4FA89A",fontFamily:FNTM,border:"1px solid #4FA89A25",cursor:"default"}} title={s.title}>{s.id} <span style={{color:"#b0a898"}}>({s.score.toFixed(1)})</span></span>)}
+          {showLinkEditor===sel.id&&<div style={{marginTop:8,padding:"10px",background:"#fff",border:"1px solid #D8CEC3",borderRadius:3}}>
+            <input value={linkSearch} onChange={e=>setLinkSearch(e.target.value)} placeholder="Search to add link..." style={{...iS,fontSize:11,marginBottom:6}}/>
+            <div style={{maxHeight:120,overflow:"auto"}}>
+              {(sel.type==="rule"?assertions:rules).filter(x=>!((sel.linkedAssertions||sel.linkedRules||[]).includes(x.id))&&(linkSearch===""||x.title.toLowerCase().includes(linkSearch.toLowerCase())||x.id.toLowerCase().includes(linkSearch.toLowerCase()))).slice(0,6).map(x=><div key={x.id} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 6px",borderRadius:3,cursor:"pointer",fontSize:10,color:"#5a5550"}} onMouseEnter={e=>e.currentTarget.style.background="#f0eeec"} onMouseLeave={e=>e.currentTarget.style.background="transparent"} onClick={()=>{
+                const linkField=sel.type==="rule"?"linkedAssertions":"linkedRules";
+                const u=p=>p.map(r=>r.id===sel.id?{...r,[linkField]:[...(r[linkField]||[]),x.id]}:r);
+                if(sel.type==="rule")setRules(u); else setAssertions(u);
+                setSel(prev=>({...prev,[linkField]:[...(prev[linkField]||[]),x.id]}));
+              }}>
+                <span style={{color:"#4FA89A",fontWeight:700}}>{x.id}</span>
+                <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.title}</span>
+                <span style={{color:"#4FA89A",fontSize:14}}>+</span>
+              </div>)}
             </div>
-          </div>;
-        })()}
+            <input value={linkComment} onChange={e=>setLinkComment(e.target.value)} placeholder="Why is this linked? (optional)" style={{...iS,fontSize:10,marginTop:6,fontStyle:"italic"}}/>
+          </div>}
+          {/* Suggested links */}
+          {showLinkEditor!==sel.id&&(()=>{
+            const existing = new Set(sel.linkedAssertions||sel.linkedRules||[]);
+            const suggestions = computeLinks(sel, rules, assertions).filter(s=>!existing.has(s.id));
+            if(suggestions.length===0) return null;
+            return <div style={{marginTop:6}}>
+              <div style={{fontSize:9,color:"#4FA89A",fontFamily:FNTM,fontStyle:"italic",marginBottom:4}}>Suggested links</div>
+              <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                {suggestions.slice(0,4).map(s=><span key={s.id} style={{padding:"2px 8px",borderRadius:3,fontSize:10,background:"#e6f5f1",color:"#4FA89A",fontFamily:FNTM,border:"1px solid #4FA89A25",cursor:"pointer"}} title={s.title} onClick={()=>{
+                  const linkField=sel.type==="rule"?"linkedAssertions":"linkedRules";
+                  const u=p=>p.map(r=>r.id===sel.id?{...r,[linkField]:[...(r[linkField]||[]),s.id]}:r);
+                  if(sel.type==="rule")setRules(u); else setAssertions(u);
+                  setSel(prev=>({...prev,[linkField]:[...(prev[linkField]||[]),s.id]}));
+                }}>{s.id} +</span>)}
+              </div>
+            </div>;
+          })()}
+        </div>
+
         {(sel.tags||[]).length>0&&<div style={{marginBottom:18}}><div style={{fontSize:10,color:"#b0a898",textTransform:"uppercase",letterSpacing:1,marginBottom:6,fontFamily:FNTM}}>Tags</div><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{sel.tags.map(t=><Tag key={t} label={t}/>)}</div></div>}
         <div style={{padding:"10px 0",borderTop:"1px solid #D8CEC3",marginTop:12,fontSize:10,color:"#D8CEC3",fontFamily:FNTM}}><div>Created by: {sel.createdBy}</div><div>Created: {formatDate(sel.createdAt)}</div><div>Versions: {(sel.versions||[]).length}</div></div>
+
+        {/* Comments section */}
+        <div style={{marginTop:12,borderTop:"1px solid #D8CEC3",paddingTop:12}}>
+          <div style={{fontSize:10,color:"#b0a898",textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontFamily:FNTM}}>Comments ({(comments[sel.id]||[]).length})</div>
+          {(comments[sel.id]||[]).map((c,i)=><div key={i} style={{padding:"8px 10px",background:"#fff",borderRadius:3,marginBottom:6,border:"1px solid #e8e4e0"}}>
+            <div style={{fontSize:11,color:"#1F1F1F",lineHeight:1.5}}>{c.text}</div>
+            <div style={{fontSize:9,color:"#b0a898",fontFamily:FNTM,marginTop:4}}>— {c.by} · {new Date(c.date).toLocaleDateString()}</div>
+          </div>)}
+          <div style={{display:"flex",gap:6,marginTop:4}}>
+            <input value={newComment} onChange={e=>setNewComment(e.target.value)} placeholder="Add a comment..." style={{...iS,flex:1,fontSize:11,padding:"6px 10px"}} onKeyDown={e=>{if(e.key==="Enter"&&newComment.trim()){setComments(prev=>({...prev,[sel.id]:[...(prev[sel.id]||[]),{by:"You",text:newComment,date:new Date().toISOString()}]}));setNewComment("");}}}/>
+            <button onClick={()=>{if(!newComment.trim())return;setComments(prev=>({...prev,[sel.id]:[...(prev[sel.id]||[]),{by:"You",text:newComment,date:new Date().toISOString()}]}));setNewComment("");}} style={{padding:"6px 12px",borderRadius:3,fontSize:10,background:"#062044",border:"none",color:"#fff",cursor:"pointer",fontFamily:FNTM,fontWeight:700,flexShrink:0}}>Post</button>
+          </div>
+        </div>
         {/* Health indicators */}
         {(()=>{
           const score = healthScores[sel.id]||0;
@@ -1726,10 +1819,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
       </div>
       <Field label="Scope" hint="e.g. Supplier = X; Process = EAF"><input style={iS} value={form.scope} onChange={e=>setForm({...form,scope:e.target.value})}/></Field>
       {view!=="assertions"&&<Field label="Rationale"><textarea style={{...iS,height:60,resize:"vertical"}} value={form.rationale} onChange={e=>setForm({...form,rationale:e.target.value})}/></Field>}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        <Field label="Confidence"><select style={{...iS,cursor:"pointer"}} value={form.confidence} onChange={e=>setForm({...form,confidence:e.target.value})}>{CONFIDENCES.map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
-        {view!=="assertions"&&<Field label="Status"><select style={{...iS,cursor:"pointer"}} value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>{STATUSES.map(s=><option key={s} value={s}>{s}</option>)}</select></Field>}
-      </div>
+      {view!=="assertions"&&<Field label="Status"><select style={{...iS,cursor:"pointer"}} value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>{STATUSES.filter(s=>["Proposed","Active"].includes(s)).map(s=><option key={s} value={s}>{s}</option>)}</select></Field>}
       <Field label="Tags" hint="Comma separated"><input style={iS} value={form.tags} onChange={e=>setForm({...form,tags:e.target.value})} placeholder="scrap, eaf, quality"/></Field>
       <Field label="Evidence / Source Note"><textarea style={{...iS,height:50,resize:"vertical"}} value={form.evidenceText} onChange={e=>setForm({...form,evidenceText:e.target.value})} placeholder="Where does this knowledge come from?"/></Field>
       <Field label="Author"><input style={iS} value={form.createdBy} onChange={e=>setForm({...form,createdBy:e.target.value})} placeholder="Name"/></Field>
@@ -1745,10 +1835,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           <Field label="Process Area"><TypeaheadInput value={eForm.processArea||""} onChange={v=>setEForm({...eForm,processArea:v})} options={PROCESS_AREAS} placeholder="Type process area..."/></Field>
         </div>
         <Field label="Scope"><input style={iS} value={eForm.scope} onChange={e=>setEForm({...eForm,scope:e.target.value})}/></Field>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          <Field label="Confidence"><select style={{...iS,cursor:"pointer"}} value={eForm.confidence} onChange={e=>setEForm({...eForm,confidence:e.target.value})}>{CONFIDENCES.map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
-          {eForm.type==="rule"&&<Field label="Status"><select style={{...iS,cursor:"pointer"}} value={eForm.status} onChange={e=>setEForm({...eForm,status:e.target.value})}>{STATUSES.map(s=><option key={s} value={s}>{s}</option>)}</select></Field>}
-        </div>
+        {eForm.type==="rule"&&<Field label="Status"><select style={{...iS,cursor:"pointer"}} value={eForm.status} onChange={e=>setEForm({...eForm,status:e.target.value})}>{STATUSES.map(s=><option key={s} value={s}>{s}</option>)}</select></Field>}
         <Field label="Tags" hint="Comma separated"><input style={iS} value={eForm.tags} onChange={e=>setEForm({...eForm,tags:e.target.value})}/></Field>
         <div style={{borderTop:"1px solid #D8CEC3",paddingTop:14,marginTop:8}}>
           <div style={{fontSize:10,color:"#4FA89A",textTransform:"uppercase",letterSpacing:1.2,marginBottom:10,fontFamily:FNTM,fontWeight:700}}>VERSION AUDIT TRAIL</div>
@@ -1880,7 +1967,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           <input value={a.title} onChange={e=>{const u={...parsed,assertions:parsed.assertions.map((x,j)=>j===i?{...x,title:e.target.value}:x)};setParsed(u);}} style={{...iS,fontSize:12,fontWeight:500,marginBottom:6,background:"#fff"}}/>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <TypeaheadInput value={a.category} onChange={v=>{const u={...parsed,assertions:parsed.assertions.map((x,j)=>j===i?{...x,category:v}:x)};setParsed(u);}} options={CATEGORIES} placeholder="Category"/>
-            <select value={a.confidence} onChange={e=>{const u={...parsed,assertions:parsed.assertions.map((x,j)=>j===i?{...x,confidence:e.target.value}:x)};setParsed(u);}} style={{...iS,width:110,cursor:"pointer"}}>{CONFIDENCES.map(c=><option key={c} value={c}>{c}</option>)}</select>
+            
             <input value={a.scope||""} onChange={e=>{const u={...parsed,assertions:parsed.assertions.map((x,j)=>j===i?{...x,scope:e.target.value}:x)};setParsed(u);}} style={{...iS,flex:1,fontSize:11}} placeholder="Scope"/>
             <button onClick={()=>{const u={...parsed,assertions:parsed.assertions.filter((_,j)=>j!==i)};setParsed(u);}} style={{background:"none",border:"none",color:"#c0392b",cursor:"pointer",fontSize:14,padding:"0 4px"}}>✕</button>
           </div>
@@ -1894,7 +1981,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <TypeaheadInput value={r.category} onChange={v=>{const u={...parsed,rules:parsed.rules.map((x,j)=>j===i?{...x,category:v}:x)};setParsed(u);}} options={CATEGORIES} placeholder="Category"/>
             <TypeaheadInput value={r.processArea} onChange={v=>{const u={...parsed,rules:parsed.rules.map((x,j)=>j===i?{...x,processArea:v}:x)};setParsed(u);}} options={PROCESS_AREAS} placeholder="Process area"/>
-            <select value={r.confidence} onChange={e=>{const u={...parsed,rules:parsed.rules.map((x,j)=>j===i?{...x,confidence:e.target.value}:x)};setParsed(u);}} style={{...iS,width:110,cursor:"pointer"}}>{CONFIDENCES.map(c=><option key={c} value={c}>{c}</option>)}</select>
+            
             <button onClick={()=>{const u={...parsed,rules:parsed.rules.filter((_,j)=>j!==i)};setParsed(u);}} style={{background:"none",border:"none",color:"#c0392b",cursor:"pointer",fontSize:14,padding:"0 4px"}}>✕</button>
           </div>
         </div>)}
@@ -1937,6 +2024,25 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         </div>
         <h3 style={{fontSize:16,color:"#062044",fontWeight:700,lineHeight:1.4,marginBottom:12,fontFamily:FNT}}>{showEventDetail.title}</h3>
         <div style={{fontSize:12,color:"#5a5550",lineHeight:1.6,marginBottom:16,padding:"10px 14px",background:"#f8f6f4",borderRadius:3,border:`1px solid ${showEventDetail.outcome==="Positive"?"#4FA89A15":"#D8CEC380"}`}}>{showEventDetail.description}</div>
+
+        {/* Tagged people */}
+        {(showEventDetail.taggedPeople||[]).length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16,alignItems:"center"}}>
+          <span style={{fontSize:10,color:"#b0a898",fontFamily:FNTM}}>Tagged:</span>
+          {showEventDetail.taggedPeople.map((p,i)=><span key={i} style={{padding:"3px 10px",borderRadius:3,background:"#e8edf4",color:"#062044",fontSize:10,fontFamily:FNTM,fontWeight:600}}>{p}</span>)}
+        </div>}
+
+        {/* Comments on event */}
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:10,color:"#b0a898",textTransform:"uppercase",letterSpacing:1,marginBottom:8,fontFamily:FNTM}}>Comments ({(comments[showEventDetail.id]||[]).length})</div>
+          {(comments[showEventDetail.id]||[]).map((c,i)=><div key={i} style={{padding:"8px 10px",background:"#fff",borderRadius:3,marginBottom:6,border:"1px solid #e8e4e0"}}>
+            <div style={{fontSize:11,color:"#1F1F1F",lineHeight:1.5}}>{c.text}</div>
+            <div style={{fontSize:9,color:"#b0a898",fontFamily:FNTM,marginTop:4}}>— {c.by} · {new Date(c.date).toLocaleDateString()}</div>
+          </div>)}
+          <div style={{display:"flex",gap:6,marginTop:4}}>
+            <input value={newComment} onChange={e=>setNewComment(e.target.value)} placeholder="Add a comment..." style={{...iS,flex:1,fontSize:11,padding:"6px 10px"}} onKeyDown={e=>{if(e.key==="Enter"&&newComment.trim()){setComments(prev=>({...prev,[showEventDetail.id]:[...(prev[showEventDetail.id]||[]),{by:"You",text:newComment,date:new Date().toISOString()}]}));setNewComment("");}}}/>
+            <button onClick={()=>{if(!newComment.trim())return;setComments(prev=>({...prev,[showEventDetail.id]:[...(prev[showEventDetail.id]||[]),{by:"You",text:newComment,date:new Date().toISOString()}]}));setNewComment("");}} style={{padding:"6px 12px",borderRadius:3,fontSize:10,background:"#062044",border:"none",color:"#fff",cursor:"pointer",fontFamily:FNTM,fontWeight:700,flexShrink:0}}>Post</button>
+          </div>
+        </div>
 
         {/* Photo evidence */}
         {(showEventDetail.photos||[]).length>0&&<div style={{marginBottom:16}}>
@@ -2004,7 +2110,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
             <input value={a.title} onChange={e=>{const u={...genParsed,assertions:genParsed.assertions.map((x,j)=>j===i?{...x,title:e.target.value}:x)};setGenParsed(u);}} style={{...iS,fontSize:12,fontWeight:500,marginBottom:6,background:"#fff"}}/>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <TypeaheadInput value={a.category} onChange={v=>{const u={...genParsed,assertions:genParsed.assertions.map((x,j)=>j===i?{...x,category:v}:x)};setGenParsed(u);}} options={CATEGORIES} placeholder="Category"/>
-              <select value={a.confidence} onChange={e=>{const u={...genParsed,assertions:genParsed.assertions.map((x,j)=>j===i?{...x,confidence:e.target.value}:x)};setGenParsed(u);}} style={{...iS,width:110,cursor:"pointer"}}>{CONFIDENCES.map(c=><option key={c} value={c}>{c}</option>)}</select>
+              
               <input value={a.scope||""} onChange={e=>{const u={...genParsed,assertions:genParsed.assertions.map((x,j)=>j===i?{...x,scope:e.target.value}:x)};setGenParsed(u);}} style={{...iS,flex:1,fontSize:11}} placeholder="Scope"/>
               <button onClick={()=>{const u={...genParsed,assertions:genParsed.assertions.filter((_,j)=>j!==i)};setGenParsed(u);}} style={{background:"none",border:"none",color:"#c0392b",cursor:"pointer",fontSize:14,padding:"0 4px"}}>✕</button>
             </div>
@@ -2017,7 +2123,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <TypeaheadInput value={r.category} onChange={v=>{const u={...genParsed,rules:genParsed.rules.map((x,j)=>j===i?{...x,category:v}:x)};setGenParsed(u);}} options={CATEGORIES} placeholder="Category"/>
               <TypeaheadInput value={r.processArea} onChange={v=>{const u={...genParsed,rules:genParsed.rules.map((x,j)=>j===i?{...x,processArea:v}:x)};setGenParsed(u);}} options={PROCESS_AREAS} placeholder="Process area"/>
-              <select value={r.confidence} onChange={e=>{const u={...genParsed,rules:genParsed.rules.map((x,j)=>j===i?{...x,confidence:e.target.value}:x)};setGenParsed(u);}} style={{...iS,width:110,cursor:"pointer"}}>{CONFIDENCES.map(c=><option key={c} value={c}>{c}</option>)}</select>
+              
               <button onClick={()=>{const u={...genParsed,rules:genParsed.rules.filter((_,j)=>j!==i)};setGenParsed(u);}} style={{background:"none",border:"none",color:"#c0392b",cursor:"pointer",fontSize:14,padding:"0 4px"}}>✕</button>
             </div>
           </div>)}
@@ -2053,6 +2159,30 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         <Field label="Reported By"><input style={iS} value={evForm.reportedBy} onChange={e=>setEvForm({...evForm,reportedBy:e.target.value})} placeholder="Name"/></Field>
       </div>
       <Field label="Description"><textarea style={{...iS,height:70,resize:"vertical",lineHeight:1.5}} value={evForm.description} onChange={e=>setEvForm({...evForm,description:e.target.value})} placeholder={evForm.outcome==="Positive"?"What went well? Include heat numbers, product grades, conditions that drove success...":"What happened? Include heat numbers, product grades, timing..."}/></Field>
+
+      {/* Tag people */}
+      <Field label="Tag People" hint="Tag team members to review, comment, or contribute to this event">
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
+          {(evForm.taggedPeople||[]).map((p,i)=><span key={i} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:3,background:"#e8edf4",color:"#062044",fontSize:10,fontFamily:FNTM,fontWeight:600}}>
+            {p}
+            <button onClick={()=>setEvForm(f=>({...f,taggedPeople:f.taggedPeople.filter((_,j)=>j!==i)}))} style={{background:"none",border:"none",color:"#8a8278",cursor:"pointer",fontSize:12,padding:0,lineHeight:1}}>✕</button>
+          </span>)}
+        </div>
+        <div style={{position:"relative"}}>
+          <input
+            style={{...iS,fontSize:11}}
+            placeholder="Type a name to tag..."
+            onKeyDown={e=>{
+              if(e.key==="Enter"&&e.target.value.trim()){
+                e.preventDefault();
+                setEvForm(f=>({...f,taggedPeople:[...(f.taggedPeople||[]),e.target.value.trim()]}));
+                e.target.value="";
+              }
+            }}
+          />
+          <div style={{position:"absolute",right:8,top:6,fontSize:9,color:"#b0a898",fontFamily:FNTM}}>Enter to add</div>
+        </div>
+      </Field>
 
       {/* Photo evidence */}
       <div style={{marginBottom:16}}>
@@ -2126,7 +2256,7 @@ Extract ALL distinct assertions (observed facts/patterns) and rules (actionable 
         </div>}
         {(showAnswerModal.generatedAssertions||[]).length>0&&<div style={{marginBottom:12}}>
           <div style={{fontSize:10,color:"#4FA89A",fontFamily:FNTM,fontWeight:700,letterSpacing:0.8,marginBottom:6}}>GENERATED ASSERTIONS</div>
-          {showAnswerModal.generatedAssertions.map(aid=>{const a=assertions.find(x=>x.id===aid);return a?<div key={aid} onClick={()=>{setShowAnswerModal(null);setView("assertions");setSel(a);}} style={{padding:"8px 12px",background:"#f8f6f4",borderRadius:3,marginBottom:4,fontSize:12,color:"#062044",cursor:"pointer",border:"1px solid #e8e4e0",display:"flex",alignItems:"center",gap:8}}><span style={{color:"#4FA89A",fontWeight:700,flexShrink:0}}>{aid}</span><span style={{flex:1}}>{a.title}</span><Badge label={a.confidence} colorFn={confidenceColor}/></div>:null;})}
+          {showAnswerModal.generatedAssertions.map(aid=>{const a=assertions.find(x=>x.id===aid);return a?<div key={aid} onClick={()=>{setShowAnswerModal(null);setView("assertions");setSel(a);}} style={{padding:"8px 12px",background:"#f8f6f4",borderRadius:3,marginBottom:4,fontSize:12,color:"#062044",cursor:"pointer",border:"1px solid #e8e4e0",display:"flex",alignItems:"center",gap:8}}><span style={{color:"#4FA89A",fontWeight:700,flexShrink:0}}>{aid}</span><span style={{flex:1}}>{a.title}</span></div>:null;})}
         </div>}
 
         {/* Add answer input */}
