@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FNTM, iS } from '../lib/constants.js'
+import { FNT, iS } from '../lib/constants.js'
 import { fetchLinks, saveLink, deleteLink, searchKnowledge, fetchSuggestedLinks } from '../lib/db.js'
 import { getDisplayName } from '../lib/userContext.js'
 

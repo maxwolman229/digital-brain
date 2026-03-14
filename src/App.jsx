@@ -7,6 +7,7 @@ import Auth from './components/Auth.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import PlantHome from './components/PlantHome.jsx'
 import KnowledgeBank from './components/KnowledgeBank.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 
 export default function App() {
@@ -102,6 +103,7 @@ export default function App() {
   } : null
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
         {/* Public */}
@@ -219,5 +221,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }

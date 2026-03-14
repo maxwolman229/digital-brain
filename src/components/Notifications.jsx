@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { FNTM } from '../lib/constants.js'
+import { FNT } from '../lib/constants.js'
 
 const SEED = [
   { text: 'R-003 was promoted to Verified status', date: '2025-02-20T10:00:00Z', read: false, target: { view: 'rules' } },

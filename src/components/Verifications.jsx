@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FNTM } from '../lib/constants.js'
+import { FNT } from '../lib/constants.js'
 import { fetchItemVerifications, addVerification } from '../lib/db.js'
 import { getDisplayName } from '../lib/userContext.js'
 

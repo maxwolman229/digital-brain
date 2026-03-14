@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { paColor, statusColor, FNTM } from '../lib/constants.js'
+import { paColor, statusColor, FNT } from '../lib/constants.js'
 import { Badge } from './shared.jsx'
 
 export default function GraphView({ rules, assertions, gpf, gcf, onSelect, focusNodeId }) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FNTM, iS } from '../lib/constants.js'
+import { FNT, iS } from '../lib/constants.js'
 import { fetchItemComments, addComment } from '../lib/db.js'
 import { getDisplayName } from '../lib/userContext.js'
 
