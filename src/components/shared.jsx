@@ -39,7 +39,7 @@ export const Modal = ({ open, onClose, title, children, width = 640 }) => {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(6,32,68,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#FFFFFF", border: "1px solid #D8CEC3", borderRadius: 4, width: "90%", maxWidth: width, maxHeight: "85vh", overflow: "auto", padding: 28, boxShadow: "0 20px 60px rgba(6,32,68,0.2)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 18, color: "#062044", fontFamily: FNT, fontWeight: 800 }}>{title}</h2>
+          <h2 style={{ margin: 0, fontSize: 18, color: "#062044", fontFamily: FNT, fontWeight: 700 }}>{title}</h2>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#8a8278", fontSize: 22, cursor: "pointer" }}>✕</button>
         </div>
         {children}

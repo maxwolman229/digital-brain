@@ -1,17 +1,36 @@
 import { useState, useEffect, useRef } from 'react'
 import { FNT, FNTM, statusColor, paColor } from '../lib/constants.js'
 import { Badge, PillFilter, Modal } from './shared.jsx'
-import { fetchRules, fetchAssertions } from '../lib/db.js'
+import { fetchRules, fetchAssertions, fetchAllLinksForGraph, fetchItemById } from '../lib/db.js'
+import Comments from './Comments.jsx'
+import Verifications from './Verifications.jsx'
+import LinkEditor from './LinkEditor.jsx'
 
 // ─── Force-directed graph canvas ───────────────────────────────────────────────
 
-function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
+function edgeCol(relType) {
+  return ({
+    supports:     '#4FA89A',
+    contradicts:  '#c0392b',
+    relates_to:   '#B0A898',
+    derived_from: '#4466AA',
+    supersedes:   '#F2652F',
+    caused_by:    '#c0392b',
+    mitigates:    '#16a085',
+  })[relType] || '#B0A898'
+}
+
+function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId, processAreas = [] }) {
   const canvasRef = useRef(null)
   const nodesRef = useRef([])
   const edgesRef = useRef([])
   const animRef = useRef(null)
   const dragRef = useRef(null)
   const hovRef = useRef(null)
+  const hovEdgeRef = useRef(null)
+  const edgeMidsRef = useRef([])
+  const didDragRef = useRef(false)
+  const mouseDownPosRef = useRef(null)
   const szRef = useRef({ w: 800, h: 600 })
   const [tip, setTip] = useState(null)
   const highlightRef = useRef(highlightId)
@@ -80,22 +99,18 @@ function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
     })
 
     const edges = []
-    fit.forEach(item => {
-      const linked = item.type === 'rule'
-        ? (item.linkedAssertions || [])
-        : (item.linkedRules || [])
-      linked.forEach(tid => {
-        if (ids.has(tid) && !edges.find(e =>
-          (e.s === item.id && e.t === tid) || (e.s === tid && e.t === item.id)
-        )) {
-          edges.push({ s: item.id, t: tid })
-        }
-      })
+    links.forEach(l => {
+      const s = l.source_id, t = l.target_id
+      if (ids.has(s) && ids.has(t) && !edges.find(e =>
+        (e.s === s && e.t === t) || (e.s === t && e.t === s)
+      )) {
+        edges.push({ s, t, relType: l.relationship_type || 'relates_to', comment: l.comment || '' })
+      }
     })
 
     nodesRef.current = nodes
     edgesRef.current = edges
-  }, [rules, assertions, gpf, gcf])
+  }, [rules, assertions, links, gpf, gcf])
 
   // Resize observer
   useEffect(() => {
@@ -195,19 +210,25 @@ function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
       })
 
       const hov = hovRef.current
+      const hovEdge = hovEdgeRef.current
 
       // Edges
+      const mids = []
       es.forEach(e => {
         const a = nm[e.s], b = nm[e.t]; if (!a || !b) return
         const hl = hov && (hov.id === e.s || hov.id === e.t)
+        const isHovEdge = hovEdge && hovEdge.s === e.s && hovEdge.t === e.t
         const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
         const dx = b.x - a.x, dy = b.y - a.y
         const nx = -dy * 0.08, ny = dx * 0.08
+        const col = edgeCol(e.relType)
+        // Store curve midpoint for hover detection (Q(0.5) of bezier)
+        mids.push({ cx: mx + nx * 0.5, cy: my + ny * 0.5, e })
         ctx.beginPath()
         ctx.moveTo(a.x, a.y)
         ctx.quadraticCurveTo(mx + nx, my + ny, b.x, b.y)
-        ctx.strokeStyle = hl ? '#4FA89A88' : '#D8CEC380'
-        ctx.lineWidth = hl ? 2.5 : 1
+        ctx.strokeStyle = (hl || isHovEdge) ? col + 'cc' : col + '55'
+        ctx.lineWidth = (hl || isHovEdge) ? 2.5 : 1
         ctx.stroke()
         // Arrowhead at midpoint
         const at = 0.5, dt = 0.01
@@ -219,9 +240,10 @@ function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
         ctx.save()
         ctx.translate(px, py); ctx.rotate(ang)
         ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -4); ctx.lineTo(-4, 4); ctx.closePath()
-        ctx.fillStyle = hl ? '#4FA89A70' : '#D8CEC360'; ctx.fill()
+        ctx.fillStyle = (hl || isHovEdge) ? col + 'aa' : col + '44'; ctx.fill()
         ctx.restore()
       })
+      edgeMidsRef.current = mids
 
       // Nodes
       ns.forEach(n => {
@@ -290,7 +312,7 @@ function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
 
     animRef.current = requestAnimationFrame(tick)
     return () => { on = false; cancelAnimationFrame(animRef.current) }
-  }, [rules, assertions, gpf, gcf])
+  }, [rules, assertions, links, gpf, gcf])
 
   const getNode = e => {
     const r = canvasRef.current.getBoundingClientRect()
@@ -304,25 +326,42 @@ function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
         ref={canvasRef}
         onMouseDown={e => {
           const n = getNode(e)
+          didDragRef.current = false
+          mouseDownPosRef.current = { x: e.clientX, y: e.clientY }
           if (n) { dragRef.current = n; n.vx = 0; n.vy = 0 }
         }}
         onMouseMove={e => {
           const r = canvasRef.current.getBoundingClientRect()
           const mx = e.clientX - r.left, my = e.clientY - r.top
-          if (dragRef.current) { dragRef.current.x = mx; dragRef.current.y = my; return }
+          if (dragRef.current) {
+            const dp = mouseDownPosRef.current
+            if (dp && (Math.abs(e.clientX - dp.x) > 4 || Math.abs(e.clientY - dp.y) > 4)) {
+              didDragRef.current = true
+            }
+            dragRef.current.x = mx; dragRef.current.y = my; return
+          }
           const n = getNode(e)
           hovRef.current = n || null
-          canvasRef.current.style.cursor = n ? 'grab' : 'default'
-          setTip(n ? { x: mx, y: my, node: n } : null)
+          if (n) {
+            hovEdgeRef.current = null
+            canvasRef.current.style.cursor = 'pointer'
+            setTip({ x: mx, y: my, node: n })
+          } else {
+            const em = edgeMidsRef.current.find(m => {
+              const ddx = m.cx - mx, ddy = m.cy - my
+              return ddx * ddx + ddy * ddy < 225 // 15px radius
+            })
+            hovEdgeRef.current = em?.e || null
+            canvasRef.current.style.cursor = 'default'
+            setTip(em ? { x: mx, y: my, edge: em.e } : null)
+          }
         }}
         onMouseUp={() => { dragRef.current = null }}
-        onMouseLeave={() => { dragRef.current = null; hovRef.current = null; setTip(null) }}
-        onDoubleClick={e => {
+        onMouseLeave={() => { dragRef.current = null; hovRef.current = null; hovEdgeRef.current = null; setTip(null) }}
+        onClick={e => {
+          if (didDragRef.current) return
           const n = getNode(e)
-          if (n) {
-            const it = [...rules, ...assertions].find(i => i.id === n.id)
-            if (it) onSelect(it)
-          }
+          if (n) onSelect(n.id, n.type)
         }}
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
@@ -338,13 +377,15 @@ function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
             <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '1.5px solid #4FA89A' }} /> Assertion
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-          {['EAF', 'Casting', 'Ladle Furnace'].map(pa => (
-            <span key={pa} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: paColor(pa) }} /> {pa}
-            </span>
-          ))}
-        </div>
+        {processAreas.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+            {processAreas.map(pa => (
+              <span key={pa} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: paColor(pa) }} /> {pa}
+              </span>
+            ))}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 5, borderTop: '1px solid #D8CEC3', paddingTop: 5 }}>
           {['Proposed', 'Active', 'Verified', 'Established'].map(s => (
             <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -352,7 +393,14 @@ function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
             </span>
           ))}
         </div>
-        <div style={{ marginTop: 6, color: '#b0a898', fontStyle: 'italic' }}>Double-click to inspect · Drag to reposition</div>
+        <div style={{ marginTop: 6, paddingTop: 5, borderTop: '1px solid #D8CEC3' }}>
+          {[['supports', 'supports'], ['contradicts', 'contradicts'], ['relates_to', 'relates to']].map(([rt, label]) => (
+            <span key={rt} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+              <span style={{ display: 'inline-block', width: 16, height: 2, background: edgeCol(rt), borderRadius: 1 }} /> {label}
+            </span>
+          ))}
+        </div>
+        <div style={{ marginTop: 4, color: '#b0a898', fontStyle: 'italic' }}>Click to inspect · Drag to reposition</div>
       </div>
 
       {/* Hover tooltip */}
@@ -365,64 +413,108 @@ function GraphCanvas({ rules, assertions, gpf, gcf, onSelect, highlightId }) {
           padding: '10px 14px', maxWidth: 260, pointerEvents: 'none',
           boxShadow: '0 8px 24px rgba(6,32,68,0.15)',
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: paColor(tip.node.processArea), fontFamily: FNT, marginBottom: 4 }}>
-            {tip.node.label} · {tip.node.type.toUpperCase()}
-          </div>
-          <div style={{ fontSize: 11, color: '#1F1F1F', lineHeight: 1.4, marginBottom: 6 }}>{tip.node.title}</div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {tip.node.status && <Badge label={tip.node.status} colorFn={statusColor} />}
-          </div>
+          {tip.node ? (
+            <>
+              <div style={{ fontSize: 11, fontWeight: 700, color: paColor(tip.node.processArea), fontFamily: FNT, marginBottom: 4 }}>
+                {tip.node.label} · {tip.node.type.toUpperCase()}
+              </div>
+              <div style={{ fontSize: 11, color: '#1F1F1F', lineHeight: 1.4, marginBottom: 6 }}>{tip.node.title}</div>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {tip.node.status && <Badge label={tip.node.status} colorFn={statusColor} />}
+              </div>
+            </>
+          ) : tip.edge ? (
+            <>
+              <div style={{ fontSize: 11, fontWeight: 700, fontFamily: FNT, marginBottom: 4 }}>
+                <span style={{ color: edgeCol(tip.edge.relType) }}>{tip.edge.relType.replace(/_/g, ' ')}</span>
+              </div>
+              <div style={{ fontSize: 10, color: '#5a5550', fontFamily: FNT, marginBottom: tip.edge.comment ? 4 : 0 }}>
+                {tip.edge.s} → {tip.edge.t}
+              </div>
+              {tip.edge.comment && (
+                <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, fontStyle: 'italic' }}>
+                  "{tip.edge.comment}"
+                </div>
+              )}
+            </>
+          ) : null}
         </div>
       )}
     </div>
   )
 }
 
-// ─── Simple detail modal for selected item ─────────────────────────────────────
+// ─── Full detail modal for selected item ───────────────────────────────────────
 
-function ItemDetailModal({ item, onClose, onNavigate }) {
-  if (!item) return null
+function ItemDetailModal({ item, loading, onClose, onNavigate }) {
   return (
-    <Modal open title={item.id} onClose={onClose} width={500}>
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#062044', lineHeight: 1.4, marginBottom: 10 }}>
-          {item.title}
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-          <Badge label={item.status} colorFn={statusColor} />
-          {item.processArea && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: paColor(item.processArea), fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.6 }}>{item.processArea}</span>
-          )}
-          {item.category && (
-            <span style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT }}>{item.category}</span>
-          )}
-        </div>
-        {item.rationale && (
-          <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, marginBottom: 12 }}>{item.rationale}</div>
-        )}
-        {item.scope && (
-          <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginBottom: 4 }}>
-            <span style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6 }}>Scope:</span> {item.scope}
+    <Modal open={!!(item || loading)} title={item ? `${item.id}${item.versions?.length ? ' · v' + item.versions.length : ''}` : 'Loading…'} onClose={onClose} width={640}>
+      {loading && (
+        <div style={{ padding: '40px 0', textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 13 }}>Loading…</div>
+      )}
+      {item && !loading && (
+        <div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+            {item.status && <Badge label={item.status} colorFn={statusColor} />}
+            {item.category && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: '#8a8278', fontFamily: FNT }}>{item.category}</span>}
+            {item.processArea && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: paColor(item.processArea) + '22', color: paColor(item.processArea), fontFamily: FNT, fontWeight: 700 }}>{item.processArea}</span>}
+            {item.confidence && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, border: '1px solid #D8CEC3' }}>{item.confidence} confidence</span>}
           </div>
-        )}
-        {(item.linkedAssertions?.length > 0 || item.linkedRules?.length > 0) && (
-          <div style={{ fontSize: 11, color: '#4FA89A', fontFamily: FNT, marginTop: 8 }}>
-            {item.type === 'rule'
-              ? `Links to ${item.linkedAssertions.length} assertion${item.linkedAssertions.length !== 1 ? 's' : ''}`
-              : `Links to ${item.linkedRules.length} rule${item.linkedRules.length !== 1 ? 's' : ''}`}
+
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#062044', lineHeight: 1.4, marginBottom: 14, fontFamily: FNT }}>{item.title}</div>
+
+          {item.scope && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Scope</div>
+              <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.scope}</div>
+            </div>
+          )}
+          {item.rationale && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Rationale</div>
+              <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.rationale}</div>
+            </div>
+          )}
+          {(item.evidence || []).length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Evidence</div>
+              {item.evidence.map((ev, i) => (
+                <div key={i} style={{ padding: '6px 10px', background: '#f8f6f4', borderRadius: 3, marginBottom: 4, fontSize: 11, color: '#5a5550', lineHeight: 1.4 }}>
+                  <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 9, color: '#b0a898', letterSpacing: 0.6 }}>{ev.type} · </span>{ev.text}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ marginBottom: 12 }}>
+            <Verifications targetType={item.type} targetId={item.id} />
           </div>
-        )}
-      </div>
-      <div style={{ borderTop: '1px solid #e8e4e0', paddingTop: 14, display: 'flex', gap: 8 }}>
-        <button
-          onClick={() => { onClose(); onNavigate?.(item.type === 'rule' ? 'rules' : 'assertions') }}
-          style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: '#062044', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
-        >View Full Record</button>
-        <button
-          onClick={onClose}
-          style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', fontFamily: FNT }}
-        >Close</button>
-      </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <LinkEditor
+              sourceType={item.type}
+              sourceId={item.id}
+              onOpenItem={() => {}}
+              sourceMeta={{ processArea: item.processArea, category: item.category }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <Comments targetType={item.type} targetId={item.id} />
+          </div>
+
+          <div style={{ borderTop: '1px solid #e8e4e0', paddingTop: 14, display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => { onClose(); onNavigate?.(item.type === 'rule' ? 'rules' : 'assertions') }}
+              style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: '#062044', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
+            >View Full Record</button>
+            <button
+              onClick={onClose}
+              style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', fontFamily: FNT }}
+            >Close</button>
+          </div>
+        </div>
+      )}
     </Modal>
   )
 }
@@ -432,15 +524,19 @@ function ItemDetailModal({ item, onClose, onNavigate }) {
 export default function RelationshipGraph({ onNavigate, highlightId, onClearHighlight, processAreas = [], categories = [] }) {
   const [rules, setRules] = useState([])
   const [assertions, setAssertions] = useState([])
+  const [links, setLinks] = useState([])
   const [loading, setLoading] = useState(true)
   const [gpf, setGpf] = useState([])  // graph process filter
   const [gcf, setGcf] = useState([])  // graph category filter
   const [sel, setSel] = useState(null)
+  const [selLoading, setSelLoading] = useState(false)
 
   useEffect(() => {
     Promise.all([fetchRules(), fetchAssertions()]).then(([r, a]) => {
       setRules(r)
       setAssertions(a)
+      const allIds = [...r.map(x => x.id), ...a.map(x => x.id)]
+      fetchAllLinksForGraph(allIds).then(setLinks)
       setLoading(false)
     })
   }, [])
@@ -455,9 +551,8 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
   )
 
   const totalNodes = rules.length + assertions.length
-  const linkedCount = [...rules, ...assertions].filter(i =>
-    (i.linkedAssertions?.length > 0) || (i.linkedRules?.length > 0)
-  ).length
+  const linkedIds = new Set(links.flatMap(l => [l.source_id, l.target_id]))
+  const linkedCount = [...rules, ...assertions].filter(i => linkedIds.has(i.id)).length
 
   return (
     <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
@@ -493,7 +588,7 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
             {' · '}
             <span style={{ color: '#4FA89A', fontWeight: 700 }}>{linkedCount}</span> linked
           </div>
-          Nodes clustered by process area. Edges show rule↔assertion links. Filter to isolate knowledge chains.
+          Nodes clustered by process area. Edges show explicit links. Filter to isolate knowledge chains.
         </div>
       </div>
 
@@ -502,16 +597,27 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
         <GraphCanvas
           rules={rules}
           assertions={assertions}
+          links={links}
           gpf={gpf}
           gcf={gcf}
-          onSelect={(it) => { setSel(it); onClearHighlight?.() }}
+          onSelect={(id, type) => {
+            onClearHighlight?.()
+            setSel(null)
+            setSelLoading(true)
+            fetchItemById(type, id).then(item => {
+              setSel(item)
+              setSelLoading(false)
+            })
+          }}
           highlightId={highlightId}
+          processAreas={processAreas}
         />
       </div>
 
       <ItemDetailModal
         item={sel}
-        onClose={() => setSel(null)}
+        loading={selLoading}
+        onClose={() => { setSel(null); setSelLoading(false) }}
         onNavigate={onNavigate}
       />
     </div>

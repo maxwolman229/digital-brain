@@ -287,7 +287,7 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
                 background: loading ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
                 border: 'none',
                 color: loading ? 'rgba(255,255,255,0.4)' : '#062044',
-                fontSize: 13, fontWeight: 800, letterSpacing: 1.2,
+                fontSize: 13, fontWeight: 700, letterSpacing: 1.2,
                 textTransform: 'uppercase', cursor: loading ? 'default' : 'pointer',
                 fontFamily: FNT, transition: 'all 0.15s',
               }}

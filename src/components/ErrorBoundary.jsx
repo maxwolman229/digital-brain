@@ -48,7 +48,7 @@ export default class ErrorBoundary extends Component {
               style={{
                 padding: '9px 22px', borderRadius: 3, fontSize: 12,
                 background: '#FFFFFF', border: 'none', color: '#062044',
-                cursor: 'pointer', fontFamily: FNT, fontWeight: 800,
+                cursor: 'pointer', fontFamily: FNT, fontWeight: 700,
               }}
             >
               Reload Page

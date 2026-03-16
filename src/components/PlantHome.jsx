@@ -5,7 +5,6 @@ import { findOrCreateOrg, createPlant, createMembership, joinPlantByCode } from 
 const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
 const FNTM = "'IBM Plex Mono', 'Courier New', monospace"
 
-const ALL_AREAS = ['EAF', 'Casting', 'Rolling', 'Ladle Furnace', 'Scrap Yard', 'Quality Lab']
 
 const iS = {
   width: '100%', padding: '10px 14px', fontSize: 13, fontFamily: FNT,
@@ -34,17 +33,11 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
   const [joinCode, setJoinCode] = useState('')
   const [orgName, setOrgName] = useState('')
   const [plantName, setPlantName] = useState('')
-  const [areas, setAreas] = useState(['EAF', 'Casting', 'Ladle Furnace'])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  function toggleArea(a) {
-    setAreas(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a])
-  }
-
   function resetPanels() {
-    setPanel(null); setJoinCode(''); setOrgName(''); setPlantName('')
-    setAreas(['EAF', 'Casting', 'Ladle Furnace']); setError(null)
+    setPanel(null); setJoinCode(''); setOrgName(''); setPlantName(''); setError(null)
   }
 
   async function handleJoin() {
@@ -63,11 +56,10 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
   async function handleCreate() {
     if (!orgName.trim()) { setError('Organisation name is required.'); return }
     if (!plantName.trim()) { setError('Plant name is required.'); return }
-    if (areas.length === 0) { setError('Select at least one process area.'); return }
     setSaving(true); setError(null)
     try {
       const org = await findOrCreateOrg(orgName)
-      const plant = await createPlant(org.id, plantName, areas)
+      const plant = await createPlant(org.id, plantName, [])
       await createMembership(userId, plant.id, 'admin')
       const membership = {
         membershipId: null,
@@ -150,7 +142,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
                   style={{
                     padding: '7px 16px', borderRadius: 3, fontSize: 11,
                     background: '#FFFFFF', border: 'none', color: '#062044',
-                    fontFamily: FNT, fontWeight: 800, letterSpacing: 0.5, cursor: 'pointer',
+                    fontFamily: FNT, fontWeight: 700, letterSpacing: 0.5, cursor: 'pointer',
                   }}
                 >
                   Enter →
@@ -178,7 +170,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
               style={{
                 flex: 1, padding: '12px', borderRadius: 3, fontSize: 12,
                 background: '#FFFFFF', border: 'none',
-                color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 800,
+                color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700,
               }}
             >
               + Create a Plant
@@ -214,7 +206,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
               <button
                 onClick={handleJoin}
                 disabled={saving}
-                style={{ flex: 1, padding: '10px', borderRadius: 3, fontSize: 12, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 800, opacity: saving ? 0.6 : 1 }}
+                style={{ flex: 1, padding: '10px', borderRadius: 3, fontSize: 12, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, opacity: saving ? 0.6 : 1 }}
               >
                 {saving ? 'Joining…' : 'Join Plant →'}
               </button>
@@ -243,30 +235,6 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
               <input style={iS} type="text" value={plantName} onChange={e => setPlantName(e.target.value)} placeholder="e.g. Contrecoeur Meltshop" />
             </div>
 
-            <div style={{ marginBottom: 20 }}>
-              <label style={labelS}>Process Areas</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {ALL_AREAS.map(a => {
-                  const active = areas.includes(a)
-                  return (
-                    <button
-                      key={a}
-                      onClick={() => toggleArea(a)}
-                      style={{
-                        padding: '5px 12px', borderRadius: 3, fontSize: 11, fontFamily: FNT,
-                        background: active ? '#4FA89A' : 'transparent',
-                        border: `1px solid ${active ? '#4FA89A' : 'rgba(255,255,255,0.2)'}`,
-                        color: active ? '#fff' : 'rgba(255,255,255,0.5)',
-                        cursor: 'pointer', fontWeight: active ? 700 : 400,
-                      }}
-                    >
-                      {a}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
             {error && <ErrorBox msg={error} />}
 
             <div style={{ display: 'flex', gap: 8 }}>
@@ -276,7 +244,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
               <button
                 onClick={handleCreate}
                 disabled={saving}
-                style={{ flex: 1, padding: '10px', borderRadius: 3, fontSize: 12, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 800, opacity: saving ? 0.6 : 1 }}
+                style={{ flex: 1, padding: '10px', borderRadius: 3, fontSize: 12, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, opacity: saving ? 0.6 : 1 }}
               >
                 {saving ? 'Creating…' : 'Launch Knowledge Bank →'}
               </button>

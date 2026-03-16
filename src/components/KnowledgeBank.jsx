@@ -15,13 +15,13 @@ import NarrativeInput from './NarrativeInput.jsx'
 import PlantSettings from './PlantSettings.jsx'
 
 const TABS = [
-  { id: 'query',      icon: '⌕', label: 'Query' },
+  { id: 'query',      icon: '⌕', label: 'Ask the Bank' },
+  { id: 'questions',  icon: '?', label: 'Ask the Team' },
   { id: 'rules',      icon: '◆', label: 'Rules' },
   { id: 'assertions', icon: '◇', label: 'Assertions' },
   { id: 'events',     icon: '●', label: 'Events' },
   { id: 'health',     icon: '♥', label: 'Knowledge Health' },
   { id: 'graph',      icon: '⬡', label: 'Relationship Graph' },
-  { id: 'questions',  icon: '?', label: 'Open Questions' },
 ]
 
 const initials = (name) => {
@@ -190,7 +190,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
           </button>
           <button
             onClick={() => setAddFormOpen(true)}
-            style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 800, letterSpacing: 0.4 }}
+            style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
           >
             + Add {view === 'assertions' ? 'Assertion' : 'Rule'}
           </button>
@@ -211,7 +211,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               onClick={() => { setShowProfile(p => !p); notifRef.current?.close() }}
               style={{ padding: '5px 10px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800 }}>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>
                 {initials(user?.displayName)}
               </div>
               {shortName(user?.displayName)}
@@ -219,7 +219,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             {showProfile && (
               <div style={{ position: 'absolute', top: 38, right: 0, width: 260, background: '#fff', border: '1px solid #e8e4e0', borderRadius: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 999, padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
                     {initials(user?.displayName)}
                   </div>
                   <div style={{ overflow: 'hidden' }}>
@@ -334,6 +334,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {view === 'rules' && (
             <RulesView
+              key={activePlantId}
               search={search}
               fStatus={fStatus}
               fCat={fCat}
@@ -350,6 +351,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
           {view === 'assertions' && (
             <AssertionsView
+              key={activePlantId}
               search={search}
               fStatus={fStatus}
               fCat={fCat}
@@ -365,6 +367,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
           {view === 'events' && (
             <EventsView
+              key={activePlantId}
               reportOpen={reportEventOpen}
               onReportClose={() => setReportEventOpen(false)}
               processAreas={vocabulary.processAreas}
@@ -374,15 +377,17 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
           {view === 'questions' && (
             <QuestionsView
+              key={activePlantId}
               processAreas={vocabulary.processAreas}
               onItemSaved={refreshVocabulary}
             />
           )}
 
-          {view === 'health' && <HealthDashboard onNavigate={switchView} />}
+          {view === 'health' && <HealthDashboard key={activePlantId} onNavigate={switchView} />}
 
           {view === 'graph' && (
             <RelationshipGraph
+              key={activePlantId}
               onNavigate={switchView}
               highlightId={graphHighlight}
               onClearHighlight={() => setGraphHighlight(null)}
@@ -391,7 +396,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             />
           )}
 
-          {view === 'query' && <QueryView onNavigate={switchView} />}
+          {view === 'query' && <QueryView key={activePlantId} onNavigate={switchView} />}
 
           {view !== 'rules' && view !== 'assertions' && view !== 'events' && view !== 'questions' && view !== 'health' && view !== 'graph' && view !== 'query' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>

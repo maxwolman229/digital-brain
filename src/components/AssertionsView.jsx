@@ -24,10 +24,11 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
 
   async function load() {
     setLoading(true)
-    const [data, commentsData, verificationsData] = await Promise.all([
-      fetchAssertions(),
-      fetchComments('assertion'),
-      fetchVerifications('assertion'),
+    const data = await fetchAssertions()
+    const ids = data.map(a => a.id)
+    const [commentsData, verificationsData] = await Promise.all([
+      fetchComments('assertion', ids),
+      fetchVerifications('assertion', ids),
     ])
     setAssertions(data)
     setComments(commentsData)
@@ -134,7 +135,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
                 {[...(sel.versions || [])].reverse().map(v => (
                   <div key={v.version} style={{ padding: '12px 14px', borderTop: '1px solid #e8e4e0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 12, color: '#4FA89A', fontWeight: 800, fontFamily: FNT }}>v{v.version}</span>
+                      <span style={{ fontSize: 12, color: '#4FA89A', fontWeight: 700, fontFamily: FNT }}>v{v.version}</span>
                       <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>{formatDate(v.date)}</span>
                     </div>
                     <div style={{ display: 'flex', gap: 12, padding: '6px 10px', background: '#f8f6f4', borderRadius: 2, border: '1px solid #D8CEC3' }}>
@@ -221,7 +222,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
             </div>
 
             {/* Comments */}
-            <Comments targetType="assertion" targetId={sel.id} />
+            <Comments targetType="assertion" targetId={sel.id} onCommentPosted={() => setComments(prev => ({ ...prev, [sel.id]: [...(prev[sel.id] || []), {}] }))} />
           </div>
         )}
       </Modal>
@@ -278,7 +279,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
 function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], categories = [] }) {
   const [form, setForm] = useState({
     title: item.title || '',
-    category: item.category || 'Process',
+    category: item.category || '',
     processArea: item.processArea || '',
     scope: item.scope || '',
     confidence: item.confidence || 'Medium',
@@ -356,7 +357,7 @@ function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], cate
         <button type="button" onClick={onClose} style={{ padding: '8px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}>
           Cancel
         </button>
-        <button type="submit" disabled={saving} style={{ padding: '8px 22px', borderRadius: 3, fontSize: 12, background: saving ? '#D8CEC3' : '#062044', border: 'none', color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 800 }}>
+        <button type="submit" disabled={saving} style={{ padding: '8px 22px', borderRadius: 3, fontSize: 12, background: saving ? '#D8CEC3' : '#062044', border: 'none', color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700 }}>
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
@@ -368,7 +369,7 @@ function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], cate
 
 function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = [] }) {
   const [form, setForm] = useState({
-    title: '', category: 'Process', processArea: '', scope: '',
+    title: '', category: '', processArea: '', scope: '',
     confidence: 'Medium', status: 'Proposed', tagsInput: '', evidenceText: '',
   })
   const [saving, setSaving] = useState(false)
@@ -443,7 +444,7 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
         <button type="button" onClick={onClose} style={{ padding: '8px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}>
           Cancel
         </button>
-        <button type="submit" disabled={saving} style={{ padding: '8px 22px', borderRadius: 3, fontSize: 12, background: saving ? '#D8CEC3' : '#062044', border: 'none', color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 800 }}>
+        <button type="submit" disabled={saving} style={{ padding: '8px 22px', borderRadius: 3, fontSize: 12, background: saving ? '#D8CEC3' : '#062044', border: 'none', color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700 }}>
           {saving ? 'Saving…' : 'Add Assertion'}
         </button>
       </div>

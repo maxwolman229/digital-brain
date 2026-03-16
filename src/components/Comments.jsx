@@ -3,7 +3,7 @@ import { FNT, iS } from '../lib/constants.js'
 import { fetchItemComments, addComment } from '../lib/db.js'
 import { getDisplayName } from '../lib/userContext.js'
 
-export default function Comments({ targetType, targetId }) {
+export default function Comments({ targetType, targetId, onCommentPosted }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [text, setText] = useState('')
@@ -23,6 +23,7 @@ export default function Comments({ targetType, targetId }) {
     const comment = { by, text, date: new Date().toISOString() }
     setItems(prev => [...prev, comment])
     setText('')
+    onCommentPosted?.()
     await addComment(targetType, targetId, text, by)
   }
 

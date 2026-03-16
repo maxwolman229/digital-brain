@@ -97,7 +97,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
         if (item._type === 'rule') {
           const created = await createRule({
             title: item.title,
-            category: item.category || 'Process',
+            category: item.category || '',
             processArea: item.process_area || form.processArea,
             scope: item.scope || '',
             rationale: item.rationale || '',
@@ -111,7 +111,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
         } else {
           const created = await createAssertion({
             title: item.title,
-            category: item.category || 'Process',
+            category: item.category || '',
             processArea: item.process_area || form.processArea,
             scope: item.scope || '',
             confidence: item.confidence || 'Medium',
@@ -207,7 +207,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
               border: 'none',
               color: (!extracting && form.text.trim()) ? '#FFFFFF' : '#8a8278',
               cursor: (!extracting && form.text.trim()) ? 'pointer' : 'not-allowed',
-              fontFamily: FNT, fontWeight: 800, letterSpacing: 0.4,
+              fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4,
             }}
           >
             {extracting ? 'Extracting knowledge…' : 'Extract Rules & Assertions →'}
@@ -272,7 +272,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
                 border: 'none',
                 color: (!saving && items.length > 0) ? '#FFFFFF' : '#8a8278',
                 cursor: (!saving && items.length > 0) ? 'pointer' : 'not-allowed',
-                fontFamily: FNT, fontWeight: 800, letterSpacing: 0.4,
+                fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4,
               }}
             >
               {saving
@@ -288,7 +288,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
       {step === 'done' && (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#062044', fontFamily: FNT, marginBottom: 8 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#062044', fontFamily: FNT, marginBottom: 8 }}>
             {savedCount} item{savedCount !== 1 ? 's' : ''} added to Knowledge Bank
           </div>
           <div style={{ fontSize: 12, color: '#8a8278', fontFamily: FNT, marginBottom: 24, lineHeight: 1.7 }}>

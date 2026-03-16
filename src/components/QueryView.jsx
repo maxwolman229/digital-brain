@@ -383,7 +383,7 @@ export default function QueryView({ onNavigate }) {
               background: input.trim() && !loading ? '#062044' : '#D8CEC3',
               border: 'none', color: '#FFFFFF',
               cursor: input.trim() && !loading ? 'pointer' : 'default',
-              fontFamily: FNT, fontWeight: 800, letterSpacing: 0.5,
+              fontFamily: FNT, fontWeight: 700, letterSpacing: 0.5,
               flexShrink: 0, height: 44,
             }}
           >{loading ? '…' : 'Query'}</button>
@@ -470,7 +470,7 @@ export default function QueryView({ onNavigate }) {
                 onClick={handleAskSubmit}
                 disabled={askSubmitting || !askText.trim()}
                 style={{
-                  padding: '10px 20px', borderRadius: 3, fontSize: 12, fontWeight: 800,
+                  padding: '10px 20px', borderRadius: 3, fontSize: 12, fontWeight: 700,
                   background: (!askSubmitting && askText.trim()) ? '#062044' : '#f0eeec',
                   border: 'none',
                   color: (!askSubmitting && askText.trim()) ? '#fff' : '#8a8278',

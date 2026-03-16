@@ -117,7 +117,7 @@ export default function Onboarding({ userId, displayName: initialName, onComplet
             style={{
               width: '100%', padding: '12px 0', borderRadius: 3,
               background: '#FFFFFF', border: 'none', color: '#062044',
-              fontSize: 13, fontWeight: 800, letterSpacing: 1,
+              fontSize: 13, fontWeight: 700, letterSpacing: 1,
               textTransform: 'uppercase', cursor: 'pointer', fontFamily: FNT,
               opacity: saving ? 0.6 : 1,
             }}

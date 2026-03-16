@@ -1,5 +1,4 @@
 import { supabase } from './supabase.js'
-import { INITIAL_RULES, INITIAL_ASSERTIONS, INITIAL_EVENTS, INITIAL_QUESTIONS } from './data.js'
 import { getPlantId, getDisplayName } from './userContext.js'
 
 // Dynamic plant ID from authenticated user context.
@@ -62,14 +61,15 @@ function normaliseAssertion(a, evidence = [], versions = [], linkedRules = []) {
 // ─── Rules ────────────────────────────────────────────────────────────────────
 
 export async function fetchRules() {
-  const [rulesRes, evidenceRes, versionsRes, linksRes] = await Promise.all([
-    supabase.from('rules').select('*').eq('plant_id', PLANT_ID()).order('created_at', { ascending: false }),
-    supabase.from('evidence').select('*').eq('parent_type', 'rule'),
-    supabase.from('versions').select('*').eq('target_type', 'rule'),
-    supabase.from('links').select('source_id, target_id').eq('source_type', 'rule').eq('target_type', 'assertion'),
-  ])
+  const rulesRes = await supabase.from('rules').select('*').eq('plant_id', PLANT_ID()).order('created_at', { ascending: false })
+  if (!rulesRes.data?.length) return []
 
-  if (!rulesRes.data?.length) return INITIAL_RULES
+  const ruleIds = rulesRes.data.map(r => r.id)
+  const [evidenceRes, versionsRes, linksRes] = await Promise.all([
+    supabase.from('evidence').select('*').eq('parent_type', 'rule').in('parent_id', ruleIds),
+    supabase.from('versions').select('*').eq('target_type', 'rule').in('target_id', ruleIds),
+    supabase.from('links').select('source_id, target_id').eq('source_type', 'rule').eq('target_type', 'assertion').in('source_id', ruleIds),
+  ])
 
   const linksBySource = {}
   linksRes.data?.forEach(l => {
@@ -85,14 +85,15 @@ export async function fetchRules() {
 // ─── Assertions ───────────────────────────────────────────────────────────────
 
 export async function fetchAssertions() {
-  const [assertRes, evidenceRes, versionsRes, linksRes] = await Promise.all([
-    supabase.from('assertions').select('*').eq('plant_id', PLANT_ID()).order('created_at', { ascending: false }),
-    supabase.from('evidence').select('*').eq('parent_type', 'assertion'),
-    supabase.from('versions').select('*').eq('target_type', 'assertion'),
-    supabase.from('links').select('source_id, target_id').eq('source_type', 'rule').eq('target_type', 'assertion'),
-  ])
+  const assertRes = await supabase.from('assertions').select('*').eq('plant_id', PLANT_ID()).order('created_at', { ascending: false })
+  if (!assertRes.data?.length) return []
 
-  if (!assertRes.data?.length) return INITIAL_ASSERTIONS
+  const assertionIds = assertRes.data.map(a => a.id)
+  const [evidenceRes, versionsRes, linksRes] = await Promise.all([
+    supabase.from('evidence').select('*').eq('parent_type', 'assertion').in('parent_id', assertionIds),
+    supabase.from('versions').select('*').eq('target_type', 'assertion').in('target_id', assertionIds),
+    supabase.from('links').select('source_id, target_id').eq('source_type', 'rule').eq('target_type', 'assertion').in('target_id', assertionIds),
+  ])
 
   // Build reverse map: assertion_id → rule_ids
   const linkedRulesMap = {}
@@ -108,17 +109,16 @@ export async function fetchAssertions() {
 
 // ─── Comments (keyed by target_id) ───────────────────────────────────────────
 
-export async function fetchComments(targetType) {
+export async function fetchComments(targetType, itemIds) {
+  if (!itemIds?.length) return {}
   const { data } = await supabase
     .from('comments')
     .select('*')
     .eq('target_type', targetType)
+    .in('target_id', itemIds)
     .order('created_at')
 
-  if (!data?.length) {
-    return SEED_COMMENTS[targetType] || {}
-  }
-
+  if (!data?.length) return {}
   const map = {}
   data.forEach(c => {
     if (!map[c.target_id]) map[c.target_id] = []
@@ -129,16 +129,15 @@ export async function fetchComments(targetType) {
 
 // ─── Verifications (keyed by target_id, array of names) ──────────────────────
 
-export async function fetchVerifications(targetType) {
+export async function fetchVerifications(targetType, itemIds) {
+  if (!itemIds?.length) return {}
   const { data } = await supabase
     .from('verifications')
     .select('*')
     .eq('target_type', targetType)
+    .in('target_id', itemIds)
 
-  if (!data?.length) {
-    return SEED_VERIFICATIONS[targetType] || {}
-  }
-
+  if (!data?.length) return {}
   const map = {}
   data.forEach(v => {
     if (!map[v.target_id]) map[v.target_id] = []
@@ -180,7 +179,7 @@ export async function fetchEvents() {
     .eq('plant_id', PLANT_ID())
     .order('date', { ascending: false })
 
-  if (!data?.length) return INITIAL_EVENTS
+  if (!data?.length) return []
   return data.map(normaliseEvent)
 }
 
@@ -214,30 +213,6 @@ export async function addEvent(ev) {
   return normaliseEvent(data)
 }
 
-// ─── Seed maps (shared fallback for per-item and bulk fetches) ────────────────
-
-const SEED_COMMENTS = {
-  rule: {
-    'R-001': [{ by: 'L. Chen', text: 'Confirmed this on night shift last week. Definitely need the extra time.', date: '2025-02-10T08:00:00Z' }],
-    'R-003': [{ by: 'M. Rossi', text: 'Also applies when using Turkish shredded. Same copper issues.', date: '2025-02-14T14:30:00Z' }],
-  },
-  event: {
-    'E-001': [{ by: 'J. Martinez', text: "We saw similar cracking on Heat #4790 two weeks earlier but didn't file it.", date: '2025-02-09T10:00:00Z' }],
-  },
-}
-
-const SEED_VERIFICATIONS = {
-  rule: {
-    'R-001': ['M. Rossi', 'K. Alvarez', 'D. Novak'],
-    'R-003': ['L. Chen', 'T. Williams'],
-    'R-005': ['M. Rossi'],
-  },
-  assertion: {
-    'A-001': ['J. Martinez', 'S. Petrov'],
-    'A-002': ['L. Chen'],
-  },
-}
-
 // ─── Per-item fetch — used by Comments / Verifications components ─────────────
 
 export async function fetchItemComments(targetType, targetId) {
@@ -248,10 +223,7 @@ export async function fetchItemComments(targetType, targetId) {
     .eq('target_id', targetId)
     .order('created_at')
 
-  if (data?.length) {
-    return data.map(c => ({ by: c.by, text: c.text, date: c.created_at }))
-  }
-  return SEED_COMMENTS[targetType]?.[targetId] || []
+  return (data || []).map(c => ({ by: c.by, text: c.text, date: c.created_at }))
 }
 
 export async function fetchItemVerifications(targetType, targetId) {
@@ -261,10 +233,7 @@ export async function fetchItemVerifications(targetType, targetId) {
     .eq('target_type', targetType)
     .eq('target_id', targetId)
 
-  if (data?.length) {
-    return data.map(v => v.verified_by)
-  }
-  return SEED_VERIFICATIONS[targetType]?.[targetId] || []
+  return (data || []).map(v => v.verified_by)
 }
 
 // ─── Persist a new comment to Supabase ───────────────────────────────────────
@@ -319,7 +288,7 @@ export async function fetchQuestions() {
     .eq('plant_id', PLANT_ID())
     .order('created_at', { ascending: false })
 
-  if (!data?.length) return INITIAL_QUESTIONS
+  if (!data?.length) return []
   return data.map(normaliseQuestion)
 }
 
@@ -381,12 +350,18 @@ export async function fetchResponses(questionId) {
 
 // Returns all links involving this item (bidirectional), with resolved titles.
 export async function fetchLinks(itemType, itemId) {
-  const { data, error } = await supabase
-    .from('links')
-    .select('*')
-    .or(`and(source_type.eq.${itemType},source_id.eq.${itemId}),and(target_type.eq.${itemType},target_id.eq.${itemId})`)
-
-  if (error || !data?.length) return []
+  const [srcRes, tgtRes] = await Promise.all([
+    supabase.from('links').select('*').eq('source_type', itemType).eq('source_id', itemId),
+    supabase.from('links').select('*').eq('target_type', itemType).eq('target_id', itemId),
+  ])
+  const error = srcRes.error || tgtRes.error
+  if (error) { console.error('[fetchLinks] error:', error.message); return [] }
+  const seen = new Set()
+  const data = []
+  for (const row of [...(srcRes.data || []), ...(tgtRes.data || [])]) {
+    if (!seen.has(row.id)) { seen.add(row.id); data.push(row) }
+  }
+  if (!data.length) return []
 
   // Collect all rule/assertion IDs we need titles for
   const ruleIds = new Set()
@@ -422,27 +397,54 @@ export async function fetchLinks(itemType, itemId) {
       linkedId,
       linkedTitle:    meta.title || linkedId,
       linkedProcessArea: meta.processArea || '',
+      _raw: { source_type: l.source_type, source_id: l.source_id, target_type: l.target_type, target_id: l.target_id, relationship_type: l.relationship_type },
     }
   })
 }
 
 export async function saveLink(sourceType, sourceId, targetType, targetId, relType, comment, createdBy) {
+  const payload = {
+    source_type: sourceType,
+    source_id: sourceId,
+    target_type: targetType,
+    target_id: targetId,
+    relationship_type: relType || 'relates_to',
+    comment: comment || null,
+    created_by: createdBy || 'You',
+  }
   const { error } = await supabase
     .from('links')
-    .upsert({
-      source_type: sourceType,
-      source_id: sourceId,
-      target_type: targetType,
-      target_id: targetId,
-      relationship_type: relType,
-      comment: comment || null,
-      created_by: createdBy || 'You',
-    }, { onConflict: 'source_type,source_id,target_type,target_id,relationship_type' })
-  return !error
+    .upsert(payload, { onConflict: 'source_type,source_id,target_type,target_id,relationship_type' })
+
+  if (error) {
+    console.error('[saveLink] failed:', error.message)
+    return false
+  }
+  return true
 }
 
 export async function deleteLink(linkId) {
-  await supabase.from('links').delete().eq('id', linkId)
+  const { error } = await supabase.from('links').delete().eq('id', linkId)
+  if (error) console.error('[deleteLink] failed:', error.message)
+}
+
+// Fetch all links for a set of item IDs (used by relationship graph)
+export async function fetchAllLinksForGraph(itemIds) {
+  if (!itemIds?.length) return []
+  const [srcRes, tgtRes] = await Promise.all([
+    supabase.from('links')
+      .select('id, source_type, source_id, target_type, target_id, relationship_type, comment')
+      .in('source_id', itemIds),
+    supabase.from('links')
+      .select('id, source_type, source_id, target_type, target_id, relationship_type, comment')
+      .in('target_id', itemIds),
+  ])
+  const seen = new Set()
+  const all = []
+  for (const row of [...(srcRes.data || []), ...(tgtRes.data || [])]) {
+    if (row.id && !seen.has(row.id)) { seen.add(row.id); all.push(row) }
+  }
+  return all
 }
 
 // Search rules + assertions by title for the link editor
@@ -454,50 +456,30 @@ export async function searchKnowledge(query, excludeType, excludeId) {
     supabase.from('assertions').select('id, title, process_area').ilike('title', `%${q}%`).eq('plant_id', PLANT_ID()).limit(8),
   ])
 
-  // Fallback to in-memory if DB empty
-  const rules = rulesRes.data?.length
-    ? rulesRes.data.map(r => ({ id: r.id, type: 'rule', title: r.title, processArea: r.process_area }))
-    : INITIAL_RULES.filter(r => r.title.toLowerCase().includes(q.toLowerCase())).slice(0, 8)
-      .map(r => ({ id: r.id, type: 'rule', title: r.title, processArea: r.processArea }))
-
-  const assertions = assertRes.data?.length
-    ? assertRes.data.map(a => ({ id: a.id, type: 'assertion', title: a.title, processArea: a.process_area }))
-    : INITIAL_ASSERTIONS.filter(a => a.title.toLowerCase().includes(q.toLowerCase())).slice(0, 8)
-      .map(a => ({ id: a.id, type: 'assertion', title: a.title, processArea: a.processArea }))
-
+  const rules = (rulesRes.data || []).map(r => ({ id: r.id, type: 'rule', title: r.title, processArea: r.process_area }))
+  const assertions = (assertRes.data || []).map(a => ({ id: a.id, type: 'assertion', title: a.title, processArea: a.process_area }))
   return [...rules, ...assertions].filter(x => !(x.type === excludeType && x.id === excludeId))
 }
 
 // Fetch a single rule or assertion by type+id (for the cross-type detail modal)
 export async function fetchItemById(type, id) {
   if (type === 'rule') {
-    const seed = INITIAL_RULES.find(r => r.id === id)
     const [itemRes, evidenceRes, versionsRes] = await Promise.all([
-      supabase.from('rules').select('*').eq('id', id).single(),
+      supabase.from('rules').select('*').eq('id', id).eq('plant_id', PLANT_ID()).single(),
       supabase.from('evidence').select('*').eq('parent_type', 'rule').eq('parent_id', id),
       supabase.from('versions').select('*').eq('target_type', 'rule').eq('target_id', id),
     ])
-    if (!itemRes.data) return seed || null
-    const item = normaliseRule(itemRes.data, evidenceRes.data || [], versionsRes.data || [], [])
-    // Fill null fields from in-memory seed as fallback (handles items seeded without metadata)
-    if (!item.createdBy && seed?.createdBy) item.createdBy = seed.createdBy
-    if (!item.createdAt && seed?.createdAt) item.createdAt = seed.createdAt
-    if (!item.evidence?.length && seed?.evidence?.length) item.evidence = seed.evidence
-    return item
+    if (!itemRes.data) return null
+    return normaliseRule(itemRes.data, evidenceRes.data || [], versionsRes.data || [], [])
   }
   if (type === 'assertion') {
-    const seed = INITIAL_ASSERTIONS.find(a => a.id === id)
     const [itemRes, evidenceRes, versionsRes] = await Promise.all([
-      supabase.from('assertions').select('*').eq('id', id).single(),
+      supabase.from('assertions').select('*').eq('id', id).eq('plant_id', PLANT_ID()).single(),
       supabase.from('evidence').select('*').eq('parent_type', 'assertion').eq('parent_id', id),
       supabase.from('versions').select('*').eq('target_type', 'assertion').eq('target_id', id),
     ])
-    if (!itemRes.data) return seed || null
-    const item = normaliseAssertion(itemRes.data, evidenceRes.data || [], versionsRes.data || [], [])
-    if (!item.createdBy && seed?.createdBy) item.createdBy = seed.createdBy
-    if (!item.createdAt && seed?.createdAt) item.createdAt = seed.createdAt
-    if (!item.evidence?.length && seed?.evidence?.length) item.evidence = seed.evidence
-    return item
+    if (!itemRes.data) return null
+    return normaliseAssertion(itemRes.data, evidenceRes.data || [], versionsRes.data || [], [])
   }
   return null
 }

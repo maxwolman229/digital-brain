@@ -16,7 +16,7 @@ const CAT_COLORS = {
 const EMPTY_FORM = {
   title: '',
   outcome: 'Negative',
-  processArea: 'EAF',
+  processArea: '',
   impact: 'Moderate',
   reportedBy: '',
   description: '',
@@ -281,7 +281,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             )}
 
             {/* Generate button */}
-            <button style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontSize: 13, background: '#F2652F', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 800, letterSpacing: 0.4, marginBottom: 4 }}>
+            <button style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontSize: 13, background: '#F2652F', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4, marginBottom: 4 }}>
               {`Generate ${sel.outcome === 'Positive' ? 'Best-Practice' : 'Preventive'} Rules & Assertions`}
             </button>
             <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, textAlign: 'center', marginBottom: 16 }}>AI generation — coming soon</div>
@@ -316,7 +316,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
               key={o}
               onClick={() => setForm({ ...form, outcome: o })}
               style={{
-                flex: 1, padding: 10, borderRadius: 3, fontSize: 13, fontWeight: 800, fontFamily: FNT,
+                flex: 1, padding: 10, borderRadius: 3, fontSize: 13, fontWeight: 700, fontFamily: FNT,
                 letterSpacing: 0.4, cursor: 'pointer', transition: 'all 0.15s',
                 border: form.outcome === o ? `2px solid ${o === 'Positive' ? '#4FA89A' : '#F2652F'}` : '2px solid #D8CEC3',
                 background: form.outcome === o ? (o === 'Positive' ? '#e6f5f1' : '#fde8e5') : '#FFFFFF',
@@ -440,7 +440,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             border: 'none',
             color: form.title.trim() ? '#FFFFFF' : '#888',
             cursor: form.title.trim() ? 'pointer' : 'not-allowed',
-            fontFamily: FNT, fontWeight: 800,
+            fontFamily: FNT, fontWeight: 700,
           }}
         >
           File Event Report

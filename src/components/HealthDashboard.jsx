@@ -79,15 +79,15 @@ export default function HealthDashboard({ onNavigate }) {
   const [topPeriod, setTopPeriod] = useState('all')
 
   useEffect(() => {
-    Promise.all([
-      fetchRules(),
-      fetchAssertions(),
-      fetchEvents(),
-      fetchVerifications('rule'),
-      fetchVerifications('assertion'),
-      fetchComments('rule'),
-      fetchComments('assertion'),
-    ]).then(([r, a, ev, vr, va, cr, ca]) => {
+    Promise.all([fetchRules(), fetchAssertions(), fetchEvents()]).then(async ([r, a, ev]) => {
+      const rIds = r.map(x => x.id)
+      const aIds = a.map(x => x.id)
+      const [vr, va, cr, ca] = await Promise.all([
+        fetchVerifications('rule', rIds),
+        fetchVerifications('assertion', aIds),
+        fetchComments('rule', rIds),
+        fetchComments('assertion', aIds),
+      ])
       setRules(r)
       setAssertions(a)
       setEvents(ev)
@@ -174,15 +174,15 @@ export default function HealthDashboard({ onNavigate }) {
       <div style={{ flexShrink: 0, padding: '16px 28px', borderBottom: '1px solid #e8e4e0', background: '#FAFAF9' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
           <div style={{ padding: 16, background: contradictions.length > 0 ? '#fde8e5' : '#e6f5f1', borderRadius: 3, border: `1px solid ${contradictions.length > 0 ? '#c0392b20' : '#4FA89A20'}` }}>
-            <div style={{ fontSize: 28, fontWeight: 900, color: contradictions.length > 0 ? '#c0392b' : '#4FA89A', fontFamily: FNT }}>{contradictions.length}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: contradictions.length > 0 ? '#c0392b' : '#4FA89A', fontFamily: FNT }}>{contradictions.length}</div>
             <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, fontWeight: 600 }}>Contradicted</div>
           </div>
           <div style={{ padding: 16, background: staleItems.length > 0 ? '#fef3e2' : '#e6f5f1', borderRadius: 3, border: `1px solid ${staleItems.length > 0 ? '#F2652F20' : '#4FA89A20'}` }}>
-            <div style={{ fontSize: 28, fontWeight: 900, color: staleItems.length > 0 ? '#F2652F' : '#4FA89A', fontFamily: FNT }}>{staleItems.length}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: staleItems.length > 0 ? '#F2652F' : '#4FA89A', fontFamily: FNT }}>{staleItems.length}</div>
             <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, fontWeight: 600 }}>Stale</div>
           </div>
           <div style={{ padding: 16, background: '#e6f5f1', borderRadius: 3, border: '1px solid #4FA89A20' }}>
-            <div style={{ fontSize: 28, fontWeight: 900, color: '#4FA89A', fontFamily: FNT }}>{activeCount}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#4FA89A', fontFamily: FNT }}>{activeCount}</div>
             <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, fontWeight: 600 }}>Active Knowledge</div>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function HealthDashboard({ onNavigate }) {
                             <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2 }}>{c.ruleA.id}</div>
                             <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.ruleA.title}</div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#c0392b', fontWeight: 900 }}>⇄</div>
+                          <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#c0392b', fontWeight: 700 }}>⇄</div>
                           <div style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F' }}>
                             <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2 }}>{c.ruleB.id}</div>
                             <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.ruleB.title}</div>
@@ -309,7 +309,7 @@ export default function HealthDashboard({ onNavigate }) {
                 onMouseEnter={e => e.currentTarget.style.background = '#f8f6f4'}
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}
               >
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#D8CEC3', fontFamily: FNT, width: 24, textAlign: 'right', flexShrink: 0 }}>{idx + 1}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#D8CEC3', fontFamily: FNT, width: 24, textAlign: 'right', flexShrink: 0 }}>{idx + 1}</span>
                 <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, width: 40, flexShrink: 0 }}>{item.id}</span>
                 <Badge label={item.status} colorFn={statusColor} />
                 <div style={{ flex: 1, fontSize: 12, color: '#1F1F1F', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}</div>

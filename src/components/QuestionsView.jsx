@@ -6,7 +6,7 @@ import {
   addRuleFromExtraction, addAssertionFromExtraction,
 } from '../lib/db.js'
 
-const EMPTY_ASK = { question: '', detail: '', processArea: 'EAF', askedBy: '', taggedPeople: [] }
+const EMPTY_ASK = { question: '', detail: '', processArea: '', askedBy: '', taggedPeople: [] }
 
 export default function QuestionsView({ processAreas = [], onItemSaved }) {
   const [questions, setQuestions] = useState([])
@@ -130,8 +130,8 @@ export default function QuestionsView({ processAreas = [], onItemSaved }) {
       if (!resp.ok) throw new Error(data.error || 'Extraction failed')
 
       setExtractParsed({
-        rules: (data.rules || []).map((r, i) => ({ ...r, id: i, category: r.category || 'Process', processArea: r.process_area || sel.processArea, tags: ['from-question', sel.id.toLowerCase()], createdBy: sel.responses[0]?.by || 'You' })),
-        assertions: (data.assertions || []).map((a, i) => ({ ...a, id: i, category: a.category || 'Process', processArea: a.process_area || sel.processArea, tags: ['from-question', sel.id.toLowerCase()], createdBy: sel.responses[0]?.by || 'You' })),
+        rules: (data.rules || []).map((r, i) => ({ ...r, id: i, category: r.category || '', processArea: r.process_area || sel.processArea, tags: ['from-question', sel.id.toLowerCase()], createdBy: sel.responses[0]?.by || 'You' })),
+        assertions: (data.assertions || []).map((a, i) => ({ ...a, id: i, category: a.category || '', processArea: a.process_area || sel.processArea, tags: ['from-question', sel.id.toLowerCase()], createdBy: sel.responses[0]?.by || 'You' })),
       })
     } catch (err) {
       setExtractError(err.message || 'Extraction failed.')
@@ -222,7 +222,7 @@ export default function QuestionsView({ processAreas = [], onItemSaved }) {
         </div>
         <button
           onClick={() => { setAskForm(EMPTY_ASK); setAskTagInput(''); setShowAskForm(true) }}
-          style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: '#062044', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 800, letterSpacing: 0.4, flexShrink: 0 }}
+          style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: '#062044', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4, flexShrink: 0 }}
         >
           + Ask a Question
         </button>
@@ -371,7 +371,7 @@ export default function QuestionsView({ processAreas = [], onItemSaved }) {
               <button
                 onClick={handleSubmitResponse}
                 disabled={!answerText.trim()}
-                style={{ width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, background: answerText.trim() ? '#4FA89A' : '#f0eeec', border: 'none', color: answerText.trim() ? '#FFFFFF' : '#444', cursor: answerText.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT, fontWeight: 800, letterSpacing: 0.4 }}
+                style={{ width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, background: answerText.trim() ? '#4FA89A' : '#f0eeec', border: 'none', color: answerText.trim() ? '#FFFFFF' : '#444', cursor: answerText.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
               >
                 {replyTo ? 'Submit Reply' : 'Submit Answer'}
               </button>
@@ -518,7 +518,7 @@ export default function QuestionsView({ processAreas = [], onItemSaved }) {
         <button
           onClick={handleAsk}
           disabled={!askForm.question.trim()}
-          style={{ width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, background: askForm.question.trim() ? '#062044' : '#f0eeec', border: 'none', color: askForm.question.trim() ? '#FFFFFF' : '#444', cursor: askForm.question.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT, fontWeight: 800, marginTop: 8, letterSpacing: 0.4 }}
+          style={{ width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, background: askForm.question.trim() ? '#062044' : '#f0eeec', border: 'none', color: askForm.question.trim() ? '#FFFFFF' : '#444', cursor: askForm.question.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT, fontWeight: 700, marginTop: 8, letterSpacing: 0.4 }}
         >
           Submit Question to Team
         </button>

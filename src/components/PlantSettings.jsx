@@ -123,7 +123,7 @@ export default function PlantSettings({ membership, onClose }) {
                     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
                     borderBottom: '1px solid #f0eeec',
                   }}>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
                       {m.displayName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>

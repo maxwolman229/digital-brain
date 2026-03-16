@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { FNT, iS } from '../lib/constants.js'
 import { fetchLinks, saveLink, deleteLink, searchKnowledge, fetchSuggestedLinks } from '../lib/db.js'
 import { getDisplayName } from '../lib/userContext.js'
+import { supabase, getStoredJwt } from '../lib/supabase.js'
 
 // ── Relationship type config ───────────────────────────────────────────────────
 
@@ -49,6 +50,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
   const [saving, setSaving] = useState(false)
   const [suggestions, setSuggestions] = useState([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  const [dbg, setDbg] = useState(null)
   const searchRef = useRef(null)
   const debounce = useRef(null)
 
@@ -78,6 +80,24 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
   }, [editMode, sourceType, sourceId, sourceMeta])
 
   async function load() {
+    // ── DEBUG: raw queries ──────────────────────────────────────────────────
+    const jwt = getStoredJwt()
+    const [srcRaw, tgtRaw, anyRaw] = await Promise.all([
+      supabase.from('links').select('source_type,source_id,target_type,target_id,relationship_type').eq('source_type', sourceType).eq('source_id', sourceId),
+      supabase.from('links').select('source_type,source_id,target_type,target_id,relationship_type').eq('target_type', sourceType).eq('target_id', sourceId),
+      supabase.from('links').select('source_type,source_id,target_type,target_id,relationship_type').limit(5),
+    ])
+    setDbg({
+      jwt: jwt ? jwt.substring(0, 30) + '…' : 'MISSING — using anon key!',
+      jwtPresent: !!jwt,
+      srcRows: srcRaw.data,
+      srcError: srcRaw.error ? `${srcRaw.error.code}: ${srcRaw.error.message}` : null,
+      tgtRows: tgtRaw.data,
+      tgtError: tgtRaw.error ? `${tgtRaw.error.code}: ${tgtRaw.error.message}` : null,
+      anyRows: anyRaw.data,
+      anyError: anyRaw.error ? `${anyRaw.error.code}: ${anyRaw.error.message}` : null,
+    })
+    // ── END DEBUG ───────────────────────────────────────────────────────────
     const data = await fetchLinks(sourceType, sourceId)
     setLinks(data)
   }
@@ -109,6 +129,57 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
 
   return (
     <div>
+      {/* ── DEBUG PANEL (remove when links confirmed working) ── */}
+      {dbg && (
+        <div style={{ marginBottom: 10, padding: '8px 10px', background: '#1a1a2e', borderRadius: 3, fontFamily: 'monospace', fontSize: 10, color: '#a0f0a0', lineHeight: 1.7 }}>
+          <div style={{ color: '#ffcc00', fontWeight: 700, marginBottom: 4 }}>DEBUG — {sourceType}/{sourceId}</div>
+
+          <div style={{ color: dbg.jwtPresent ? '#a0f0a0' : '#ff4040', marginBottom: 6 }}>
+            JWT: {dbg.jwt}
+          </div>
+
+          <div style={{ marginBottom: 4 }}>
+            <span style={{ color: '#80d8ff' }}>Q1</span> source_type='{sourceType}' AND source_id='{sourceId}':&nbsp;
+            {dbg.srcError
+              ? <span style={{ color: '#ff4040' }}>ERROR {dbg.srcError}</span>
+              : <span style={{ color: '#a0f0a0' }}>{dbg.srcRows?.length ?? 0} rows</span>}
+            {dbg.srcRows?.map((r, i) => (
+              <div key={i} style={{ paddingLeft: 8, color: '#e0e0e0' }}>
+                {r.source_type}/{r.source_id} → {r.target_type}/{r.target_id} [{r.relationship_type}]
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginBottom: 4 }}>
+            <span style={{ color: '#80d8ff' }}>Q2</span> target_type='{sourceType}' AND target_id='{sourceId}':&nbsp;
+            {dbg.tgtError
+              ? <span style={{ color: '#ff4040' }}>ERROR {dbg.tgtError}</span>
+              : <span style={{ color: '#a0f0a0' }}>{dbg.tgtRows?.length ?? 0} rows</span>}
+            {dbg.tgtRows?.map((r, i) => (
+              <div key={i} style={{ paddingLeft: 8, color: '#e0e0e0' }}>
+                {r.source_type}/{r.source_id} → {r.target_type}/{r.target_id} [{r.relationship_type}]
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginBottom: 4 }}>
+            <span style={{ color: '#80d8ff' }}>Q3</span> SELECT * FROM links LIMIT 5 (any data visible?):&nbsp;
+            {dbg.anyError
+              ? <span style={{ color: '#ff4040' }}>ERROR {dbg.anyError}</span>
+              : <span style={{ color: '#a0f0a0' }}>{dbg.anyRows?.length ?? 0} rows</span>}
+            {dbg.anyRows?.map((r, i) => (
+              <div key={i} style={{ paddingLeft: 8, color: '#e0e0e0' }}>
+                {r.source_type}/{r.source_id} → {r.target_type}/{r.target_id} [{r.relationship_type}]
+              </div>
+            ))}
+          </div>
+
+          <div style={{ color: '#ffcc00', borderTop: '1px solid #333', paddingTop: 4, marginTop: 2 }}>
+            fetchLinks result: {links.length} normalised link{links.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+      )}
+
       {/* Section header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT }}>

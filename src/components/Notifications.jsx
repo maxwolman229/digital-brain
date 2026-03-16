@@ -70,7 +70,7 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
             position: 'absolute', top: -4, right: -4,
             width: 16, height: 16, borderRadius: '50%',
             background: '#F2652F', color: '#fff',
-            fontSize: 8, fontWeight: 800,
+            fontSize: 8, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             {unread}
