@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 
-const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
+const FNT  = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
 const FNTM = "'IBM Plex Mono', 'Courier New', monospace"
 
 export default function BevCanPending() {
@@ -19,68 +19,58 @@ export default function BevCanPending() {
         backgroundSize: '60px 60px', pointerEvents: 'none',
       }} />
 
-      <div style={{ width: '100%', maxWidth: 480, position: 'relative', textAlign: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 460, position: 'relative', textAlign: 'center' }}>
 
-        {/* Logo + brand */}
+        {/* Logo */}
         <div style={{ marginBottom: 40 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: 3, color: '#FFFFFF', border: '1.5px solid #FFFFFF', padding: '4px 12px 5px' }}>
-              M/D/1
-            </div>
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', fontWeight: 300 }}>×</span>
-            <div style={{ position: 'relative' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', letterSpacing: 1 }}>BevCan 1.0</div>
-              <span style={{ position: 'absolute', top: -8, right: -28, background: '#4FA89A', color: '#fff', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, padding: '2px 4px', borderRadius: 2 }}>BETA</span>
-            </div>
+          <div style={{ display: 'inline-block', fontSize: 32, fontWeight: 700, letterSpacing: 4, color: '#FFFFFF', border: '2px solid #FFFFFF', padding: '8px 20px 10px', lineHeight: 1 }}>
+            M/D/1
           </div>
         </div>
 
-        {/* Status card */}
+        {/* Card */}
         <div style={{
           background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 6, padding: '36px 32px 32px',
         }}>
-          {/* Icon */}
+          {/* Check icon */}
           <div style={{
             width: 52, height: 52, borderRadius: '50%',
             background: 'rgba(79,168,154,0.15)', border: '1px solid rgba(79,168,154,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 20px', fontSize: 22,
+            margin: '0 auto 20px', fontSize: 22, color: '#4FA89A',
           }}>
-            ⧖
+            ✓
           </div>
 
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginBottom: 12 }}>
-            Application Under Review
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#FFFFFF', marginBottom: 14 }}>
+            Thank you for your application!
           </div>
 
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.75, marginBottom: 28, maxWidth: 360, margin: '0 auto 28px' }}>
-            Thanks for applying to BevCan 1.0. We verify that all members have
-            real industry experience in beverage can manufacturing.
-            <br /><br />
-            You'll receive an email within 48 hours when your application has been reviewed.
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.85, marginBottom: 28 }}>
+            Our team will review your application and be in touch within 48 hours.
           </div>
 
-          <div style={{
-            padding: '12px 16px', borderRadius: 3,
-            background: 'rgba(79,168,154,0.08)', border: '1px solid rgba(79,168,154,0.2)',
-            fontSize: 11, color: '#4FA89A', fontFamily: FNTM, marginBottom: 28, lineHeight: 1.6,
-          }}>
-            Once approved, you'll have access to the full BevCan knowledge bank —
-            20 reference rules seeded by the MD1 team, plus community contributions
-            from verified industry professionals.
+          {/* Divider */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 24 }} />
+
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>
+            In the meantime, feel free to explore the demo
           </div>
 
           <button
-            onClick={() => navigate('/bevcan')}
+            onClick={() => navigate('/auth')}
             style={{
-              width: '100%', padding: '11px 0', borderRadius: 3,
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
-              color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600,
+              width: '100%', padding: '12px 0', borderRadius: 3,
+              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+              color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: 600,
               letterSpacing: 0.8, cursor: 'pointer', fontFamily: FNT,
+              transition: 'background 0.15s',
             }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
           >
-            ← Back to Login
+            See Demo →
           </button>
         </div>
 
