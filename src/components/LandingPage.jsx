@@ -82,59 +82,75 @@ export default function LandingPage() {
         </div>
 
         {!showPassword ? (
-          <div style={{ display: 'flex', gap: 16 }}>
-            <a
-              href="mailto:mw@korfsteel.com"
-              style={{
-                display: 'inline-block',
-                padding: '16px 48px',
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: 2,
-                textTransform: 'uppercase',
-                color: '#FFFFFF',
-                textDecoration: 'none',
-                border: '1.5px solid rgba(255,255,255,0.25)',
-                borderRadius: 2,
-                transition: 'all 0.3s',
-              }}
-              onMouseEnter={e => {
-                e.target.style.borderColor = '#FFFFFF'
-                e.target.style.background = 'rgba(255,255,255,0.06)'
-              }}
-              onMouseLeave={e => {
-                e.target.style.borderColor = 'rgba(255,255,255,0.25)'
-                e.target.style.background = 'transparent'
-              }}
-            >
-              Get in Touch
-            </a>
-            <button
-              onClick={() => setShowPassword(true)}
-              style={{
-                padding: '16px 48px',
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: 2,
-                textTransform: 'uppercase',
-                color: '#FFFFFF',
-                background: 'transparent',
-                border: '1.5px solid rgba(255,255,255,0.25)',
-                borderRadius: 2,
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-              }}
-              onMouseEnter={e => {
-                e.target.style.borderColor = '#FFFFFF'
-                e.target.style.background = 'rgba(255,255,255,0.06)'
-              }}
-              onMouseLeave={e => {
-                e.target.style.borderColor = 'rgba(255,255,255,0.25)'
-                e.target.style.background = 'transparent'
-              }}
-            >
-              See Demo
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 16 }}>
+              <button
+                onClick={() => setShowPassword(true)}
+                style={{
+                  padding: '16px 48px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  letterSpacing: 2,
+                  textTransform: 'uppercase',
+                  color: '#FFFFFF',
+                  background: 'transparent',
+                  border: '1.5px solid rgba(255,255,255,0.25)',
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = '#FFFFFF'
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                See Demo
+              </button>
+              <button
+                onClick={() => navigate('/bevcan')}
+                style={{
+                  position: 'relative',
+                  padding: '16px 48px',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: 2,
+                  textTransform: 'uppercase',
+                  color: '#062044',
+                  background: '#FFFFFF',
+                  border: '1.5px solid #FFFFFF',
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.88)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = '#FFFFFF'
+                }}
+              >
+                BevCan 1.0
+                <span style={{
+                  position: 'absolute',
+                  top: -8,
+                  right: -8,
+                  background: '#4FA89A',
+                  color: '#FFFFFF',
+                  fontSize: 8,
+                  fontWeight: 700,
+                  letterSpacing: 1.5,
+                  padding: '2px 5px',
+                  borderRadius: 2,
+                }}>BETA</span>
+              </button>
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 1, fontFamily: "'IBM Plex Mono', monospace" }}>
+              Public industry knowledge bank · Application required
+            </div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>

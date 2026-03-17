@@ -5,7 +5,7 @@ import { createRule, createAssertion } from '../lib/db.js'
 
 const EMPTY_FORM = { text: '', processArea: '', source: '', submittedBy: '' }
 
-export default function NarrativeInput({ open, onClose, onCreated, processAreas = [], categories = [], onItemSaved }) {
+export default function NarrativeInput({ open, onClose, onCreated, processAreas = [], categories = [], industry, onItemSaved }) {
   const [step, setStep] = useState('input') // 'input' | 'review' | 'done'
   const [form, setForm] = useState(EMPTY_FORM)
   const [extracting, setExtracting] = useState(false)
@@ -59,6 +59,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
         body: JSON.stringify({
           narrative: form.text,
           process_area: form.processArea,
+          industry,
         }),
       })
 

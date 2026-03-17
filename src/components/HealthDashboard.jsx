@@ -1,50 +1,7 @@
 import { useState, useEffect } from 'react'
-import { FNT, FNTM, statusColor } from '../lib/constants.js'
+import { FNT, FNTM, statusColor, formatDate } from '../lib/constants.js'
 import { Badge, Tag } from './shared.jsx'
-import { fetchRules, fetchAssertions, fetchEvents, fetchComments, fetchVerifications } from '../lib/db.js'
-
-// ─── Contradiction detection ───────────────────────────────────────────────────
-const OPPOSE = [
-  [/\breduce\b/i, /\bmaintain\b|\bstandard\b|\bnormal\b/i],
-  [/\bslow\b|\bdecrease\b|\blower\b/i, /\bfast\b|\bincrease\b|\bhigher\b|\bstandard\b/i],
-  [/\bavoid\b|\bnever\b|\bdo not\b|\bprohibit\b/i, /\buse\b|\ballow\b|\bpermit\b/i],
-  [/\bextend\b|\blonger\b/i, /\bshorten\b|\bshorter\b|\breduce time\b/i],
-  [/\brequire\b|\bmandatory\b|\balways\b/i, /\boptional\b|\bskip\b|\bnot required\b/i],
-]
-
-function detectContradictions(allRules) {
-  const contradictions = []
-  for (let i = 0; i < allRules.length; i++) {
-    for (let j = i + 1; j < allRules.length; j++) {
-      const a = allRules[i], b = allRules[j]
-      if (a.status === 'Retired' || b.status === 'Retired') continue
-      if (a.status === 'Superseded' || b.status === 'Superseded') continue
-      const shareArea = a.processArea && b.processArea && a.processArea === b.processArea
-      const shareCat = a.category && b.category &&
-        (a.category.includes(b.category) || b.category.includes(a.category))
-      if (!shareArea && !shareCat) continue
-      const tA = (a.title || '').toLowerCase()
-      const tB = (b.title || '').toLowerCase()
-      for (const [pat1, pat2] of OPPOSE) {
-        if ((pat1.test(tA) && pat2.test(tB)) || (pat1.test(tB) && pat2.test(tA))) {
-          const scopeOverlap = !a.scope || !b.scope || a.scope === b.scope ||
-            (a.scope || '').split(/[\s;,]+/).some(w =>
-              w.length > 2 && (b.scope || '').toLowerCase().includes(w.toLowerCase())
-            )
-          if (scopeOverlap) {
-            contradictions.push({
-              ruleA: a, ruleB: b,
-              reason: 'Opposing directives in same area',
-              shared: shareArea ? a.processArea : a.category,
-            })
-            break
-          }
-        }
-      }
-    }
-  }
-  return contradictions
-}
+import { fetchRules, fetchAssertions, fetchEvents, fetchComments, fetchVerifications, fetchContradictions } from '../lib/db.js'
 
 // ─── Staleness detection ────────────────────────────────────────────────────────
 const STALE_DAYS = 90
@@ -75,11 +32,12 @@ export default function HealthDashboard({ onNavigate }) {
   const [events, setEvents] = useState([])
   const [verifications, setVerifications] = useState({})
   const [comments, setComments] = useState({})
+  const [contradictions, setContradictions] = useState([])
   const [loading, setLoading] = useState(true)
   const [topPeriod, setTopPeriod] = useState('all')
 
   useEffect(() => {
-    Promise.all([fetchRules(), fetchAssertions(), fetchEvents()]).then(async ([r, a, ev]) => {
+    Promise.all([fetchRules(), fetchAssertions(), fetchEvents(), fetchContradictions()]).then(async ([r, a, ev, ctrs]) => {
       const rIds = r.map(x => x.id)
       const aIds = a.map(x => x.id)
       const [vr, va, cr, ca] = await Promise.all([
@@ -91,6 +49,7 @@ export default function HealthDashboard({ onNavigate }) {
       setRules(r)
       setAssertions(a)
       setEvents(ev)
+      setContradictions(ctrs)
       setVerifications({ ...vr, ...va })
       setComments({ ...cr, ...ca })
       setLoading(false)
@@ -104,7 +63,6 @@ export default function HealthDashboard({ onNavigate }) {
   )
 
   const allItems = [...rules, ...assertions]
-  const contradictions = detectContradictions(rules)
   const staleItems = allItems.filter(item => {
     if (item.status === 'Retired' || item.status === 'Superseded') return false
     return checkStaleness(item, events).stale
@@ -203,31 +161,38 @@ export default function HealthDashboard({ onNavigate }) {
                 {contradictions.length > 0 && (
                   <div style={{ marginBottom: 20 }}>
                     <div style={{ fontSize: 11, color: '#c0392b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, fontFamily: FNT, fontWeight: 700 }}>Contradicted</div>
-                    {contradictions.map((c, i) => (
-                      <div key={i} style={{ padding: '14px 16px', background: '#fff', border: '1px solid #c0392b20', borderRadius: 3, marginBottom: 8 }}>
-                        <div style={{ fontSize: 10, color: '#c0392b', fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
-                          CONFLICT IN {c.shared?.toUpperCase()}
+                    {contradictions.map(c => (
+                      <div key={c.id} style={{ padding: '14px 16px', background: '#fff', border: '1px solid #c0392b20', borderRadius: 3, marginBottom: 8 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                          <div style={{ fontSize: 10, color: '#c0392b', fontFamily: FNT, fontWeight: 700 }}>
+                            CONTRADICTION
+                          </div>
+                          <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT }}>
+                            flagged by {c.flaggedBy} · {formatDate(c.flaggedAt)}
+                          </div>
                         </div>
                         <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
                           <div style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F' }}>
-                            <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2 }}>{c.ruleA.id}</div>
-                            <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.ruleA.title}</div>
+                            <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemA.type} · {c.itemA.id}</div>
+                            <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.itemA.title}</div>
+                            {c.itemA.processArea && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 3, fontFamily: FNT }}>{c.itemA.processArea}</div>}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#c0392b', fontWeight: 700 }}>⇄</div>
                           <div style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F' }}>
-                            <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2 }}>{c.ruleB.id}</div>
-                            <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.ruleB.title}</div>
+                            <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemB.type} · {c.itemB.id}</div>
+                            <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.itemB.title}</div>
+                            {c.itemB.processArea && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 3, fontFamily: FNT }}>{c.itemB.processArea}</div>}
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button
-                            onClick={() => onNavigate?.('rules')}
+                            onClick={() => onNavigate?.(c.itemA.type === 'rule' ? 'rules' : 'assertions')}
                             style={{ padding: '4px 10px', fontSize: 10, background: '#fff', border: '1px solid #D8CEC3', borderRadius: 3, cursor: 'pointer', fontFamily: FNT, fontWeight: 600, color: '#5a5550' }}
-                          >Edit {c.ruleA.id}</button>
+                          >Edit {c.itemA.id}</button>
                           <button
-                            onClick={() => onNavigate?.('rules')}
+                            onClick={() => onNavigate?.(c.itemB.type === 'rule' ? 'rules' : 'assertions')}
                             style={{ padding: '4px 10px', fontSize: 10, background: '#fff', border: '1px solid #D8CEC3', borderRadius: 3, cursor: 'pointer', fontFamily: FNT, fontWeight: 600, color: '#5a5550' }}
-                          >Edit {c.ruleB.id}</button>
+                          >Edit {c.itemB.id}</button>
                         </div>
                       </div>
                     ))}

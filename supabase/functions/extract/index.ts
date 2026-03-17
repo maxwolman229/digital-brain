@@ -19,9 +19,6 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-// ─── Domain context prompt ────────────────────────────────────────────────────
-
-const DOMAIN_CONTEXT = `You are an expert steelmaking knowledge engineer with deep expertise in EAF steelmaking, continuous casting, ladle metallurgy, scrap management, and downstream rolling. The Ishikawa categories are: Material, Process, Equipment, People, Measurement, Environment. Process areas: EAF, Casting, Rolling, Ladle Furnace, Scrap Yard, Quality Lab.`
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
 
@@ -34,7 +31,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     // ── Parse body ────────────────────────────────────────────────────────────
-    let body: { narrative?: string; process_area?: string }
+    let body: { narrative?: string; process_area?: string; industry?: string }
     try {
       body = await req.json()
     } catch {
@@ -43,8 +40,8 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const { narrative, process_area } = body
-    console.log(`[extract] process_area="${process_area}" narrative_length=${narrative?.length ?? 0}`)
+    const { narrative, process_area, industry } = body
+    console.log(`[extract] process_area="${process_area}" industry="${industry}" narrative_length=${narrative?.length ?? 0}`)
 
     if (!narrative?.trim()) {
       return new Response(JSON.stringify({ error: 'narrative is required' }), {
@@ -73,12 +70,12 @@ Deno.serve(async (req: Request) => {
         max_tokens: 2000,
         messages: [{
           role: 'user',
-          content: `${DOMAIN_CONTEXT}
+          content: `You are an operational knowledge engineer. Extract structured knowledge from operator narratives. The Ishikawa categories are: Material, Process, Equipment, People, Measurement, Environment.${industry ? ` The plant operates in the ${industry} industry — use appropriate terminology.` : ''}
 
 Extract structured operational knowledge from this operator narrative. Return ONLY valid JSON — no markdown, no backticks, no explanation.
 
 NARRATIVE: ${narrative}
-PRIMARY PROCESS AREA: ${process_area || 'EAF'}
+PRIMARY PROCESS AREA: ${process_area || 'General'}${industry ? `\nINDUSTRY: ${industry}` : ''}
 
 JSON schema:
 {
@@ -86,7 +83,7 @@ JSON schema:
     {
       "title": "Short actionable directive an operator must follow",
       "category": "one of: Material | Process | Equipment | People | Measurement | Environment",
-      "process_area": "one of: EAF | Casting | Rolling | Ladle Furnace | Scrap Yard | Quality Lab | Other",
+      "process_area": "use the primary process area above, or a more specific area if mentioned in the narrative",
       "scope": "specific conditions or constraints where this applies",
       "rationale": "why this rule exists — the consequence of not following it",
       "confidence": "one of: Low | Medium | High | Very High"
@@ -96,7 +93,7 @@ JSON schema:
     {
       "title": "Short factual observation about how the process behaves",
       "category": "one of: Material | Process | Equipment | People | Measurement | Environment",
-      "process_area": "one of: EAF | Casting | Rolling | Ladle Furnace | Scrap Yard | Quality Lab | Other",
+      "process_area": "use the primary process area above, or a more specific area if mentioned in the narrative",
       "scope": "specific conditions under which this is true",
       "confidence": "one of: Low | Medium | High | Very High"
     }

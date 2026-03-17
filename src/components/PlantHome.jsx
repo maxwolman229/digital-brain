@@ -12,6 +12,25 @@ const iS = {
   borderRadius: 3, color: '#FFFFFF', outline: 'none', boxSizing: 'border-box',
 }
 
+const INDUSTRY_OPTIONS = [
+  'Steel - EAF (Electric Arc Furnace)',
+  'Steel - BOF (Basic Oxygen Furnace)',
+  'Steel - Continuous Casting',
+  'Aluminum Smelting',
+  'Aluminum Rolling',
+  'Beverage Can Manufacturing',
+  'Cement',
+  'Glass',
+  'Chemicals',
+  'Pharmaceuticals',
+  'Food & Beverage',
+  'Pulp & Paper',
+  'Oil & Gas - Refining',
+  'Power Generation',
+  'Mining & Minerals Processing',
+  'Automotive Assembly',
+]
+
 const labelS = {
   display: 'block', fontSize: 9, color: 'rgba(255,255,255,0.4)',
   textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 5, fontFamily: FNT,
@@ -33,11 +52,13 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
   const [joinCode, setJoinCode] = useState('')
   const [orgName, setOrgName] = useState('')
   const [plantName, setPlantName] = useState('')
+  const [industry, setIndustry] = useState('')
+  const [showIndustrySuggestions, setShowIndustrySuggestions] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
   function resetPanels() {
-    setPanel(null); setJoinCode(''); setOrgName(''); setPlantName(''); setError(null)
+    setPanel(null); setJoinCode(''); setOrgName(''); setPlantName(''); setIndustry(''); setError(null)
   }
 
   async function handleJoin() {
@@ -59,7 +80,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
     setSaving(true); setError(null)
     try {
       const org = await findOrCreateOrg(orgName)
-      const plant = await createPlant(org.id, plantName, [])
+      const plant = await createPlant(org.id, plantName, industry)
       await createMembership(userId, plant.id, 'admin')
       const membership = {
         membershipId: null,
@@ -69,6 +90,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
         inviteCode: plant.invite_code,
         orgId: org.id,
         orgName: org.name,
+        industry: plant.industry || industry,
         role: 'admin',
         joinedAt: new Date().toISOString(),
       }
@@ -136,6 +158,11 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
                     {m.orgName && <span>{m.orgName} · </span>}
                     <span style={{ color: roleColors[m.role] || '#b0e0ff' }}>{m.role}</span>
                   </div>
+                  {m.industry && (
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: FNT, marginTop: 2 }}>
+                      {m.industry}
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => handleEnter(m.plantId)}
@@ -233,6 +260,50 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
             <div style={{ marginBottom: 14 }}>
               <label style={labelS}>Plant Name</label>
               <input style={iS} type="text" value={plantName} onChange={e => setPlantName(e.target.value)} placeholder="e.g. Contrecoeur Meltshop" />
+            </div>
+
+            <div style={{ marginBottom: 14, position: 'relative' }}>
+              <label style={labelS}>Industry / Plant Type</label>
+              <input
+                style={iS}
+                type="text"
+                value={industry}
+                onChange={e => { setIndustry(e.target.value); setShowIndustrySuggestions(true) }}
+                onFocus={() => setShowIndustrySuggestions(true)}
+                onBlur={() => setTimeout(() => setShowIndustrySuggestions(false), 150)}
+                placeholder="e.g. Steel - EAF, Beverage Can…"
+                autoComplete="off"
+              />
+              {showIndustrySuggestions && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                  background: '#0d2d55', border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 3, maxHeight: 160, overflowY: 'auto',
+                }}>
+                  {INDUSTRY_OPTIONS
+                    .filter(o => o.toLowerCase().includes(industry.toLowerCase()))
+                    .map(opt => (
+                      <div
+                        key={opt}
+                        onMouseDown={() => { setIndustry(opt); setShowIndustrySuggestions(false) }}
+                        style={{
+                          padding: '8px 12px', fontSize: 12, color: 'rgba(255,255,255,0.8)',
+                          cursor: 'pointer', fontFamily: FNT,
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        {opt}
+                      </div>
+                    ))
+                  }
+                  {INDUSTRY_OPTIONS.filter(o => o.toLowerCase().includes(industry.toLowerCase())).length === 0 && industry && (
+                    <div style={{ padding: '8px 12px', fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: FNT }}>
+                      Custom entry — press Enter or continue
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {error && <ErrorBox msg={error} />}

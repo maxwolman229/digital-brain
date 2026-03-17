@@ -8,7 +8,7 @@ import {
 
 const EMPTY_ASK = { question: '', detail: '', processArea: '', askedBy: '', taggedPeople: [] }
 
-export default function QuestionsView({ processAreas = [], onItemSaved }) {
+export default function QuestionsView({ processAreas = [], industry, onItemSaved }) {
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
@@ -124,7 +124,7 @@ export default function QuestionsView({ processAreas = [], onItemSaved }) {
           'apikey': supabaseKey,
           'Authorization': 'Bearer ' + (jwt || supabaseKey),
         },
-        body: JSON.stringify({ narrative, process_area: sel.processArea }),
+        body: JSON.stringify({ narrative, process_area: sel.processArea, industry }),
       })
       const data = await resp.json()
       if (!resp.ok) throw new Error(data.error || 'Extraction failed')

@@ -8,6 +8,9 @@ import Onboarding from './components/Onboarding.jsx'
 import PlantHome from './components/PlantHome.jsx'
 import KnowledgeBank from './components/KnowledgeBank.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import BevCanSignup from './components/BevCanSignup.jsx'
+import BevCanPending from './components/BevCanPending.jsx'
+import AdminDashboard from './components/AdminDashboard.jsx'
 
 
 export default function App() {
@@ -203,8 +206,14 @@ export default function App() {
               <Navigate to="/auth" replace />
             ) : !profile ? (
               <Navigate to="/onboarding" replace />
-            ) : (!activePlantId && !getStoredActivePlant()) ? (
+            ) : memberships.length === 0 ? (
               <Navigate to="/plants" replace />
+            ) : !activeMembership ? (
+              // activePlantId is stale/invalid — activate first valid membership
+              (() => {
+                activateContext(profile, memberships, memberships[0].plantId)
+                return null
+              })()
             ) : (
               <KnowledgeBank
                 key={activePlantId}
@@ -213,8 +222,61 @@ export default function App() {
                 activePlantId={activePlantId}
                 onSwitchPlant={handleSwitchPlant}
                 onLogout={handleLogout}
+                isSuperAdmin={profile?.isSuperAdmin || false}
               />
             )
+          }
+        />
+
+        {/* BevCan public knowledge bank */}
+        <Route
+          path="/bevcan"
+          element={
+            <BevCanSignup
+              session={session}
+              profile={profile}
+              memberships={memberships}
+              onSwitchToBevCan={() => {
+                handleSwitchPlant('dddddddd-dddd-dddd-dddd-dddddddddddd')
+              }}
+              onSignedIn={async (user) => {
+                let p = null, membs = [], plantId = null
+                try {
+                  p = await loadProfile(user.id)
+                  if (p) {
+                    membs = await fetchMemberships(user.id)
+                    if (membs.length > 0) {
+                      const bevcanId = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+                      const hasBevCan = membs.some(m => m.plantId === bevcanId)
+                      plantId = hasBevCan ? bevcanId : membs[0].plantId
+                      const m = membs.find(x => x.plantId === plantId)
+                      try { localStorage.setItem('md1-active-plant', plantId) } catch {}
+                      setUserContext({ plantId, displayName: p.displayName, orgId: m?.orgId, userId: user.id, role: m?.role })
+                    } else {
+                      setUserContext({ displayName: p.displayName, userId: user.id })
+                    }
+                  }
+                } catch (e) {
+                  console.error('bevcan post-signin error', e)
+                }
+                setSession({ user })
+                setProfile(p)
+                setMemberships(membs)
+                setActivePlantId(plantId)
+              }}
+            />
+          }
+        />
+
+        <Route path="/bevcan/pending" element={<BevCanPending />} />
+
+        {/* Admin dashboard — super admins only */}
+        <Route
+          path="/admin"
+          element={
+            !session ? <Navigate to="/auth" replace />
+            : !(profile?.isSuperAdmin) ? <Navigate to="/app" replace />
+            : <AdminDashboard />
           }
         />
 

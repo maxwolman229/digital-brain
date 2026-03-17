@@ -125,7 +125,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     // ── Parse body ────────────────────────────────────────────────────────────
-    let body: { question?: string; plant_id?: string }
+    let body: { question?: string; plant_id?: string; industry?: string }
     try {
       body = await req.json()
     } catch {
@@ -134,8 +134,8 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const { question, plant_id } = body
-    console.log(`[query] question="${question?.slice(0, 80)}" plant_id="${plant_id}"`)
+    const { question, plant_id, industry } = body
+    console.log(`[query] question="${question?.slice(0, 80)}" plant_id="${plant_id}" industry="${industry}"`)
 
     if (!question?.trim()) {
       return new Response(JSON.stringify({ error: 'question is required' }), {
@@ -194,7 +194,7 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log(`[query] Sending ${items.length} items to Claude (mode: ${mode})`)
-    return await answerWithClaude(question, items, anthropicKey, mode, CORS)
+    return await answerWithClaude(question, items, anthropicKey, mode, CORS, industry)
 
   } catch (err) {
     const message = (err as Error).message
@@ -213,11 +213,13 @@ async function answerWithClaude(
   apiKey: string,
   mode: string,
   cors: Record<string, string>,
+  industry?: string,
 ): Promise<Response> {
   const knowledgeContext = buildContext(items)
   console.log(`[claude] Sending ${items.length} items as context (mode: ${mode})`)
 
-  const systemPrompt = `You are the MD1 Knowledge Bank — an operational knowledge assistant for a steel plant. You answer questions ONLY from the knowledge items provided below. You do not guess or improvise.
+  const plantDescription = industry ? `a ${industry} plant` : 'a manufacturing plant'
+  const systemPrompt = `You are a knowledge assistant for ${plantDescription}. You answer questions ONLY from the knowledge items provided below. You do not guess or improvise.
 
 KNOWLEDGE ITEMS (retrieved by ${mode} search):
 ${knowledgeContext}
@@ -230,7 +232,7 @@ RULES FOR YOUR RESPONSE:
 5. If nothing in the knowledge items matches the question, say exactly: "No rules in the knowledge bank cover this situation." Then suggest filing an open question.
 6. Keep your answer concise — 2-5 sentences unless the question requires more detail.
 7. NEVER invent rules or knowledge not in the items above.
-8. NEVER say "generally in steelmaking…" — only reference what is documented above.
+8. NEVER reference general industry knowledge — only reference what is documented above.
 9. If there are contradictions between items, flag them explicitly.`
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {

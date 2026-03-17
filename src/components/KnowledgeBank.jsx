@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FNT, FNTM, STATUSES, statusColor } from '../lib/constants.js'
 import { fetchVocabulary } from '../lib/db.js'
+import { getStoredJwt } from '../lib/supabase.js'
 import { Badge, PillFilter } from './shared.jsx'
 import RulesView from './RulesView.jsx'
 import AssertionsView from './AssertionsView.jsx'
@@ -13,9 +14,14 @@ import Notifications from './Notifications.jsx'
 import QueryView from './QueryView.jsx'
 import NarrativeInput from './NarrativeInput.jsx'
 import PlantSettings from './PlantSettings.jsx'
+import CaptureView from './CaptureView.jsx'
+
+const BEVCAN_PLANT_ID = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+const SUPABASE_URL    = import.meta.env.VITE_SUPABASE_URL
 
 const TABS = [
   { id: 'query',      icon: '⌕', label: 'Ask the Bank' },
+  { id: 'capture',    icon: '◈', label: 'Capture Knowledge' },
   { id: 'questions',  icon: '?', label: 'Ask the Team' },
   { id: 'rules',      icon: '◆', label: 'Rules' },
   { id: 'assertions', icon: '◇', label: 'Assertions' },
@@ -37,7 +43,7 @@ const shortName = (name) => {
   return parts.length >= 2 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0]
 }
 
-export default function KnowledgeBank({ user, memberships, activePlantId, onSwitchPlant, onLogout }) {
+export default function KnowledgeBank({ user, memberships, activePlantId, onSwitchPlant, onLogout, isSuperAdmin }) {
   const navigate = useNavigate()
   const [view, setView] = useState('rules')
   const [search, setSearch] = useState('')
@@ -47,6 +53,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
   const [showProfile, setShowProfile] = useState(false)
   const [showPlantMenu, setShowPlantMenu] = useState(false)
   const [showPlantSettings, setShowPlantSettings] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
   const [ruleCounts, setRuleCounts] = useState({ total: 0, byStatus: {} })
   const [graphHighlight, setGraphHighlight] = useState(null)
   const [reportEventOpen, setReportEventOpen] = useState(false)
@@ -56,6 +63,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
   const notifRef = useRef(null)
 
   const activeMembership = memberships.find(m => m.plantId === activePlantId)
+  const isPlantAdmin = user?.role === 'admin' || isSuperAdmin
 
   async function refreshVocabulary() {
     const v = await fetchVocabulary(activePlantId, activeMembership?.processAreas || [])
@@ -63,6 +71,22 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
   }
 
   useEffect(() => { refreshVocabulary() }, [activePlantId])
+
+  useEffect(() => {
+    if (!isPlantAdmin || activePlantId !== BEVCAN_PLANT_ID) { setPendingCount(0); return }
+    const jwt = getStoredJwt()
+    if (!jwt) return
+    fetch(`${SUPABASE_URL}/functions/v1/bevcan-admin`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'list' }),
+    })
+      .then(r => r.json())
+      .then(({ applications }) => {
+        setPendingCount((applications || []).filter(a => a.status === 'pending').length)
+      })
+      .catch(() => {})
+  }, [activePlantId, isPlantAdmin])
 
   const tog = (arr, setArr, v) => setArr(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])
 
@@ -129,15 +153,16 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     {m.plantId === activePlantId ? '◆ ' : ''}{m.plantName}
                   </div>
                   <div style={{ fontSize: 10, color: '#8a8278', marginTop: 1 }}>{m.orgName} · {m.role}</div>
+                  {m.industry && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 1 }}>{m.industry}</div>}
                 </button>
               ))}
               <div style={{ borderTop: '1px solid #e8e4e0' }}>
-                {user?.role === 'admin' && (
+                {isPlantAdmin && (
                   <button
                     onClick={() => { setShowPlantMenu(false); setShowPlantSettings(true) }}
                     style={{ display: 'block', width: '100%', padding: '9px 14px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 11, color: '#5a5550' }}
                   >
-                    ⚙ Plant Settings
+                    ⚙ Members & Requests{pendingCount > 0 ? ` (${pendingCount})` : ''}
                   </button>
                 )}
                 <button
@@ -150,6 +175,34 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             </div>
           )}
         </div>
+
+        {/* Settings button — admins only */}
+        {isPlantAdmin && (
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={() => { setShowPlantSettings(true); setShowPlantMenu(false) }}
+              title="Members & Requests"
+              style={{
+                position: 'relative', padding: '5px 9px', borderRadius: 3, fontSize: 13,
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+                color: 'rgba(255,255,255,0.75)', cursor: 'pointer', lineHeight: 1,
+              }}
+            >
+              ⚙
+              {pendingCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: -5, right: -5,
+                  minWidth: 15, height: 15, background: '#e74c3c', color: '#fff',
+                  borderRadius: 8, fontSize: 9, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 3px', fontFamily: FNT,
+                }}>
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Search — only on rules/assertions views */}
         {showSearch && (
@@ -196,6 +249,17 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
           </button>
 
           <div style={{ width: 1, height: 22, background: 'rgba(255,255,255,0.15)', margin: '0 2px' }} />
+
+          {/* Admin link — super admins only */}
+          {isSuperAdmin && (
+            <button
+              onClick={() => navigate('/admin')}
+              title="Admin Dashboard"
+              style={{ padding: '5px 10px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontFamily: FNT }}
+            >
+              ⚙ Admin
+            </button>
+          )}
 
           {/* Notification bell */}
           <Notifications
@@ -328,6 +392,15 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               </div>
             </div>
           )}
+
+          {view === 'capture' && (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>KNOWLEDGE CAPTURE</div>
+              <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, lineHeight: 1.7 }}>
+                Adaptive interview — the system asks one question at a time, extracts rules and assertions from your answers, then presents them for review.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Main content ── */}
@@ -379,6 +452,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             <QuestionsView
               key={activePlantId}
               processAreas={vocabulary.processAreas}
+              industry={activeMembership?.industry}
               onItemSaved={refreshVocabulary}
             />
           )}
@@ -396,9 +470,19 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             />
           )}
 
-          {view === 'query' && <QueryView key={activePlantId} onNavigate={switchView} />}
+          {view === 'query' && <QueryView key={activePlantId} onNavigate={switchView} industry={activeMembership?.industry} />}
 
-          {view !== 'rules' && view !== 'assertions' && view !== 'events' && view !== 'questions' && view !== 'health' && view !== 'graph' && view !== 'query' && (
+          {view === 'capture' && (
+            <CaptureView
+              key={activePlantId}
+              processAreas={vocabulary.processAreas}
+              industry={activeMembership?.industry}
+              onNavigate={switchView}
+              onItemSaved={refreshVocabulary}
+            />
+          )}
+
+          {view !== 'rules' && view !== 'assertions' && view !== 'events' && view !== 'questions' && view !== 'health' && view !== 'graph' && view !== 'query' && view !== 'capture' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 32, color: '#D8CEC3' }}>{TABS.find(t => t.id === view)?.icon}</div>
               <div style={{ fontSize: 13, color: '#b0a898', fontFamily: FNT }}>{TABS.find(t => t.id === view)?.label} — coming soon</div>
@@ -413,6 +497,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
         onCreated={() => {}}
         processAreas={vocabulary.processAreas}
         categories={vocabulary.categories}
+        industry={activeMembership?.industry}
         onItemSaved={refreshVocabulary}
       />
 
@@ -422,10 +507,12 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             plantId: user.plantId,
             plantName: user.plantName,
             orgId: user.orgId,
-            orgName: '',
+            orgName: activeMembership?.orgName || '',
             role: user.role,
             inviteCode: user.inviteCode,
           }}
+          isSuperAdmin={isSuperAdmin}
+          onPendingCountChange={setPendingCount}
           onClose={() => setShowPlantSettings(false)}
         />
       )}

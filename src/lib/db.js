@@ -1,9 +1,11 @@
 import { supabase } from './supabase.js'
 import { getPlantId, getDisplayName } from './userContext.js'
+import { INITIAL_RULES, INITIAL_ASSERTIONS, INITIAL_EVENTS, INITIAL_QUESTIONS } from './data.js'
 
 // Dynamic plant ID from authenticated user context.
 // Falls back to env/seed UUID so development still works without auth.
 const PLANT_ID = () => getPlantId() || import.meta.env.VITE_PLANT_ID || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+const DEMO_PLANT_ID = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 
 // ─── Normalise snake_case Supabase rows → camelCase prototype shape ───────────
 
@@ -61,8 +63,16 @@ function normaliseAssertion(a, evidence = [], versions = [], linkedRules = []) {
 // ─── Rules ────────────────────────────────────────────────────────────────────
 
 export async function fetchRules() {
-  const rulesRes = await supabase.from('rules').select('*').eq('plant_id', PLANT_ID()).order('created_at', { ascending: false })
-  if (!rulesRes.data?.length) return []
+  const pid = PLANT_ID()
+  console.log('[fetchRules] plant_id:', pid)
+  const rulesRes = await supabase.from('rules').select('*').eq('plant_id', pid).order('created_at', { ascending: false })
+  if (!rulesRes.data?.length) {
+    if (pid === DEMO_PLANT_ID) {
+      console.warn('[fetchRules] EAF demo plant returned empty — using seed data fallback')
+      return INITIAL_RULES
+    }
+    return []
+  }
 
   const ruleIds = rulesRes.data.map(r => r.id)
   const [evidenceRes, versionsRes, linksRes] = await Promise.all([
@@ -85,8 +95,16 @@ export async function fetchRules() {
 // ─── Assertions ───────────────────────────────────────────────────────────────
 
 export async function fetchAssertions() {
-  const assertRes = await supabase.from('assertions').select('*').eq('plant_id', PLANT_ID()).order('created_at', { ascending: false })
-  if (!assertRes.data?.length) return []
+  const pid = PLANT_ID()
+  console.log('[fetchAssertions] plant_id:', pid)
+  const assertRes = await supabase.from('assertions').select('*').eq('plant_id', pid).order('created_at', { ascending: false })
+  if (!assertRes.data?.length) {
+    if (pid === DEMO_PLANT_ID) {
+      console.warn('[fetchAssertions] EAF demo plant returned empty — using seed data fallback')
+      return INITIAL_ASSERTIONS
+    }
+    return []
+  }
 
   const assertionIds = assertRes.data.map(a => a.id)
   const [evidenceRes, versionsRes, linksRes] = await Promise.all([
@@ -173,13 +191,21 @@ function normaliseEvent(e) {
 }
 
 export async function fetchEvents() {
+  const pid = PLANT_ID()
+  console.log('[fetchEvents] plant_id:', pid)
   const { data } = await supabase
     .from('events')
     .select('*')
-    .eq('plant_id', PLANT_ID())
+    .eq('plant_id', pid)
     .order('date', { ascending: false })
 
-  if (!data?.length) return []
+  if (!data?.length) {
+    if (pid === DEMO_PLANT_ID) {
+      console.warn('[fetchEvents] EAF demo plant returned empty — using seed data fallback')
+      return INITIAL_EVENTS
+    }
+    return []
+  }
   return data.map(normaliseEvent)
 }
 
@@ -282,13 +308,21 @@ function normaliseQuestion(q) {
 }
 
 export async function fetchQuestions() {
+  const pid = PLANT_ID()
+  console.log('[fetchQuestions] plant_id:', pid)
   const { data } = await supabase
     .from('questions')
     .select('*')
-    .eq('plant_id', PLANT_ID())
+    .eq('plant_id', pid)
     .order('created_at', { ascending: false })
 
-  if (!data?.length) return []
+  if (!data?.length) {
+    if (pid === DEMO_PLANT_ID) {
+      console.warn('[fetchQuestions] EAF demo plant returned empty — using seed data fallback')
+      return INITIAL_QUESTIONS
+    }
+    return []
+  }
   return data.map(normaliseQuestion)
 }
 
@@ -420,7 +454,90 @@ export async function saveLink(sourceType, sourceId, targetType, targetId, relTy
     console.error('[saveLink] failed:', error.message)
     return false
   }
+
+  if (relType === 'contradicts') {
+    await handleContradictLink(sourceType, sourceId, targetType, targetId, createdBy || 'You')
+  }
+
   return true
+}
+
+async function handleContradictLink(sourceType, sourceId, targetType, targetId, flaggedBy) {
+  const srcTable = sourceType === 'rule' ? 'rules' : 'assertions'
+  const tgtTable = targetType === 'rule' ? 'rules' : 'assertions'
+
+  // Set both items to Contradicted
+  await Promise.all([
+    supabase.from(srcTable).update({ status: 'Contradicted' }).eq('id', sourceId),
+    supabase.from(tgtTable).update({ status: 'Contradicted' }).eq('id', targetId),
+  ])
+
+  // Notify both authors — look up user_ids from profiles by display_name
+  const [srcRes, tgtRes] = await Promise.all([
+    supabase.from(srcTable).select('created_by').eq('id', sourceId).single(),
+    supabase.from(tgtTable).select('created_by').eq('id', targetId).single(),
+  ])
+  const authorNames = [...new Set([srcRes.data?.created_by, tgtRes.data?.created_by].filter(Boolean))]
+  if (!authorNames.length) return
+
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, display_name')
+    .in('display_name', authorNames)
+  if (!profiles?.length) return
+
+  const notifs = profiles.map(p => ({
+    user_id: p.user_id,
+    text: `${sourceId} has been flagged as contradicting ${targetId} — review needed`,
+    read: false,
+    target_view: sourceType === 'rule' ? 'rules' : 'assertions',
+    target_id: sourceId,
+  }))
+  await supabase.from('notifications').insert(notifs)
+}
+
+// Returns all explicit contradicts links for this plant, with both items resolved.
+export async function fetchContradictions() {
+  const { data: links, error } = await supabase
+    .from('links')
+    .select('id, source_type, source_id, target_type, target_id, created_by, created_at')
+    .eq('relationship_type', 'contradicts')
+    .order('created_at', { ascending: false })
+
+  if (error || !links?.length) return []
+
+  const ruleIds = new Set()
+  const assertionIds = new Set()
+  links.forEach(l => {
+    if (l.source_type === 'rule') ruleIds.add(l.source_id)
+    if (l.target_type === 'rule') ruleIds.add(l.target_id)
+    if (l.source_type === 'assertion') assertionIds.add(l.source_id)
+    if (l.target_type === 'assertion') assertionIds.add(l.target_id)
+  })
+
+  const [rulesRes, assertRes] = await Promise.all([
+    ruleIds.size
+      ? supabase.from('rules').select('id, title, process_area, status').eq('plant_id', PLANT_ID()).in('id', [...ruleIds])
+      : { data: [] },
+    assertionIds.size
+      ? supabase.from('assertions').select('id, title, process_area, status').eq('plant_id', PLANT_ID()).in('id', [...assertionIds])
+      : { data: [] },
+  ])
+
+  const itemMap = {}
+  ;(rulesRes.data || []).forEach(r => { itemMap[r.id] = { id: r.id, type: 'rule', title: r.title, processArea: r.process_area, status: r.status } })
+  ;(assertRes.data || []).forEach(a => { itemMap[a.id] = { id: a.id, type: 'assertion', title: a.title, processArea: a.process_area, status: a.status } })
+
+  // Only return pairs where both items belong to this plant
+  return links
+    .filter(l => itemMap[l.source_id] && itemMap[l.target_id])
+    .map(l => ({
+      id: l.id,
+      itemA: itemMap[l.source_id],
+      itemB: itemMap[l.target_id],
+      flaggedBy: l.created_by,
+      flaggedAt: l.created_at,
+    }))
 }
 
 export async function deleteLink(linkId) {

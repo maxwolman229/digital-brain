@@ -148,7 +148,7 @@ function SourceChips({ sources, onCiteClick }) {
   )
 }
 
-export default function QueryView({ onNavigate }) {
+export default function QueryView({ onNavigate, industry }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -192,7 +192,7 @@ export default function QueryView({ onNavigate }) {
           'apikey': supabaseKey,
           'Authorization': 'Bearer ' + (jwt || supabaseKey),
         },
-        body: JSON.stringify({ question: q, plant_id: PLANT_ID }),
+        body: JSON.stringify({ question: q, plant_id: PLANT_ID, industry }),
       })
       const data = await resp.json()
       if (!resp.ok) throw new Error(data.error || `Edge function error (${resp.status})`)

@@ -122,6 +122,7 @@ export async function loadProfile(userId) {
     role: data.role || 'member',
     plantId: data.plant_id,
     orgId: data.org_id,
+    isSuperAdmin: data.is_super_admin || false,
   }
 }
 
@@ -166,10 +167,10 @@ export async function findOrCreateOrg(name) {
   return data
 }
 
-export async function createPlant(orgId, plantName, processAreas) {
+export async function createPlant(orgId, plantName, industry) {
   const { data, error } = await supabase
     .from('plants')
-    .insert({ org_id: orgId, name: plantName.trim(), process_areas: processAreas })
+    .insert({ org_id: orgId, name: plantName.trim(), industry: industry?.trim() || null })
     .select()
     .single()
 
@@ -206,10 +207,13 @@ export async function createMembership(userId, plantId, role = 'admin', invitedB
 }
 
 export async function fetchMemberships(userId) {
-  const { data: membRows } = await supabase
+  console.log('[fetchMemberships] querying for user_id:', userId)
+  const { data: membRows, error: membErr } = await supabase
     .from('plant_memberships')
     .select('id, plant_id, role, joined_at, invited_by')
     .eq('user_id', userId)
+
+  console.log('[fetchMemberships] plant_memberships rows:', membRows?.length ?? 0, membRows?.map(m => m.plant_id), membErr ? '— ERROR: ' + membErr.message : '')
 
   // If no membership rows found, check the profiles table for a legacy plant_id.
   // This handles accounts created before the multi-plant migration, or the demo
@@ -239,14 +243,16 @@ export async function fetchMemberships(userId) {
     return []
   }
 
-  return _buildMemberships(membRows)
+  const result = await _buildMemberships(membRows)
+  console.log('[fetchMemberships] built memberships:', result.map(m => `${m.plantName} (${m.plantId})`))
+  return result
 }
 
 async function _buildMemberships(membRows) {
   const plantIds = membRows.map(m => m.plant_id)
   const { data: plants } = await supabase
     .from('plants')
-    .select('id, name, org_id, process_areas, invite_code')
+    .select('id, name, org_id, process_areas, invite_code, industry')
     .in('id', plantIds)
 
   const plantMap = {}
@@ -273,6 +279,7 @@ async function _buildMemberships(membRows) {
       inviteCode: plant.invite_code || '',
       orgId: plant.org_id,
       orgName: org.name || '',
+      industry: plant.industry || '',
       role: m.role,
       joinedAt: m.joined_at,
     }
@@ -288,7 +295,7 @@ export async function joinPlantByCode(inviteCode) {
 
   const { data: plant, error: plantErr } = await supabase
     .from('plants')
-    .select('id, name, org_id, process_areas, invite_code')
+    .select('id, name, org_id, process_areas, invite_code, industry')
     .eq('invite_code', inviteCode.trim().toUpperCase())
     .single()
 
@@ -319,6 +326,7 @@ export async function joinPlantByCode(inviteCode) {
     inviteCode: plant.invite_code,
     orgId: plant.org_id,
     orgName,
+    industry: plant.industry || '',
     role: 'contributor',
     joinedAt: membership.joined_at,
   }
@@ -365,4 +373,27 @@ export async function removeMember(membershipId) {
     .delete()
     .eq('id', membershipId)
   if (error) throw new Error(error.message)
+}
+
+// ─── BevCan application helpers ───────────────────────────────────────────────
+
+export async function createBevcanApplication(userId, fields) {
+  const { data, error } = await supabase
+    .from('bevcan_applications')
+    .insert({ user_id: userId, ...fields })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function fetchBevcanApplicationStatus(userId) {
+  const { data } = await supabase
+    .from('bevcan_applications')
+    .select('status')
+    .eq('user_id', userId)
+    .order('applied_at', { ascending: false })
+    .limit(1)
+    .single()
+  return data?.status || null // 'pending' | 'approved' | 'rejected' | null
 }

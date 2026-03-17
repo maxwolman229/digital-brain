@@ -17,6 +17,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
   const [crossSel, setCrossSel] = useState(null)
   const [crossLoading, setCrossLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [contradictLinks, setContradictLinks] = useState([])
 
   useEffect(() => {
     load()
@@ -57,6 +58,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
     setSel(item)
     setShowVer(false)
     setCrossSel(null)
+    setContradictLinks([])
   }
 
   async function openLinkedItem(type, id) {
@@ -158,6 +160,25 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
               </div>
             )}
 
+            {/* Contradiction warning */}
+            {contradictLinks.length > 0 && (
+              <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fde8e5', border: '1px solid #c0392b30', borderRadius: 3 }}>
+                <div style={{ fontSize: 12, color: '#c0392b', fontFamily: FNT, fontWeight: 700, marginBottom: 4 }}>
+                  ⚠ Contradiction flagged
+                </div>
+                {contradictLinks.map(l => (
+                  <div key={l.id} style={{ fontSize: 12, color: '#c0392b', fontFamily: FNT }}>
+                    This item contradicts{' '}
+                    <button
+                      onClick={() => openLinkedItem(l.linkedType, l.linkedId)}
+                      style={{ background: 'none', border: 'none', padding: 0, color: '#c0392b', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontSize: 12, fontFamily: FNT }}
+                    >{l.linkedId}</button>
+                    {' — '}{l.linkedTitle}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Title + badges */}
             <h3 style={{ fontSize: 16, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 16, fontFamily: FNT }}>
               {sel.title}
@@ -203,6 +224,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
                 sourceId={sel.id}
                 onOpenItem={openLinkedItem}
                 sourceMeta={{ processArea: sel.processArea, category: sel.category, title: sel.title }}
+                onLinksLoaded={links => setContradictLinks(links.filter(l => l.relType === 'contradicts'))}
               />
             </div>
 
