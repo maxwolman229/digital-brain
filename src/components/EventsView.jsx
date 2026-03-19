@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
-import { FNT, FNTM, iS, IMPACTS, EVENT_STATUSES, EVENT_OUTCOMES, ISHIKAWA_CATS, formatDate, outcomeColor, impactColor, eventStatusColor } from '../lib/constants.js'
-import { Badge, Tag, Modal, Field, TypeaheadInput } from './shared.jsx'
-import { fetchEvents, addEvent } from '../lib/db.js'
+import { useState, useEffect, useRef } from 'react'
+import { FNT, iS, IMPACTS, EVENT_STATUSES, EVENT_OUTCOMES, ISHIKAWA_CATS, formatDate, outcomeColor, impactColor, eventStatusColor, statusColor } from '../lib/constants.js'
+import { Badge, Tag, Modal, Field, TypeaheadInput, MentionDropdown } from './shared.jsx'
+import { fetchEvents, addEvent, fetchEventKnowledgeCounts, fetchEventConnectedKnowledge, saveLink, searchKnowledge, fetchItemById, fetchPlantMembers } from '../lib/db.js'
+import { useMention } from '../lib/useMention.js'
 import Comments from './Comments.jsx'
+import EventCaptureView from './EventCaptureView.jsx'
 
 const CAT_COLORS = {
   Material: '#F2652F',
@@ -18,7 +20,6 @@ const EMPTY_FORM = {
   outcome: 'Negative',
   processArea: '',
   impact: 'Moderate',
-  reportedBy: '',
   description: '',
   ishikawa: { Material: [''], Process: [''], Equipment: [''], People: [''], Measurement: [''], Environment: [''] },
   resolution: '',
@@ -26,34 +27,107 @@ const EMPTY_FORM = {
   tags: '',
 }
 
-export default function EventsView({ reportOpen, onReportClose, processAreas = [], onItemSaved }) {
+export default function EventsView({ reportOpen, onReportClose, processAreas = [], industry, plantId, onItemSaved, onViewProfile }) {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
+  const [showModeModal, setShowModeModal] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [showInterview, setShowInterview] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [tagInput, setTagInput] = useState('')
+  const [members, setMembers] = useState([])
+  const descRef = useRef(null)
+  const { mentionQuery: descMention, handleMentionChange: handleDescChange, insertMention: insertDescMention } =
+    useMention(form.description, v => setForm(f => ({ ...f, description: v })), descRef)
   const [fOutcome, setFOutcome] = useState([])
   const [fImpact, setFImpact] = useState([])
   const [fEvStatus, setFEvStatus] = useState([])
   const [fProc, setFProc] = useState([])
 
+  // Knowledge counts per event (for badges on cards)
+  const [knowledgeCounts, setKnowledgeCounts] = useState({})
+
+  // Connected knowledge for selected event
+  const [connectedKnowledge, setConnectedKnowledge] = useState(null)
+  const [connectedLoading, setConnectedLoading] = useState(false)
+
+  // Mini knowledge item detail modal
+  const [knowledgeItemSel, setKnowledgeItemSel] = useState(null) // { type, id }
+  const [knowledgeItemDetail, setKnowledgeItemDetail] = useState(null)
+  const [knowledgeItemLoading, setKnowledgeItemLoading] = useState(false)
+
+  // Add Link inline state
+  const [addLinkOpen, setAddLinkOpen] = useState(false)
+  const [addLinkQuery, setAddLinkQuery] = useState('')
+  const [addLinkResults, setAddLinkResults] = useState([])
+  const [addLinkSaving, setAddLinkSaving] = useState(false)
+
   useEffect(() => {
     load()
+    fetchPlantMembers().then(setMembers).catch(() => {})
   }, [])
 
   useEffect(() => {
     if (reportOpen) {
-      setShowForm(true)
+      setShowModeModal(true)
       onReportClose?.()
     }
   }, [reportOpen])
+
+  // Load connected knowledge when event is selected
+  useEffect(() => {
+    if (!sel) { setConnectedKnowledge(null); return }
+    setConnectedKnowledge(null)
+    setConnectedLoading(true)
+    setAddLinkOpen(false)
+    setAddLinkQuery('')
+    setAddLinkResults([])
+    fetchEventConnectedKnowledge(sel.id, sel.title, sel.description)
+      .then(ck => { setConnectedKnowledge(ck); setConnectedLoading(false) })
+      .catch(() => setConnectedLoading(false))
+  }, [sel?.id])
+
+  // Load knowledge item detail when mini modal opens
+  useEffect(() => {
+    if (!knowledgeItemSel) { setKnowledgeItemDetail(null); return }
+    setKnowledgeItemDetail(null)
+    setKnowledgeItemLoading(true)
+    fetchItemById(knowledgeItemSel.type, knowledgeItemSel.id)
+      .then(item => { setKnowledgeItemDetail(item); setKnowledgeItemLoading(false) })
+      .catch(() => setKnowledgeItemLoading(false))
+  }, [knowledgeItemSel?.type, knowledgeItemSel?.id])
+
+  // Debounce add-link search
+  useEffect(() => {
+    if (!addLinkQuery.trim()) { setAddLinkResults([]); return }
+    const t = setTimeout(() => {
+      searchKnowledge(addLinkQuery, 'event', sel?.id).then(setAddLinkResults)
+    }, 220)
+    return () => clearTimeout(t)
+  }, [addLinkQuery])
 
   async function load() {
     setLoading(true)
     const data = await fetchEvents()
     setEvents(data)
     setLoading(false)
+    if (data.length > 0) {
+      fetchEventKnowledgeCounts(data.map(e => e.id)).then(setKnowledgeCounts)
+    }
+  }
+
+  async function handleAddLink(item) {
+    if (!sel) return
+    setAddLinkSaving(true)
+    await saveLink('event', sel.id, item.type, item.id, 'relates_to', null)
+    // Refresh connected knowledge
+    const ck = await fetchEventConnectedKnowledge(sel.id, sel.title, sel.description)
+    setConnectedKnowledge(ck)
+    setAddLinkOpen(false)
+    setAddLinkQuery('')
+    setAddLinkResults([])
+    setAddLinkSaving(false)
   }
 
   // ── Filtering ─────────────────────────────────────────────────────────────
@@ -101,7 +175,6 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
       outcome: form.outcome,
       processArea: form.processArea,
       impact: form.impact,
-      reportedBy: form.reportedBy || 'You',
       description: form.description,
       ishikawa: cleanIshikawa,
       resolution: form.resolution,
@@ -109,15 +182,10 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
       status: 'Open',
       date: now,
-      linkedRules: [],
-      linkedAssertions: [],
-      generatedRules: [],
-      generatedAssertions: [],
       createdAt: now,
     }
 
-    // Optimistic add with temporary local ID
-    const localId = `E-${String(events.length + 1).padStart(3, '0')}`
+    const localId = `E-tmp-${Date.now()}`
     const localEvent = { ...newEvent, id: localId }
     setEvents(prev => [localEvent, ...prev])
     closeForm()
@@ -136,7 +204,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
 
       {/* ── Filter row ── */}
       <div style={{ padding: '12px 28px 0', borderBottom: '1px solid #e8e4e0', background: '#FAFAF9' }}>
@@ -175,7 +243,13 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             )}
 
             {filtered.map(ev => (
-              <EventCard key={ev.id} ev={ev} selected={sel?.id === ev.id} onClick={() => setSel(ev)} />
+              <EventCard
+                key={ev.id}
+                ev={ev}
+                selected={sel?.id === ev.id}
+                onClick={() => setSel(ev)}
+                knowledgeCount={knowledgeCounts[ev.id]}
+              />
             ))}
           </>
         )}
@@ -191,7 +265,10 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
               <Badge label={sel.status} colorFn={eventStatusColor} />
               <Tag label={sel.processArea} />
               <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginLeft: 'auto' }}>
-                {formatDate(sel.date)} · {sel.reportedBy}
+                {formatDate(sel.date)} · <span
+                  onClick={() => sel.reportedBy && onViewProfile?.(sel.reportedBy)}
+                  style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
+                >{sel.reportedBy}</span>
               </span>
             </div>
 
@@ -242,49 +319,21 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
               </div>
             )}
 
-            {/* Linked knowledge */}
-            {((sel.linkedRules || []).length > 0 || (sel.linkedAssertions || []).length > 0) && (
-              <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
-                {(sel.linkedRules || []).length > 0 && (
-                  <div>
-                    <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Linked Rules</div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      {sel.linkedRules.map(lid => (
-                        <span key={lid} style={{ padding: '2px 8px', borderRadius: 2, fontSize: 11, background: '#f0eeec', color: '#4FA89A', fontFamily: FNT, fontWeight: 600, border: '1px solid #4FA89A30' }}>{lid}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {(sel.linkedAssertions || []).length > 0 && (
-                  <div>
-                    <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Linked Assertions</div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      {sel.linkedAssertions.map(lid => (
-                        <span key={lid} style={{ padding: '2px 8px', borderRadius: 2, fontSize: 11, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, fontWeight: 600, border: '1px solid #D8CEC3' }}>{lid}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Generated knowledge */}
-            {((sel.generatedRules || []).length > 0 || (sel.generatedAssertions || []).length > 0) && (
-              <div style={{ padding: '10px 14px', background: '#e6f5f1', border: '1px solid #4FA89A20', borderRadius: 3, marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT, fontWeight: 700 }}>Knowledge Generated From This Incident</div>
-                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                  {[...(sel.generatedRules || []), ...(sel.generatedAssertions || [])].map(id => (
-                    <span key={id} style={{ padding: '2px 8px', borderRadius: 2, fontSize: 11, background: '#f0eeec', color: '#4FA89A', fontFamily: FNT, fontWeight: 600 }}>{id}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Generate button */}
-            <button style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontSize: 13, background: '#F2652F', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4, marginBottom: 4 }}>
-              {`Generate ${sel.outcome === 'Positive' ? 'Best-Practice' : 'Preventive'} Rules & Assertions`}
-            </button>
-            <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, textAlign: 'center', marginBottom: 16 }}>AI generation — coming soon</div>
+            {/* ── Connected Knowledge ── */}
+            <ConnectedKnowledgeSection
+              connectedKnowledge={connectedKnowledge}
+              loading={connectedLoading}
+              outcome={sel.outcome}
+              onItemClick={(type, id) => setKnowledgeItemSel({ type, id })}
+              addLinkOpen={addLinkOpen}
+              addLinkQuery={addLinkQuery}
+              addLinkResults={addLinkResults}
+              addLinkSaving={addLinkSaving}
+              onAddLinkOpen={() => setAddLinkOpen(true)}
+              onAddLinkClose={() => { setAddLinkOpen(false); setAddLinkQuery(''); setAddLinkResults([]) }}
+              onAddLinkQueryChange={setAddLinkQuery}
+              onAddLinkSelect={handleAddLink}
+            />
 
             {/* Tags */}
             {(sel.tags || []).length > 0 && (
@@ -299,14 +348,81 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
         )}
       </Modal>
 
+      {/* ── Knowledge item mini detail modal ── */}
+      <Modal
+        open={!!knowledgeItemSel}
+        onClose={() => setKnowledgeItemSel(null)}
+        title={knowledgeItemDetail ? `${knowledgeItemDetail.type === 'rule' ? 'Rule' : 'Assertion'} ${knowledgeItemDetail.id}` : '…'}
+        width={620}
+      >
+        {knowledgeItemLoading && (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
+        )}
+        {!knowledgeItemLoading && knowledgeItemDetail && (
+          <KnowledgeItemDetail item={knowledgeItemDetail} />
+        )}
+      </Modal>
+
+      {/* ── Mode choice modal ── */}
+      <Modal open={showModeModal} onClose={() => setShowModeModal(false)} title="Report Event" width={480}>
+        <div style={{ fontSize: 13, color: '#5a5550', fontFamily: FNT, lineHeight: 1.6, marginBottom: 20 }}>
+          How would you like to file this event?
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <button
+            onClick={() => { setShowModeModal(false); setShowForm(true) }}
+            style={{
+              padding: '20px 16px', borderRadius: 4, border: '2px solid #D8CEC3',
+              background: '#fff', cursor: 'pointer', textAlign: 'left',
+              fontFamily: FNT, transition: 'border-color 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#062044'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#D8CEC3'}
+          >
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#062044', marginBottom: 4 }}>Fill out form</div>
+            <div style={{ fontSize: 11, color: '#8a8278', lineHeight: 1.5 }}>
+              Complete the structured event report yourself, including Ishikawa root cause analysis.
+            </div>
+          </button>
+          <button
+            onClick={() => { setShowModeModal(false); setShowInterview(true) }}
+            style={{
+              padding: '20px 16px', borderRadius: 4, border: '2px solid #D8CEC3',
+              background: '#fff', cursor: 'pointer', textAlign: 'left',
+              fontFamily: FNT, transition: 'border-color 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#F2652F'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#D8CEC3'}
+          >
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#062044', marginBottom: 4 }}>Walk me through it</div>
+            <div style={{ fontSize: 11, color: '#8a8278', lineHeight: 1.5 }}>
+              Answer a few guided questions. The AI structures the report and extracts any rules or lessons automatically.
+            </div>
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── Guided interview overlay ── */}
+      {showInterview && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 50, background: '#FAFAF9' }}>
+          <EventCaptureView
+            processAreas={processAreas}
+            industry={industry}
+            plantId={plantId}
+            onClose={() => setShowInterview(false)}
+            onItemSaved={() => { load(); onItemSaved?.() }}
+          />
+        </div>
+      )}
+
       {/* ── Report Event form modal ── */}
       <Modal open={showForm} onClose={closeForm} title="Report Event" width={760}>
         <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.6, marginBottom: 16 }}>
-          Document an operational event — positive or negative — with structured Ishikawa analysis. Each Ishikawa category captures contributing factors. After filing, you can generate rules and assertions that capture what worked or what to prevent.
+          Document an operational event — positive or negative — with structured Ishikawa analysis. Each Ishikawa category captures contributing factors.
         </div>
 
         <Field label="Event Title">
-          <input style={iS} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Zero-defect HSLA campaign — Heats #4810–4818" />
+          <input style={iS} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Brief title describing what happened or what went well" />
         </Field>
 
         {/* Outcome toggle */}
@@ -337,18 +453,19 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
               {IMPACTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </Field>
-          <Field label="Reported By">
-            <input style={iS} value={form.reportedBy} onChange={e => setForm({ ...form, reportedBy: e.target.value })} placeholder="Name" />
-          </Field>
         </div>
 
         <Field label="Description">
-          <textarea
-            style={{ ...iS, height: 70, resize: 'vertical', lineHeight: 1.5 }}
-            value={form.description}
-            onChange={e => setForm({ ...form, description: e.target.value })}
-            placeholder={form.outcome === 'Positive' ? 'What went well? Include heat numbers, product grades, conditions that drove success...' : 'What happened? Include heat numbers, product grades, timing...'}
-          />
+          <div style={{ position: 'relative' }}>
+            <textarea
+              ref={descRef}
+              style={{ ...iS, height: 70, resize: 'vertical', lineHeight: 1.5, width: '100%', boxSizing: 'border-box' }}
+              value={form.description}
+              onChange={handleDescChange}
+              placeholder={form.outcome === 'Positive' ? 'What went well? Include heat numbers, product grades, conditions that drove success...' : 'What happened? Include heat numbers, product grades, timing… (type @ to mention someone)'}
+            />
+            <MentionDropdown query={descMention} members={members} onSelect={insertDescMention} />
+          </div>
         </Field>
 
         {/* Tag people */}
@@ -427,7 +544,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             style={iS}
             value={form.tags}
             onChange={e => setForm({ ...form, tags: e.target.value })}
-            placeholder={form.outcome === 'Positive' ? 'hsla, zero-defect, best-practice, casting' : 'cracking, hsla, sims, casting'}
+            placeholder="e.g. best-practice, quality, operator-tip"
           />
         </Field>
 
@@ -450,11 +567,238 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
   )
 }
 
+// ── Connected Knowledge Section ────────────────────────────────────────────────
+
+function ConnectedKnowledgeSection({
+  connectedKnowledge, loading, outcome,
+  onItemClick,
+  addLinkOpen, addLinkQuery, addLinkResults, addLinkSaving,
+  onAddLinkOpen, onAddLinkClose, onAddLinkQueryChange, onAddLinkSelect,
+}) {
+  const hasDerived = (connectedKnowledge?.derived || []).length > 0
+  const hasExplicit = (connectedKnowledge?.explicit || []).length > 0
+  const hasRelated = (connectedKnowledge?.related || []).length > 0
+  const isEmpty = !hasDerived && !hasExplicit && !hasRelated
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      {/* Section header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: FNT, fontWeight: 700 }}>
+          Connected Knowledge
+        </div>
+        {!addLinkOpen && (
+          <button
+            onClick={onAddLinkOpen}
+            style={{
+              padding: '3px 10px', borderRadius: 2, fontSize: 10, fontFamily: FNT, fontWeight: 700,
+              background: 'none', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+              letterSpacing: 0.4,
+            }}
+          >
+            + Add Link
+          </button>
+        )}
+      </div>
+
+      {loading && (
+        <div style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, padding: '8px 0' }}>Loading connected knowledge…</div>
+      )}
+
+      {!loading && (
+        <>
+          {/* Generated from this event */}
+          {hasDerived && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 9, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
+                Generated from this event
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {connectedKnowledge.derived.map(item => (
+                  <KnowledgeChip key={item.id} item={item} accent="#4FA89A" onClick={() => onItemClick(item.type, item.id)} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Explicitly linked */}
+          {hasExplicit && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 9, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
+                Linked knowledge
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {connectedKnowledge.explicit.map(item => (
+                  <KnowledgeChip key={item.id} item={item} accent="#8a8278" onClick={() => onItemClick(item.type, item.id)} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Related knowledge (search-based) */}
+          {hasRelated && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
+                Related knowledge
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {connectedKnowledge.related.map(item => (
+                  <KnowledgeChip key={item.id} item={item} accent="#b0a898" onClick={() => onItemClick(item.type, item.id)} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isEmpty && !addLinkOpen && (
+            <div style={{ padding: '14px 16px', border: '1px dashed #D8CEC3', borderRadius: 3, fontSize: 11, color: '#b0a898', fontFamily: FNT, textAlign: 'center' }}>
+              No connected knowledge yet. Use "Walk me through it" when reporting events to generate rules automatically, or link existing knowledge manually.
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Add Link inline panel */}
+      {addLinkOpen && (
+        <div style={{ padding: '12px 14px', background: '#f8f6f4', border: '1px solid #D8CEC3', borderRadius: 3, marginTop: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, fontWeight: 600 }}>Search for a rule or assertion to link</div>
+            <button onClick={onAddLinkClose} style={{ background: 'none', border: 'none', color: '#b0a898', cursor: 'pointer', fontSize: 13, lineHeight: 1 }}>✕</button>
+          </div>
+          <input
+            autoFocus
+            value={addLinkQuery}
+            onChange={e => onAddLinkQueryChange(e.target.value)}
+            placeholder="Type to search knowledge…"
+            style={{ ...iS, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+          />
+          {addLinkResults.length > 0 && (
+            <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
+              {addLinkResults.map(item => (
+                <button
+                  key={`${item.type}:${item.id}`}
+                  onClick={() => !addLinkSaving && onAddLinkSelect(item)}
+                  disabled={addLinkSaving}
+                  style={{
+                    display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px',
+                    background: '#fff', border: '1px solid #e8e4e0', borderRadius: 3,
+                    cursor: 'pointer', textAlign: 'left', fontFamily: FNT, width: '100%',
+                    opacity: addLinkSaving ? 0.6 : 1,
+                  }}
+                >
+                  <span style={{
+                    fontSize: 8, padding: '2px 5px', borderRadius: 2, fontWeight: 700, textTransform: 'uppercase',
+                    background: item.type === 'rule' ? '#e8edf4' : '#f0eeec',
+                    color: item.type === 'rule' ? '#062044' : '#8a8278', flexShrink: 0,
+                  }}>{item.type}</span>
+                  <span style={{ fontSize: 11, color: '#1F1F1F', flex: 1 }}>{item.title}</span>
+                  <span style={{ fontSize: 9, color: '#b0a898', flexShrink: 0 }}>{item.processArea}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {addLinkQuery.trim() && addLinkResults.length === 0 && (
+            <div style={{ marginTop: 6, fontSize: 11, color: '#b0a898', fontFamily: FNT }}>No matches found.</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Small clickable chip for a connected knowledge item
+function KnowledgeChip({ item, accent, onClick }) {
+  const [hovered, setHovered] = useState(false)
+  const sc = statusColor(item.status)
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', gap: 8, alignItems: 'center',
+        padding: '8px 12px', borderRadius: 3, cursor: 'pointer',
+        background: hovered ? '#f0eeec' : '#fff',
+        border: `1px solid ${hovered ? accent + '40' : '#e8e4e0'}`,
+        transition: 'all 0.12s',
+        borderLeft: `3px solid ${accent}`,
+      }}
+    >
+      <span style={{
+        fontSize: 8, padding: '2px 5px', borderRadius: 2, fontWeight: 700, textTransform: 'uppercase',
+        letterSpacing: 0.4, fontFamily: FNT, flexShrink: 0,
+        background: item.type === 'rule' ? '#e8edf4' : '#f0eeec',
+        color: item.type === 'rule' ? '#062044' : '#8a8278',
+      }}>{item.type}</span>
+      <span style={{ fontSize: 9, color: sc.text, background: sc.bg, padding: '2px 6px', borderRadius: 2, fontFamily: FNT, flexShrink: 0 }}>{item.status}</span>
+      <span style={{ fontSize: 12, color: '#1F1F1F', flex: 1, lineHeight: 1.4, fontFamily: FNT }}>{item.title}</span>
+      <span style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, flexShrink: 0 }}>{item.processArea}</span>
+      <span style={{ fontSize: 10, color: accent, fontFamily: FNT, flexShrink: 0, opacity: hovered ? 1 : 0.4 }}>→</span>
+    </div>
+  )
+}
+
+// Mini detail view shown inside the knowledge item modal
+function KnowledgeItemDetail({ item }) {
+  const sc = statusColor(item.status)
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
+        <span style={{
+          fontSize: 9, padding: '3px 8px', borderRadius: 2, fontWeight: 700, textTransform: 'uppercase',
+          background: item.type === 'rule' ? '#e8edf4' : '#f0eeec',
+          color: item.type === 'rule' ? '#062044' : '#8a8278', fontFamily: FNT,
+        }}>{item.type}</span>
+        <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 2, fontFamily: FNT, background: sc.bg, color: sc.text, fontWeight: 600 }}>{item.status}</span>
+        <Tag label={item.category} />
+        {item.processArea && <Tag label={item.processArea} />}
+        <span style={{ fontSize: 9, padding: '3px 7px', borderRadius: 2, background: '#f8f6f4', color: '#8a8278', fontFamily: FNT }}>{item.confidence}</span>
+      </div>
+
+      <div style={{ fontSize: 15, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 14, fontFamily: FNT }}>
+        {item.title}
+      </div>
+
+      {item.rationale && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Rationale</div>
+          <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, padding: '10px 14px', background: '#f8f6f4', borderRadius: 3 }}>{item.rationale}</div>
+        </div>
+      )}
+
+      {item.scope && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Scope</div>
+          <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.scope}</div>
+        </div>
+      )}
+
+      {(item.versions || []).length > 0 && (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e8e4e0' }}>
+          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 6 }}>Version history</div>
+          {item.versions.map((v, i) => (
+            <div key={i} style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, marginBottom: 3 }}>
+              v{v.version} · {v.author} · {v.change}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function EventCard({ ev, selected, onClick }) {
+function EventCard({ ev, selected, onClick, knowledgeCount }) {
   const [hovered, setHovered] = useState(false)
   const accentColor = ev.outcome === 'Positive' ? '#4FA89A' : '#c0392b'
+
+  // Build badge text from count breakdown
+  let badgeParts = []
+  if (knowledgeCount?.rules > 0) badgeParts.push(`${knowledgeCount.rules} rule${knowledgeCount.rules !== 1 ? 's' : ''}`)
+  if (knowledgeCount?.assertions > 0) badgeParts.push(`${knowledgeCount.assertions} assertion${knowledgeCount.assertions !== 1 ? 's' : ''}`)
+  const badgeText = badgeParts.length > 0 ? badgeParts.join(' · ') + ' generated' : null
+
   return (
     <div
       onClick={onClick}
@@ -486,14 +830,14 @@ function EventCard({ ev, selected, onClick }) {
           <Tag label={ev.processArea} />
           {(ev.tags || []).slice(0, 3).map(t => <Tag key={t} label={t} />)}
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {(ev.linkedRules || []).length > 0 && (
-            <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>{ev.linkedRules.length}R</span>
-          )}
-          {(ev.generatedRules || []).length > 0 && (
-            <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT }}>+{ev.generatedRules.length} generated</span>
-          )}
-        </div>
+        {badgeText && (
+          <span style={{
+            fontSize: 9, padding: '3px 8px', borderRadius: 2, fontFamily: FNT, fontWeight: 700,
+            background: '#e6f5f1', color: '#2d6b5e', border: '1px solid #4FA89A30', flexShrink: 0,
+          }}>
+            {badgeText}
+          </span>
+        )}
       </div>
     </div>
   )

@@ -56,6 +56,41 @@ export const Field = ({ label, children, hint }) => (
   </div>
 )
 
+// Floating @-mention dropdown — position: absolute relative to a wrapping div
+export function MentionDropdown({ query, members, onSelect }) {
+  if (query === null) return null
+  const filtered = members
+    .filter(m => m.toLowerCase().startsWith(query.toLowerCase()))
+    .slice(0, 8)
+  if (!filtered.length) return null
+  return (
+    <div style={{
+      position: 'absolute', zIndex: 50, background: '#fff',
+      border: '1px solid #D8CEC3', borderRadius: 3,
+      boxShadow: '0 4px 12px rgba(6,32,68,0.1)',
+      maxHeight: 200, overflowY: 'auto', minWidth: 180,
+      marginTop: 2,
+    }}>
+      {filtered.map(m => (
+        <button
+          key={m}
+          onMouseDown={e => { e.preventDefault(); onSelect(m) }}
+          style={{
+            display: 'block', width: '100%', padding: '7px 12px',
+            textAlign: 'left', background: 'none', border: 'none',
+            cursor: 'pointer', fontFamily: FNT, fontSize: 12, color: '#1F1F1F',
+            borderBottom: '1px solid #f0eeec',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#f8f6f4'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >
+          @{m}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function TypeaheadInput({ value, onChange, options, placeholder }) {
   const [focused, setFocused] = useState(false)
   const ref = useRef(null)

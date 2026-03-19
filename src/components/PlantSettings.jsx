@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { fetchPlantMembers, updateMemberRole, removeMember } from '../lib/auth.js'
 import { getStoredJwt } from '../lib/supabase.js'
+import { deletePlant } from '../lib/db.js'
 
 const FNT  = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
 const FNTM = "'IBM Plex Mono', 'Courier New', monospace"
@@ -357,18 +358,36 @@ function InviteTab({ inviteCode }) {
 }
 
 // ── MAIN COMPONENT ─────────────────────────────────────────────────────────────
-export default function PlantSettings({ membership, isSuperAdmin, onClose, onPendingCountChange }) {
+export default function PlantSettings({ membership, isSuperAdmin, onClose, onPendingCountChange, onDeleted }) {
   const isBevCan  = membership.plantId === BEVCAN_PLANT_ID
   const isAdmin   = membership.role === 'admin' || isSuperAdmin
   const showPending = isBevCan && isAdmin
 
   const [tab, setTab]               = useState(showPending ? 'pending' : 'members')
   const [pendingCount, setPending]  = useState(0)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting]     = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
 
   function handleCountChange(val) {
     const next = typeof val === 'function' ? val(pendingCount) : val
     setPending(next)
     onPendingCountChange?.(next)
+  }
+
+  async function handleDeletePlant() {
+    if (deleteConfirmText !== membership.plantName) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await deletePlant(membership.plantId)
+      onClose()
+      onDeleted?.(membership.plantId)
+    } catch (err) {
+      setDeleteError(err.message)
+      setDeleting(false)
+    }
   }
 
   return (
@@ -428,8 +447,75 @@ export default function PlantSettings({ membership, isSuperAdmin, onClose, onPen
               </div>
             </div>
           )}
+
+          {/* Danger Zone — super admins only */}
+          {isSuperAdmin && (
+            <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid #f0eeec' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, fontFamily: FNT }}>
+                Danger Zone
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', border: '1px solid #f5c6c6', borderRadius: 3, background: '#fffafa' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#1F1F1F', fontFamily: FNT }}>Delete this plant</div>
+                  <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginTop: 2 }}>Permanently deletes all rules, assertions, events, and questions.</div>
+                </div>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  style={{ padding: '7px 14px', borderRadius: 3, fontSize: 11, fontWeight: 700, background: 'transparent', border: '1px solid #c0392b', color: '#c0392b', cursor: 'pointer', fontFamily: FNT, flexShrink: 0, marginLeft: 16 }}
+                >
+                  Delete Plant
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={e => e.target === e.currentTarget && !deleting && setShowDeleteModal(false)}
+        >
+          <div style={{ width: 440, maxWidth: '90vw', background: '#fff', borderRadius: 6, boxShadow: '0 16px 48px rgba(0,0,0,0.28)', padding: 28 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#c0392b', fontFamily: FNT, marginBottom: 10 }}>Delete "{membership.plantName}"?</div>
+            <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT, lineHeight: 1.7, marginBottom: 18 }}>
+              This will permanently delete the plant and all its data — rules, assertions, events, questions, comments, and links. <strong>This cannot be undone.</strong>
+            </div>
+            <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginBottom: 6 }}>
+              Type <strong style={{ color: '#1F1F1F' }}>{membership.plantName}</strong> to confirm:
+            </div>
+            <input
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder={membership.plantName}
+              autoFocus
+              style={{ width: '100%', padding: '9px 12px', fontSize: 13, fontFamily: FNT, border: '1px solid #D8CEC3', borderRadius: 3, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }}
+            />
+            {deleteError && (
+              <div style={{ padding: '8px 12px', marginBottom: 12, background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', borderRadius: 3, fontSize: 11, color: '#c0392b', fontFamily: FNT }}>
+                {deleteError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); setDeleteError(null) }}
+                disabled={deleting}
+                style={{ padding: '8px 16px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeletePlant}
+                disabled={deleting || deleteConfirmText !== membership.plantName}
+                style={{ padding: '8px 16px', borderRadius: 3, fontSize: 12, fontWeight: 700, background: deleteConfirmText === membership.plantName ? '#c0392b' : '#e8d8d8', border: 'none', color: '#fff', cursor: deleteConfirmText === membership.plantName ? 'pointer' : 'default', fontFamily: FNT, transition: 'background 0.15s' }}
+              >
+                {deleting ? 'Deleting…' : 'Delete Plant'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

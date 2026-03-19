@@ -22,7 +22,7 @@ export default function Verifications({ targetType, targetId }) {
   async function handleVerify() {
     if (alreadyVerified || loading) return
     setNames(prev => [...prev, me])
-    await addVerification(targetType, targetId, me)
+    await addVerification(targetType, targetId)
   }
 
   return (

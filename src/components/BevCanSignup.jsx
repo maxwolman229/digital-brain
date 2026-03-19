@@ -1,7 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signIn, signUp, createProfileSimple,
-         createBevcanApplication, fetchBevcanApplicationStatus } from '../lib/auth.js'
+import { signIn, createBevcanApplication, fetchBevcanApplicationStatus } from '../lib/auth.js'
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+async function registerApplicant(fields) {
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/bevcan-admin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+    },
+    body: JSON.stringify({ action: 'register_applicant', ...fields }),
+  })
+  const json = await resp.json()
+  if (!resp.ok) throw new Error(json.error || `Registration failed (${resp.status})`)
+  return json // { ok: true, user_id }
+}
 
 const BEVCAN_PLANT_ID = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
 
@@ -256,28 +273,36 @@ export default function BevCanSignup({ session, profile, memberships = [], onSig
 
     setApplyLoading(true)
     try {
-      let userId = session?.user?.id
-      let email = session?.user?.email || form.email.trim()
-
       if (!session) {
-        const { user } = await signUp(form.email.trim(), form.password)
-        userId = user.id
-        email = form.email.trim()
-        await createProfileSimple(userId, form.nickname.trim())
+        // New user — create account + profile + application via admin edge function
+        // (auto-confirms email so no confirmation email is sent)
+        await registerApplicant({
+          email: form.email.trim(),
+          password: form.password,
+          nickname: form.nickname.trim(),
+          full_name: form.fullName.trim(),
+          current_position: form.currentPosition.trim(),
+          current_company: form.currentCompany.trim() || null,
+          past_positions: form.pastPositions,
+          year_joined_industry: form.yearJoined ? parseInt(form.yearJoined) : null,
+          bio: form.bio.trim() || null,
+          confirmed_industry: form.confirmed,
+        })
+      } else {
+        // Existing account (already logged in) — just insert the application
+        await createBevcanApplication(session.user.id, {
+          email: session.user.email,
+          full_name: form.fullName.trim(),
+          nickname: form.nickname.trim(),
+          current_position: form.currentPosition.trim(),
+          current_company: form.currentCompany.trim() || null,
+          past_positions: form.pastPositions,
+          year_joined_industry: form.yearJoined ? parseInt(form.yearJoined) : null,
+          bio: form.bio.trim() || null,
+          confirmed_industry: form.confirmed,
+          status: 'pending',
+        })
       }
-
-      await createBevcanApplication(userId, {
-        email,
-        full_name: form.fullName.trim(),
-        nickname: form.nickname.trim(),
-        current_position: form.currentPosition.trim(),
-        current_company: form.currentCompany.trim() || null,
-        past_positions: form.pastPositions,
-        year_joined_industry: form.yearJoined ? parseInt(form.yearJoined) : null,
-        bio: form.bio.trim() || null,
-        confirmed_industry: form.confirmed,
-        status: 'pending',
-      })
 
       navigate('/bevcan/pending')
     } catch (err) {

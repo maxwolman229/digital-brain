@@ -1,23 +1,25 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { FNT } from '../lib/constants.js'
+import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from '../lib/db.js'
 
-const SEED = [
-  { text: 'R-003 was promoted to Verified status', date: '2025-02-20T10:00:00Z', read: false, target: { view: 'rules' } },
-  { text: 'M. Rossi commented on R-003: "Also applies when using Turkish shredded"', date: '2025-02-14T14:30:00Z', read: false, target: { view: 'rules' } },
-  { text: 'L. Chen verified R-001 from experience', date: '2025-02-12T09:00:00Z', read: false, target: { view: 'rules' } },
-  { text: 'R-005 was promoted to Established status', date: '2025-02-18T11:00:00Z', read: true, target: { view: 'rules' } },
-  { text: 'R-021 flagged as contradicting R-003 — review needed', date: '2025-02-22T08:00:00Z', read: false, target: { view: 'health' } },
-]
-
-const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, light }, ref) {
+const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, light, userId, plantId }, ref) {
   const [open, setOpen] = useState(false)
-  const [items, setItems] = useState(SEED)
+  const [items, setItems] = useState([])
   const wrapRef = useRef(null)
 
   // Expose close() so parent can shut this when another panel opens
   useImperativeHandle(ref, () => ({
     close: () => setOpen(false),
   }))
+
+  async function load() {
+    if (!userId) return
+    const data = await fetchNotifications(userId, plantId)
+    setItems(data)
+  }
+
+  // Load on mount and when user/plant changes
+  useEffect(() => { load() }, [userId, plantId])
 
   // Close on outside click
   useEffect(() => {
@@ -31,22 +33,24 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
   const unread = items.filter(n => !n.read).length
 
   function toggle() {
-    if (!open) onOpen?.()
+    if (!open) {
+      onOpen?.()
+      load() // refresh on open
+    }
     setOpen(p => !p)
   }
 
-  function markRead(i) {
+  async function handleClick(n, i) {
+    // Mark read locally and in DB
     setItems(p => p.map((x, j) => j === i ? { ...x, read: true } : x))
-  }
-
-  function markAllRead() {
-    setItems(p => p.map(n => ({ ...n, read: true })))
-  }
-
-  function handleClick(n, i) {
-    markRead(i)
+    await markNotificationRead(n.id)
     setOpen(false)
     if (n.target?.view) onNavigate?.(n.target.view)
+  }
+
+  async function handleMarkAllRead() {
+    setItems(p => p.map(n => ({ ...n, read: true })))
+    await markAllNotificationsRead(userId, plantId)
   }
 
   return (
@@ -100,7 +104,7 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
             </span>
             {unread > 0 && (
               <button
-                onClick={markAllRead}
+                onClick={handleMarkAllRead}
                 style={{ fontSize: 9, color: '#8a8278', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT }}
               >
                 Mark all read
@@ -115,7 +119,7 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
             </div>
           ) : items.map((n, i) => (
             <div
-              key={i}
+              key={n.id || i}
               onClick={() => handleClick(n, i)}
               style={{
                 padding: '10px 16px',

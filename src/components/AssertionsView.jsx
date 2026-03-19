@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react'
 import { FNT, FNTM, iS, STATUSES, CONFIDENCES, formatDate, statusColor } from '../lib/constants.js'
 import { Badge, Tag, Modal, Field, TypeaheadInput } from './shared.jsx'
 import { fetchAssertions, fetchComments, fetchVerifications, fetchItemById, createAssertion, updateAssertion } from '../lib/db.js'
-import { getDisplayName } from '../lib/userContext.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
 
-export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved }) {
+export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile }) {
   const [assertions, setAssertions] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
@@ -239,7 +238,10 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
 
             {/* Footer meta */}
             <div style={{ padding: '10px 0', borderTop: '1px solid #D8CEC3', marginTop: 12, fontSize: 10, color: '#D8CEC3', fontFamily: FNT, lineHeight: 1.8 }}>
-              <div>Created by: {sel.createdBy}</div>
+              <div>Created by: <span
+                onClick={() => sel.createdBy && onViewProfile?.(sel.createdBy)}
+                style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : '#D8CEC3', textDecoration: onViewProfile ? 'underline' : 'none' }}
+              >{sel.createdBy}</span></div>
               <div>Created: {formatDate(sel.createdAt)}</div>
             </div>
 
@@ -255,7 +257,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
           <div style={{ padding: 40, textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
         {crossSel?.data && (
-          <LinkedItemDetail item={crossSel.data} onOpenItem={openLinkedItem} />
+          <LinkedItemDetail item={crossSel.data} onOpenItem={openLinkedItem} onViewProfile={onViewProfile} />
         )}
       </Modal>
 
@@ -321,7 +323,7 @@ function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], cate
     setError(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-      const newVersion = await updateAssertion(item.id, { ...form, tags, author: getDisplayName() })
+      const newVersion = await updateAssertion(item.id, { ...form, tags })
       onSavedFull({ title: form.title, category: form.category, processArea: form.processArea, scope: form.scope, confidence: form.confidence, status: form.status, tags }, newVersion)
     } catch (err) {
       setError(err.message)
@@ -406,7 +408,7 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
     setError(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-      const assertion = await createAssertion({ ...form, tags, createdBy: getDisplayName() })
+      const assertion = await createAssertion({ ...form, tags })
       onCreated(assertion)
     } catch (err) {
       setError(err.message)
@@ -417,7 +419,7 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
   return (
     <form onSubmit={handleSubmit}>
       <Field label="Title *">
-        <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Sims scrap contains elevated residual copper…" style={iS} autoFocus />
+        <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Non-standard input materials contain elevated contaminant levels…" style={iS} autoFocus />
       </Field>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -476,7 +478,7 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
 
 // ── Linked-item detail (shared read-only view for stacked modal) ──────────────
 
-function LinkedItemDetail({ item, onOpenItem }) {
+function LinkedItemDetail({ item, onOpenItem, onViewProfile }) {
   return (
     <div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -519,7 +521,10 @@ function LinkedItemDetail({ item, onOpenItem }) {
       )}
 
       <div style={{ padding: '8px 0', borderTop: '1px solid #D8CEC3', marginTop: 12, fontSize: 10, color: '#D8CEC3', fontFamily: FNT, lineHeight: 1.8 }}>
-        <div>Created by: {item.createdBy}</div>
+        <div>Created by: <span
+          onClick={() => item.createdBy && onViewProfile?.(item.createdBy)}
+          style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : '#D8CEC3', textDecoration: onViewProfile ? 'underline' : 'none' }}
+        >{item.createdBy}</span></div>
         <div>Created: {formatDate(item.createdAt)}</div>
       </div>
     </div>

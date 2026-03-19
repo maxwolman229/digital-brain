@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { signIn, signUp } from '../lib/auth.js'
 
 const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
@@ -42,44 +42,6 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
   const [error, setError] = useState(null)
   const [demoLoading, setDemoLoading] = useState(false)
 
-  // Visible debug state
-  const [debug, setDebug] = useState({ status: 'checking…', url: '', keyPrefix: '' })
-  const [rawTest, setRawTest] = useState(null)
-
-  useEffect(() => {
-    const url = import.meta.env.VITE_SUPABASE_URL
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-    if (!url || !key) {
-      setDebug({ status: '❌ Env vars missing — check .env.local', url: url ?? 'MISSING', keyPrefix: key ? key.slice(0, 20) : 'MISSING' })
-      return
-    }
-
-    const shortUrl = url.replace('https://', '').slice(0, 32)
-    setDebug({ status: 'testing raw connection…', url: shortUrl, keyPrefix: key.slice(0, 20) + '…' })
-
-    // Raw fetch — no Supabase client, just a plain HTTP GET to the auth health endpoint
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 8000)
-
-    fetch(url + '/auth/v1/health', {
-      signal: controller.signal,
-      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key },
-    })
-      .then(async r => {
-        clearTimeout(timer)
-        const text = await r.text().catch(() => r.status)
-        setDebug(d => ({ ...d, status: `✅ HTTP ${r.status} — ${String(text).slice(0, 60)}` }))
-      })
-      .catch(err => {
-        clearTimeout(timer)
-        const msg = err.name === 'AbortError' ? 'Timed out (8s) — no response from Supabase' : err.message
-        setDebug(d => ({ ...d, status: '❌ ' + msg }))
-      })
-
-    return () => { clearTimeout(timer); controller.abort() }
-  }, [])
-
   function switchMode(m) {
     setMode(m)
     setError(null)
@@ -117,21 +79,16 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
   async function handleDemo() {
     setDemoLoading(true)
     setError(null)
-    setRawTest('signing in…')
     try {
       const { user } = await signIn(DEMO_EMAIL, DEMO_PASSWORD)
-      setRawTest('✅ signed in as ' + (user?.email ?? user?.id))
       onSignedIn(user)
     } catch (err) {
-      setRawTest('❌ ' + err.message)
       setError(err.message)
     }
     setDemoLoading(false)
   }
 
   const isLogin = mode === 'login'
-  const debugOk = debug.status.startsWith('✅')
-  const debugFail = debug.status.startsWith('❌')
 
   return (
     <div style={{
@@ -165,24 +122,6 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, textTransform: 'uppercase' }}>
             Knowledge Bank
           </div>
-        </div>
-
-        {/* Debug panel — always visible */}
-        <div style={{
-          marginBottom: 16,
-          padding: '10px 12px',
-          borderRadius: 3,
-          background: debugFail ? 'rgba(231,76,60,0.12)' : debugOk ? 'rgba(79,168,154,0.1)' : 'rgba(255,255,255,0.05)',
-          border: `1px solid ${debugFail ? 'rgba(231,76,60,0.3)' : debugOk ? 'rgba(79,168,154,0.3)' : 'rgba(255,255,255,0.1)'}`,
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: 10,
-          lineHeight: 1.7,
-          color: debugFail ? '#e74c3c' : debugOk ? '#4FA89A' : 'rgba(255,255,255,0.4)',
-        }}>
-          <div>status: {debug.status}</div>
-          <div>url: {debug.url || '…'}</div>
-          <div>key: {debug.keyPrefix || '…'}</div>
-          {rawTest && <div style={{ marginTop: 4, color: rawTest.startsWith('HTTP 200') ? '#4FA89A' : '#e74c3c' }}>auth: {rawTest}</div>}
         </div>
 
         {/* Card */}
@@ -318,9 +257,6 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
             {demoLoading ? 'Signing in…' : 'Continue as Demo →'}
           </button>
 
-          <div style={{ marginTop: 8, textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.2)', fontFamily: FNT }}>
-            demo@md1.app · digitalbrain
-          </div>
 
         </div>
 

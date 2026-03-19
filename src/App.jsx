@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { loadProfile, signOut, getRestoredSession, fetchMemberships } from './lib/auth.js'
 import { setUserContext, clearUserContext, getStoredActivePlant } from './lib/userContext.js'
+import { setAuthExpiredHandler } from './lib/supabase.js'
 import LandingPage from './components/LandingPage.jsx'
 import Auth from './components/Auth.jsx'
 import Onboarding from './components/Onboarding.jsx'
@@ -37,6 +38,15 @@ export default function App() {
   }
 
   useEffect(() => {
+    // When token refresh fails mid-session, force logout so the user re-authenticates
+    setAuthExpiredHandler(() => {
+      clearUserContext()
+      setSession(null)
+      setProfile(null)
+      setMemberships([])
+      setActivePlantId(null)
+    })
+
     async function restore() {
       const s = getRestoredSession()
       if (s) {
@@ -110,7 +120,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage loggedInAs={profile?.displayName ?? null} onLogout={handleLogout} />} />
 
         {/* Auth */}
         <Route

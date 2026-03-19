@@ -271,7 +271,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
                 onChange={e => { setIndustry(e.target.value); setShowIndustrySuggestions(true) }}
                 onFocus={() => setShowIndustrySuggestions(true)}
                 onBlur={() => setTimeout(() => setShowIndustrySuggestions(false), 150)}
-                placeholder="e.g. Steel - EAF, Beverage Can…"
+                placeholder="e.g. Beverage Can Manufacturing, Cement…"
                 autoComplete="off"
               />
               {showIndustrySuggestions && (

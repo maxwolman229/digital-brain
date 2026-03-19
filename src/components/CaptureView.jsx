@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { FNT, iS } from '../lib/constants.js'
-import { getStoredJwt } from '../lib/supabase.js'
-import { createRule, createAssertion } from '../lib/db.js'
-import { getDisplayName } from '../lib/userContext.js'
+import { authFetch } from '../lib/supabase.js'
+import { createRule, createAssertion, fetchCaptureContext } from '../lib/db.js'
+import { getDisplayName, getUserId } from '../lib/userContext.js'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -63,16 +63,17 @@ function Dots() {
   )
 }
 
+const CATEGORIES = ['Material', 'Process', 'Equipment', 'People', 'Measurement', 'Environment']
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function CaptureView({ processAreas = [], industry, onNavigate, onItemSaved }) {
+export default function CaptureView({ processAreas = [], industry, plantName, plantId, onNavigate, onItemSaved }) {
   const [phase, setPhase] = useState('setup')
 
   // Setup
-  const [processArea, setProcessArea] = useState(processAreas[0] || '')
+  const [processArea, setProcessArea] = useState('')
   const [operatorName, setOperatorName] = useState(getDisplayName() || '')
   const [topic, setTopic] = useState('')
-  const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Interview
   const [apiHistory, setApiHistory] = useState([])
@@ -101,12 +102,14 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
   // Done
   const [savedCounts, setSavedCounts] = useState({ rules: 0, assertions: 0 })
   const [sessionStats, setSessionStats] = useState({})
+  const [saveError, setSaveError] = useState(null)
 
   const scrollRef = useRef(null)
   const answerRef = useRef(null)
   const startTimeRef = useRef(null)
   const prevExtractedLen = useRef(0)
   const prevLevel = useRef(1)
+  const captureContextRef = useRef(null)
 
   useEffect(() => {
     if (phase === 'interview') {
@@ -119,10 +122,6 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
       answerRef.current?.focus()
     }
   }, [loading, currentQuestion, phase])
-
-  useEffect(() => {
-    if (processAreas.length && !processArea) setProcessArea(processAreas[0])
-  }, [processAreas])
 
   // Flash knowledge counter when new items extracted
   useEffect(() => {
@@ -148,18 +147,12 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
   const progress = Math.min((answeredCount + skippedCount) / 8, 1) * 100
   const difficulty = getDifficulty(turnNum)
 
-  async function callCapture(history) {
+  async function callCapture(history, context) {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    const jwt = getStoredJwt()
-    const resp = await fetch(`${supabaseUrl}/functions/v1/capture`, {
+    const resp = await authFetch(`${supabaseUrl}/functions/v1/capture`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': 'Bearer ' + (jwt || supabaseKey),
-      },
-      body: JSON.stringify({ history, industry }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ history, context }),
     })
     if (!resp.ok) {
       const body = await resp.json().catch(() => ({}))
@@ -170,26 +163,59 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
 
   async function startInterview(e) {
     e.preventDefault()
-    if (!operatorName.trim()) return
+    if (!topic.trim()) return
+    const resolvedName = getDisplayName() || 'Operator'
+    setOperatorName(resolvedName)
     startTimeRef.current = new Date()
     setPhase('interview')
     setLoading(true)
     setError(null)
 
+    // Read local profile extras (position, years)
+    let position = ''
+    let yearsInIndustry = ''
+    const userId = getUserId()
+    if (userId) {
+      try {
+        const raw = localStorage.getItem(`md1_profile_extra_${userId}`)
+        if (raw) {
+          const extra = JSON.parse(raw)
+          position = extra.position || ''
+          yearsInIndustry = extra.years || ''
+        }
+      } catch {}
+    }
+
+    // Fetch knowledge gaps + relevant rules in parallel with starting the interview
+    const { gapsSummary, relevantRules } = await fetchCaptureContext(plantId, processArea, topic.trim()).catch(() => ({
+      gapsSummary: 'No gap information available.',
+      relevantRules: 'No existing rules found for this topic.',
+    }))
+
+    captureContextRef.current = {
+      display_name: resolvedName,
+      position: position || 'operator',
+      years_in_industry: yearsInIndustry || 'unknown',
+      plant_name: plantName || 'the plant',
+      industry: industry || 'manufacturing',
+      topic: topic.trim(),
+      gaps_summary: gapsSummary,
+      relevant_rules: relevantRules,
+    }
+
     const setupMsg = {
       role: 'user',
       content: [
         'INTERVIEW SETUP',
-        `Process area: ${processArea || 'General'}`,
-        `Operator: ${operatorName.trim()}`,
-        `Topic: ${topic.trim() || 'open-ended — capture their most valuable knowledge'}`,
+        `Operator: ${resolvedName}`,
+        `Topic: ${topic.trim()}`,
         '',
         "Please ask your opening question to start capturing this operator's knowledge.",
       ].join('\n'),
     }
 
     try {
-      const result = await callCapture([setupMsg])
+      const result = await callCapture([setupMsg], captureContextRef.current)
       const assistantMsg = {
         role: 'assistant',
         content: JSON.stringify({ question: result.question, done: result.done, extracted: result.extracted || [] }),
@@ -224,7 +250,7 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
     setXp(prev => prev + earned)
 
     try {
-      const result = await callCapture(newHistory)
+      const result = await callCapture(newHistory, captureContextRef.current)
       const assistantMsg = {
         role: 'assistant',
         content: JSON.stringify({ question: result.question, done: result.done, extracted: result.extracted || [] }),
@@ -234,7 +260,10 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
       const newItems = (result.extracted || []).map((item, i) => ({
         ...item,
         _id: `t${turnNum}_i${i}`,
-        approved: true,
+        _sourceAnswer: trimmed,
+        decision: 'pending',
+        editing: false,
+        _expanded: false,
       }))
       const nextExtracted = [...extracted, ...newItems]
       setExtracted(nextExtracted)
@@ -270,7 +299,7 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
     setDisplayTurns(prev => [...prev, { question: currentQuestion, answer: null, skipped: true }])
 
     try {
-      const result = await callCapture(newHistory)
+      const result = await callCapture(newHistory, captureContextRef.current)
       const assistantMsg = {
         role: 'assistant',
         content: JSON.stringify({ question: result.question, done: result.done, extracted: result.extracted || [] }),
@@ -303,19 +332,35 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
     setReviewItems(prev => prev.map(item => item._id === id ? { ...item, [field]: val } : item))
   }
 
-  function toggleApproval(id) {
-    setReviewItems(prev => prev.map(item => item._id === id ? { ...item, approved: !item.approved } : item))
+  function approveAll() {
+    setReviewItems(prev => prev.map(item =>
+      item.decision === 'pending' ? { ...item, decision: 'approved' } : item
+    ))
   }
 
   async function saveApproved() {
-    const toSave = reviewItems.filter(x => x.approved)
+    const toSave = reviewItems.filter(x => x.decision !== 'rejected')
     if (!toSave.length) return
     setSaving(true)
+    setSaveError(null)
 
     const duration = startTimeRef.current ? new Date() - startTimeRef.current : 0
-    let rules = 0, assertions = 0
 
-    await Promise.all(toSave.map(async item => {
+    // Count from user decisions NOW — before any async DB work.
+    // The done screen shows what the user approved, not what the DB accepted.
+    const approvedRules      = toSave.filter(x => x.type === 'rule').length
+    const approvedAssertions = toSave.filter(x => x.type === 'assertion').length
+
+    console.log('[capture] saving', approvedRules, 'rules and', approvedAssertions, 'assertions to plant', plantId)
+
+    const failures = []
+
+    const sessionDate = startTimeRef.current
+      ? startTimeRef.current.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+      : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    const captureSource = `Knowledge capture interview — ${sessionDate}`
+
+    for (const item of toSave) {
       try {
         if (item.type === 'rule') {
           await createRule({
@@ -327,9 +372,9 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
             confidence: item.confidence || 'Medium',
             status: 'Proposed',
             tags: [],
-            createdBy: operatorName || getDisplayName(),
+            captureSource,
+            plantId,
           })
-          rules++
         } else {
           await createAssertion({
             title: item.title,
@@ -339,25 +384,31 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
             confidence: item.confidence || 'Medium',
             status: 'Proposed',
             tags: [],
-            createdBy: operatorName || getDisplayName(),
+            captureSource,
+            plantId,
           })
-          assertions++
         }
       } catch (err) {
-        console.error('[capture] save failed:', item.title, err.message)
+        console.error('[capture] save failed:', item.type, item.title, '—', err.message)
+        failures.push(`${item.type} "${item.title.slice(0, 40)}": ${err.message}`)
       }
-    }))
+    }
+
+    if (failures.length > 0) {
+      setSaveError(`${failures.length} item${failures.length > 1 ? 's' : ''} failed to save. Check console for details.`)
+    }
 
     onItemSaved?.()
-    setSavedCounts({ rules, assertions })
+    setSavedCounts({ rules: approvedRules, assertions: approvedAssertions })
     setSessionStats({ duration, answered: answeredCount, skipped: skippedCount, xp, maxStreak })
     setSaving(false)
     setPhase('done')
   }
 
   function restart() {
+    captureContextRef.current = null
     setPhase('setup')
-    setProcessArea(processAreas[0] || '')
+    setProcessArea('')
     setOperatorName(getDisplayName() || '')
     setTopic('')
     setApiHistory([])
@@ -378,6 +429,7 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
     setSavedCounts({ rules: 0, assertions: 0 })
     setSessionStats({})
     setError(null)
+    setSaveError(null)
     prevExtractedLen.current = 0
     prevLevel.current = 1
   }
@@ -385,10 +437,6 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
   // ── Setup phase ──────────────────────────────────────────────────────────────
 
   if (phase === 'setup') {
-    const filteredSuggestions = processAreas.filter(pa =>
-      pa.toLowerCase().includes(processArea.toLowerCase()) && pa !== processArea
-    )
-
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: 32 }}>
         <div style={{ width: '100%', maxWidth: 480 }}>
@@ -405,68 +453,21 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
           </div>
 
           <form onSubmit={startInterview}>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>
-                Who is being interviewed?
-              </div>
-              <input
-                value={operatorName}
-                onChange={e => setOperatorName(e.target.value)}
-                placeholder="Operator name"
-                required
-                style={{ ...iS, fontSize: 13 }}
-              />
-            </div>
-
-            <div style={{ marginBottom: 16, position: 'relative' }}>
-              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>
-                Process area
-              </div>
-              <input
-                value={processArea}
-                onChange={e => { setProcessArea(e.target.value); setShowSuggestions(true) }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                placeholder="e.g. EAF, Casting, Rolling…"
-                autoComplete="off"
-                style={{ ...iS, fontSize: 13 }}
-              />
-              {showSuggestions && filteredSuggestions.length > 0 && (
-                <div style={{
-                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                  background: '#fff', border: '1px solid #D8CEC3', borderRadius: 3,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)', overflow: 'hidden',
-                }}>
-                  {filteredSuggestions.map(pa => (
-                    <button
-                      key={pa}
-                      type="button"
-                      onMouseDown={() => { setProcessArea(pa); setShowSuggestions(false) }}
-                      style={{
-                        display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left',
-                        background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT,
-                        fontSize: 12, color: '#1F1F1F', borderBottom: '1px solid #f0eeec',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#f8f6f4'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                    >
-                      {pa}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>
-                Topic or situation <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional)</span>
+              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 8 }}>
+                What should we chat about?
               </div>
               <input
                 value={topic}
                 onChange={e => setTopic(e.target.value)}
-                placeholder="e.g. slag management, scrap quality issues, a recent incident…"
-                style={{ ...iS, fontSize: 13 }}
+                placeholder="e.g. quality issues we've been seeing lately, how we handle unusual situations…"
+                required
+                autoFocus
+                style={{ ...iS, fontSize: 14 }}
               />
+              <div style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, marginTop: 6 }}>
+                The topic seeds the first question. You can go anywhere from there.
+              </div>
             </div>
 
             {error && (
@@ -477,10 +478,14 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
 
             <button
               type="submit"
+              disabled={!topic.trim()}
               style={{
                 width: '100%', padding: '12px 0', borderRadius: 3, fontSize: 13,
-                fontFamily: FNT, fontWeight: 700, border: 'none', cursor: 'pointer',
-                background: '#062044', color: '#fff', letterSpacing: 0.5,
+                fontFamily: FNT, fontWeight: 700, border: 'none',
+                cursor: !topic.trim() ? 'default' : 'pointer',
+                background: !topic.trim() ? '#D8CEC3' : '#062044',
+                color: !topic.trim() ? '#8a8278' : '#fff',
+                letterSpacing: 0.5,
               }}
             >
               Begin Interview →
@@ -689,10 +694,31 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
   // ── Review phase ─────────────────────────────────────────────────────────────
 
   if (phase === 'review') {
-    const approvedCount = reviewItems.filter(x => x.approved).length
+    const approvedCount    = reviewItems.filter(x => x.decision === 'approved').length
+    const editedCount      = reviewItems.filter(x => x.decision === 'edited').length
+    const rejectedCount    = reviewItems.filter(x => x.decision === 'rejected').length
+    const pendingCount     = reviewItems.filter(x => x.decision === 'pending').length
+    const toSaveCount      = reviewItems.filter(x => x.decision !== 'rejected').length
+    // Real-time counts for session summary (update as user approves/rejects)
+    const toSaveRules      = reviewItems.filter(x => x.type === 'rule' && x.decision !== 'rejected').length
+    const toSaveAssertions = reviewItems.filter(x => x.type === 'assertion' && x.decision !== 'rejected').length
+
+    const counterParts = []
+    if (approvedCount > 0) counterParts.push(`${approvedCount} approved`)
+    if (editedCount > 0)   counterParts.push(`${editedCount} edited`)
+    if (rejectedCount > 0) counterParts.push(`${rejectedCount} rejected`)
+    if (pendingCount > 0)  counterParts.push(`${pendingCount} pending`)
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        <style>{`
+          @keyframes approve-flash { 0% { background-color: #b8ead9; } 100% { background-color: #f4fbf8; } }
+          @keyframes reject-flash  { 0% { background-color: #fcd8d4; } 100% { background-color: #fef7f6; } }
+          .capture-card { transition: background-color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, transform 0.2s ease; }
+          .capture-card:hover { transform: translateY(-1px); }
+        `}</style>
+
+        {/* ── Sticky header ── */}
         <div style={{
           flexShrink: 0, padding: '14px 28px', borderBottom: '1px solid #e8e4e0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FAFAF9',
@@ -702,24 +728,76 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
               Review extracted knowledge
             </div>
             <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginTop: 2 }}>
-              {approvedCount} of {reviewItems.length} items selected · edit before saving
+              {counterParts.length > 0 ? counterParts.join(' · ') : `${reviewItems.length} items to review`}
             </div>
           </div>
           <button
             onClick={saveApproved}
-            disabled={saving || approvedCount === 0}
+            disabled={saving || toSaveCount === 0}
             style={{
-              padding: '9px 20px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
-              border: 'none', cursor: approvedCount > 0 && !saving ? 'pointer' : 'default',
-              background: approvedCount > 0 && !saving ? '#062044' : '#e8e4e0',
-              color: approvedCount > 0 && !saving ? '#fff' : '#b0a898',
+              padding: '9px 22px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
+              border: 'none', cursor: toSaveCount > 0 && !saving ? 'pointer' : 'default',
+              background: toSaveCount > 0 && !saving ? '#062044' : '#e8e4e0',
+              color: toSaveCount > 0 && !saving ? '#fff' : '#b0a898',
             }}
           >
-            {saving ? 'Saving…' : `Save ${approvedCount} item${approvedCount !== 1 ? 's' : ''} →`}
+            {saving ? 'Saving…' : `Save ${toSaveCount} item${toSaveCount !== 1 ? 's' : ''} →`}
           </button>
         </div>
+        {saveError && (
+          <div style={{ flexShrink: 0, padding: '8px 28px', background: '#fde8e5', borderBottom: '1px solid #f5c6c0', fontSize: 11, color: '#c0392b', fontFamily: FNT }}>
+            ⚠ {saveError}
+          </div>
+        )}
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 28px 60px' }}>
+
+          {/* ── Session summary card ── */}
+          <div style={{
+            margin: '20px 0 20px',
+            padding: '16px 24px',
+            background: '#062044',
+            borderRadius: 4,
+            display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap',
+          }}>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, flexShrink: 0 }}>
+              Session
+            </div>
+            {[
+              { val: formatDuration(startTimeRef.current ? new Date() - startTimeRef.current : 0), label: 'duration' },
+              { val: answeredCount, label: 'answered' },
+              { val: skippedCount, label: 'skipped' },
+              { val: toSaveRules, label: 'rules', accent: true },
+              { val: toSaveAssertions, label: 'assertions', accent: true },
+              { val: `+${xp}`, label: 'XP', warm: true },
+            ].map(({ val, label, accent, warm }) => (
+              <div key={label} style={{ textAlign: 'center' }}>
+                <div style={{
+                  fontSize: 18, fontWeight: 700, fontFamily: FNT, lineHeight: 1,
+                  color: accent ? '#4FA89A' : warm ? '#F2652F' : '#fff',
+                }}>{val}</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 3 }}>{label}</div>
+              </div>
+            ))}
+            <div style={{ flex: 1 }} />
+            {/* Approve All */}
+            {pendingCount > 0 && (
+              <button
+                onClick={approveAll}
+                style={{
+                  padding: '8px 16px', borderRadius: 3, fontSize: 11, fontFamily: FNT, fontWeight: 700,
+                  background: 'rgba(79,168,154,0.15)', border: '1px solid rgba(79,168,154,0.4)',
+                  color: '#4FA89A', cursor: 'pointer', flexShrink: 0,
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(79,168,154,0.25)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(79,168,154,0.15)'}
+              >
+                ✓ Approve All
+              </button>
+            )}
+          </div>
+
+          {/* ── Empty state ── */}
           {reviewItems.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#b0a898', fontFamily: FNT, fontSize: 13 }}>
               No knowledge items were extracted from this interview.
@@ -731,84 +809,243 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
             </div>
           )}
 
-          {reviewItems.map(item => (
-            <div
-              key={item._id}
-              style={{
-                marginBottom: 12, padding: '14px 16px',
-                background: item.approved ? '#FFFFFF' : '#f8f6f4',
-                border: `1px solid ${item.approved ? '#D8CEC3' : '#e8e4e0'}`,
-                borderRadius: 4, opacity: item.approved ? 1 : 0.5,
-                transition: 'opacity 0.15s, border-color 0.15s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <button
-                  onClick={() => updateItem(item._id, 'type', item.type === 'rule' ? 'assertion' : 'rule')}
-                  title="Toggle Rule ↔ Assertion"
-                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}
-                >
-                  <TypeBadge type={item.type} />
-                </button>
-                {item.processArea && (
-                  <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>
-                    {item.processArea}
-                  </span>
+          {/* ── Item cards ── */}
+          {reviewItems.map(item => {
+            const isApproved = item.decision === 'approved'
+            const isEdited   = item.decision === 'edited'
+            const isRejected = item.decision === 'rejected'
+            const willSave   = !isRejected
+
+            return (
+              <div
+                key={item._id}
+                className="capture-card"
+                style={{
+                  marginBottom: 10,
+                  padding: '14px 16px',
+                  borderRadius: 4,
+                  borderTop: '1px solid',
+                  borderRight: '1px solid',
+                  borderBottom: '1px solid',
+                  borderTopColor:    isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(79,168,154,0.3)' : '#D8CEC3',
+                  borderRightColor:  isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(79,168,154,0.3)' : '#D8CEC3',
+                  borderBottomColor: isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(79,168,154,0.3)' : '#D8CEC3',
+                  borderLeft: `3px solid ${isRejected ? '#e74c3c' : (isApproved || isEdited) ? '#4FA89A' : '#D8CEC3'}`,
+                  backgroundColor: isRejected ? '#fef7f6' : (isApproved || isEdited) ? '#f4fbf8' : '#FFFFFF',
+                  opacity: isRejected ? 0.6 : 1,
+                  animation: item._flash === 'approved' ? 'approve-flash 0.5s ease-out' : item._flash === 'rejected' ? 'reject-flash 0.5s ease-out' : 'none',
+                }}
+              >
+                {/* ── Top row: badges + action buttons ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: item.editing ? 12 : 8, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => !isRejected && !item.editing && updateItem(item._id, 'type', item.type === 'rule' ? 'assertion' : 'rule')}
+                    title="Click to toggle Rule ↔ Assertion"
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: isRejected || item.editing ? 'default' : 'pointer', flexShrink: 0 }}
+                  >
+                    <TypeBadge type={item.type} />
+                  </button>
+                  {item.processArea && !item.editing && (
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>
+                      {item.processArea}
+                    </span>
+                  )}
+                  {item.category && !item.editing && (
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>
+                      {item.category}
+                    </span>
+                  )}
+                  {item.confidence && !item.editing && (
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, fontFamily: FNT, fontWeight: 600, flexShrink: 0, ...confidenceColor(item.confidence) }}>
+                      {item.confidence}
+                    </span>
+                  )}
+                  {isEdited && !item.editing && (
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#e6f5f1', color: '#2d6b5e', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>
+                      edited
+                    </span>
+                  )}
+
+                  <div style={{ flex: 1 }} />
+
+                  {/* Action buttons */}
+                  {item.editing ? (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        onClick={() => {
+                          setReviewItems(prev => prev.map(x =>
+                            x._id === item._id ? { ...x, editing: false, decision: 'edited', _flash: 'approved' } : x
+                          ))
+                          setTimeout(() => updateItem(item._id, '_flash', null), 600)
+                        }}
+                        style={{
+                          padding: '5px 14px', borderRadius: 3, fontSize: 10, fontFamily: FNT, fontWeight: 700,
+                          background: '#4FA89A', border: 'none', color: '#fff', cursor: 'pointer',
+                        }}
+                      >
+                        ✓ Save edit
+                      </button>
+                      <button
+                        onClick={() => updateItem(item._id, 'editing', false)}
+                        style={{
+                          padding: '5px 10px', borderRadius: 3, fontSize: 10, fontFamily: FNT,
+                          background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : isRejected ? (
+                    <button
+                      onClick={() => updateItem(item._id, 'decision', 'pending')}
+                      style={{ fontSize: 10, fontFamily: FNT, fontWeight: 700, color: '#4FA89A', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}
+                    >
+                      ↩ Restore
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      {(isApproved || isEdited) && (
+                        <span style={{ fontSize: 13, color: '#4FA89A', fontWeight: 700, marginRight: 2 }}>✓</span>
+                      )}
+                      {item.decision === 'pending' && (
+                        <button
+                          onClick={() => {
+                            setReviewItems(prev => prev.map(x =>
+                              x._id === item._id ? { ...x, decision: 'approved', _flash: 'approved' } : x
+                            ))
+                            setTimeout(() => updateItem(item._id, '_flash', null), 600)
+                          }}
+                          style={{
+                            padding: '5px 12px', borderRadius: 3, fontSize: 10, fontFamily: FNT, fontWeight: 700,
+                            background: '#e6f5f1', border: '1px solid rgba(79,168,154,0.35)', color: '#2d6b5e', cursor: 'pointer',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#d0ede6'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#e6f5f1'}
+                        >
+                          ✓ Approve
+                        </button>
+                      )}
+                      <button
+                        onClick={() => updateItem(item._id, 'editing', true)}
+                        style={{
+                          padding: '5px 10px', borderRadius: 3, fontSize: 10, fontFamily: FNT, fontWeight: 600,
+                          background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#f8f6f4' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                      >
+                        ✏ Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setReviewItems(prev => prev.map(x =>
+                            x._id === item._id ? { ...x, decision: 'rejected', _flash: 'rejected' } : x
+                          ))
+                          setTimeout(() => updateItem(item._id, '_flash', null), 600)
+                        }}
+                        style={{
+                          padding: '5px 10px', borderRadius: 3, fontSize: 10, fontFamily: FNT, fontWeight: 600,
+                          background: 'transparent', border: '1px solid #f0d8d5', color: '#e74c3c', cursor: 'pointer',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#fef0ee' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                        title="Reject — won't be saved"
+                      >
+                        ✗
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Edit mode form ── */}
+                {item.editing ? (
+                  <div>
+                    <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Title</div>
+                    <input
+                      value={item.title}
+                      onChange={e => updateItem(item._id, 'title', e.target.value)}
+                      style={{ ...iS, fontSize: 13, fontWeight: 600, color: '#062044', width: '100%', boxSizing: 'border-box', marginBottom: 10 }}
+                      autoFocus
+                    />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Process area</div>
+                        <input
+                          value={item.processArea || ''}
+                          onChange={e => updateItem(item._id, 'processArea', e.target.value)}
+                          placeholder="Type or select a process area…"
+                          style={{ ...iS, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Category</div>
+                        <select
+                          value={item.category || 'Process'}
+                          onChange={e => updateItem(item._id, 'category', e.target.value)}
+                          style={{ ...iS, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+                        >
+                          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    {item.type === 'rule' && (
+                      <div>
+                        <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Rationale</div>
+                        <textarea
+                          value={item.rationale || ''}
+                          onChange={e => updateItem(item._id, 'rationale', e.target.value)}
+                          rows={2}
+                          style={{ ...iS, fontSize: 12, resize: 'vertical', width: '100%', boxSizing: 'border-box', lineHeight: 1.5 }}
+                          placeholder="Why does this rule exist? What happens if you ignore it?"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* ── Normal display mode ── */
+                  <div>
+                    <div style={{
+                      fontSize: 13, fontWeight: 600, color: '#062044', fontFamily: FNT, lineHeight: 1.4,
+                      textDecoration: isRejected ? 'line-through' : 'none',
+                      marginBottom: item._sourceAnswer ? 8 : 0,
+                    }}>
+                      {item.title}
+                    </div>
+                    {item.type === 'rule' && item.rationale && !isRejected && (
+                      <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, lineHeight: 1.5, marginBottom: item._sourceAnswer ? 8 : 0 }}>
+                        {item.rationale}
+                      </div>
+                    )}
+                    {/* Source answer (collapsible) */}
+                    {item._sourceAnswer && (
+                      <div>
+                        <button
+                          onClick={() => updateItem(item._id, '_expanded', !item._expanded)}
+                          style={{
+                            fontSize: 9, color: '#b0a898', background: 'none', border: 'none', cursor: 'pointer',
+                            fontFamily: FNT, padding: 0, textTransform: 'uppercase', letterSpacing: 0.6,
+                            display: 'flex', alignItems: 'center', gap: 4,
+                          }}
+                        >
+                          <span style={{ fontSize: 7 }}>{item._expanded ? '▼' : '▶'}</span> Source answer
+                        </button>
+                        {item._expanded && (
+                          <div style={{
+                            marginTop: 6, padding: '8px 12px',
+                            background: '#f8f6f4', borderRadius: 3, border: '1px solid #e8e4e0',
+                            fontSize: 11, color: '#5a5550', fontFamily: FNT, lineHeight: 1.6,
+                            fontStyle: 'italic',
+                          }}>
+                            "{item._sourceAnswer}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
-                {item.category && (
-                  <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>
-                    {item.category}
-                  </span>
-                )}
-                {item.confidence && (
-                  <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, fontFamily: FNT, fontWeight: 600, flexShrink: 0, ...confidenceColor(item.confidence) }}>
-                    {item.confidence}
-                  </span>
-                )}
-                <div style={{ flex: 1 }} />
-                <button
-                  onClick={() => toggleApproval(item._id)}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0,
-                    fontSize: 11, fontFamily: FNT, fontWeight: 700,
-                    color: item.approved ? '#c0392b' : '#4FA89A', padding: '2px 6px',
-                  }}
-                >
-                  {item.approved ? '✕ Discard' : '↩ Restore'}
-                </button>
               </div>
-
-              <input
-                value={item.title}
-                onChange={e => updateItem(item._id, 'title', e.target.value)}
-                style={{ ...iS, fontSize: 13, fontWeight: 600, color: '#062044', marginBottom: 8, width: '100%', boxSizing: 'border-box' }}
-              />
-
-              {item.type === 'rule' && (
-                <div>
-                  <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Rationale</div>
-                  <textarea
-                    value={item.rationale || ''}
-                    onChange={e => updateItem(item._id, 'rationale', e.target.value)}
-                    rows={2}
-                    style={{ ...iS, fontSize: 12, resize: 'vertical', width: '100%', boxSizing: 'border-box', lineHeight: 1.5 }}
-                  />
-                </div>
-              )}
-
-              {item.scope && (
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Scope</div>
-                  <input
-                    value={item.scope}
-                    onChange={e => updateItem(item._id, 'scope', e.target.value)}
-                    style={{ ...iS, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
-          <div style={{ height: 40 }} />
+            )
+          })}
         </div>
       </div>
     )
@@ -817,115 +1054,129 @@ export default function CaptureView({ processAreas = [], industry, onNavigate, o
   // ── Done phase ───────────────────────────────────────────────────────────────
 
   const totalSaved = savedCounts.rules + savedCounts.assertions
-  const completeness = (totalSaved * 0.6).toFixed(1)
-
-  async function handleShare() {
-    const lines = [
-      `Knowledge Capture — ${operatorName} · ${processArea || 'General'}`,
-      `${savedCounts.rules} rule${savedCounts.rules !== 1 ? 's' : ''} · ${savedCounts.assertions} assertion${savedCounts.assertions !== 1 ? 's' : ''} captured`,
-      `${sessionStats.answered || 0} questions answered in ${formatDuration(sessionStats.duration || 0)}`,
-      `XP earned: ${sessionStats.xp || 0}`,
-    ]
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'))
-      setShared(true)
-      setTimeout(() => setShared(false), 2000)
-    } catch {}
-  }
+  const coverageGain = (totalSaved * 0.6).toFixed(1)
+  const targetPlant = plantName || processArea || 'your plant'
 
   return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: 32 }}>
-      <div style={{ width: '100%', maxWidth: 520 }}>
+    <div style={{
+      flex: 1, background: '#062044',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      overflow: 'auto', padding: '32px 24px', position: 'relative',
+    }}>
+      {/* Subtle grid */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px)',
+        backgroundSize: '60px 60px', pointerEvents: 'none',
+      }} />
 
-        {/* Title */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ fontSize: 12, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>
-            Session complete
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#062044', fontFamily: FNT }}>
-            Knowledge captured
-          </div>
+      <div style={{ width: '100%', maxWidth: 520, position: 'relative', textAlign: 'center' }}>
+
+        {/* Check circle */}
+        <div style={{
+          width: 64, height: 64, borderRadius: '50%',
+          background: 'rgba(79,168,154,0.15)', border: '1px solid rgba(79,168,154,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 22px', fontSize: 26, color: '#4FA89A',
+        }}>
+          ✓
         </div>
 
-        {/* Stats grid */}
+        {/* Session complete label */}
+        <div style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 14 }}>
+          Session Complete
+        </div>
+
+        {/* Headline */}
+        <div style={{ fontSize: 26, fontWeight: 700, color: '#FFFFFF', fontFamily: FNT, lineHeight: 1.25, marginBottom: 10 }}>
+          {totalSaved > 0
+            ? <>{totalSaved} piece{totalSaved !== 1 ? 's' : ''} of knowledge<br />added to {targetPlant}</>
+            : <>Session complete</>
+          }
+        </div>
+
+        {/* Coverage gain */}
+        {totalSaved > 0 && (
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', fontFamily: FNT, lineHeight: 1.5, marginBottom: 32 }}>
+            Your plant knowledge coverage increased by approximately{' '}
+            <span style={{ color: '#4FA89A', fontWeight: 700 }}>{coverageGain}%</span>
+          </div>
+        )}
+
+        {/* Stats strip */}
         <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
-          background: '#e8e4e0', borderRadius: 4, overflow: 'hidden', marginBottom: 16,
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 1, borderRadius: 4, overflow: 'hidden', marginBottom: 24,
+          border: '1px solid rgba(255,255,255,0.08)',
         }}>
           {[
-            { label: 'Session time',    value: formatDuration(sessionStats.duration || 0) },
-            { label: 'Questions answered', value: sessionStats.answered || 0 },
-            { label: 'Skipped',         value: sessionStats.skipped || 0 },
-            { label: 'Rules extracted',    value: savedCounts.rules, accent: true },
-            { label: 'Assertions extracted', value: savedCounts.assertions, accent: true },
-            { label: 'XP earned',       value: sessionStats.xp || 0, warm: true },
-          ].map(({ label, value, accent, warm }) => (
+            { val: formatDuration(sessionStats.duration || 0), label: 'Duration' },
+            { val: sessionStats.answered || 0, label: 'Answered' },
+            { val: savedCounts.rules, label: 'Rules', accent: true },
+            { val: savedCounts.assertions, label: 'Assertions', accent: true },
+          ].map(({ val, label, accent }) => (
             <div key={label} style={{
-              padding: '16px 14px', background: '#FFFFFF', textAlign: 'center',
+              padding: '16px 8px', textAlign: 'center',
+              background: 'rgba(255,255,255,0.04)',
             }}>
               <div style={{
-                fontSize: 22, fontWeight: 700, fontFamily: FNT, lineHeight: 1,
-                color: accent ? '#4FA89A' : warm ? '#F2652F' : '#062044',
-                marginBottom: 5,
+                fontSize: 20, fontWeight: 700, fontFamily: FNT, lineHeight: 1,
+                color: accent ? '#4FA89A' : '#fff', marginBottom: 5,
               }}>
-                {value}
+                {val}
               </div>
-              <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                 {label}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Completeness bar */}
-        {totalSaved > 0 && (
+        {/* XP badge */}
+        {(sessionStats.xp || 0) > 0 && (
           <div style={{
-            padding: '14px 18px', background: '#f0eeec', borderRadius: 3,
-            display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 16px', borderRadius: 20, marginBottom: 32,
+            background: 'rgba(242,101,47,0.12)', border: '1px solid rgba(242,101,47,0.25)',
           }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, lineHeight: 1.5 }}>
-                Your plant knowledge bank is now approximately{' '}
-                <span style={{ fontWeight: 700, color: '#062044' }}>{completeness}%</span>{' '}
-                more complete from this session.
-              </div>
-            </div>
+            <span style={{ fontSize: 14 }}>⚡</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#F2652F', fontFamily: FNT }}>
+              +{sessionStats.xp} XP earned
+            </span>
+            {(sessionStats.maxStreak || 0) >= 3 && (
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: FNT }}>
+                · {sessionStats.maxStreak} streak
+              </span>
+            )}
           </div>
         )}
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {savedCounts.rules > 0 && (
-            <button
-              onClick={() => onNavigate?.('rules')}
-              style={{ padding: '9px 18px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700, background: '#062044', border: 'none', color: '#fff', cursor: 'pointer' }}
-            >
-              View Rules →
-            </button>
-          )}
-          {savedCounts.assertions > 0 && (
-            <button
-              onClick={() => onNavigate?.('assertions')}
-              style={{ padding: '9px 18px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700, background: '#4FA89A', border: 'none', color: '#fff', cursor: 'pointer' }}
-            >
-              View Assertions →
-            </button>
-          )}
-          <button
-            onClick={handleShare}
-            style={{
-              padding: '9px 18px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 600,
-              background: 'transparent', border: '1px solid #D8CEC3',
-              color: shared ? '#4FA89A' : '#5a5550', cursor: 'pointer',
-            }}
-          >
-            {shared ? '✓ Copied' : 'Share with team'}
-          </button>
+        {/* CTAs */}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={restart}
-            style={{ padding: '9px 18px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 600, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer' }}
+            style={{
+              padding: '12px 24px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.25)',
+              color: 'rgba(255,255,255,0.8)', cursor: 'pointer',
+              transition: 'border-color 0.15s, background 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
           >
-            New session
+            Start Another Session
+          </button>
+          <button
+            onClick={() => onNavigate?.(savedCounts.rules > 0 ? 'rules' : 'assertions')}
+            style={{
+              padding: '12px 24px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
+              background: '#4FA89A', border: 'none', color: '#fff', cursor: 'pointer',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#3d9487'}
+            onMouseLeave={e => e.currentTarget.style.background = '#4FA89A'}
+          >
+            View in Knowledge Bank →
           </button>
         </div>
       </div>

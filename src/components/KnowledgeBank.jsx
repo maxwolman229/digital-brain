@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FNT, FNTM, STATUSES, statusColor } from '../lib/constants.js'
-import { fetchVocabulary } from '../lib/db.js'
+import { fetchVocabulary, fetchNewCounts } from '../lib/db.js'
 import { getStoredJwt } from '../lib/supabase.js'
+import { getUserId } from '../lib/userContext.js'
 import { Badge, PillFilter } from './shared.jsx'
 import RulesView from './RulesView.jsx'
 import AssertionsView from './AssertionsView.jsx'
@@ -15,6 +16,8 @@ import QueryView from './QueryView.jsx'
 import NarrativeInput from './NarrativeInput.jsx'
 import PlantSettings from './PlantSettings.jsx'
 import CaptureView from './CaptureView.jsx'
+import ProfileView from './ProfileView.jsx'
+import UserProfileModal from './UserProfileModal.jsx'
 
 const BEVCAN_PLANT_ID = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
 const SUPABASE_URL    = import.meta.env.VITE_SUPABASE_URL
@@ -52,9 +55,11 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
   const [fProc, setFProc] = useState([])
   const [showProfile, setShowProfile] = useState(false)
   const [showPlantMenu, setShowPlantMenu] = useState(false)
+  const [viewingUser, setViewingUser] = useState(null) // display name for UserProfileModal
   const [showPlantSettings, setShowPlantSettings] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
   const [ruleCounts, setRuleCounts] = useState({ total: 0, byStatus: {} })
+  const [newCounts, setNewCounts] = useState({ rules: 0, assertions: 0, events: 0, questions: 0 })
   const [graphHighlight, setGraphHighlight] = useState(null)
   const [reportEventOpen, setReportEventOpen] = useState(false)
   const [addFormOpen, setAddFormOpen] = useState(false)
@@ -88,6 +93,30 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
       .catch(() => {})
   }, [activePlantId, isPlantAdmin])
 
+  const BADGE_TABS = ['rules', 'assertions', 'events', 'questions']
+
+  function getLastViewed(plantId) {
+    try {
+      const raw = localStorage.getItem(`md1_lastViewed_${plantId}`)
+      return raw ? JSON.parse(raw) : null
+    } catch { return null }
+  }
+
+  function markViewed(plantId, tab) {
+    try {
+      const current = getLastViewed(plantId) || {}
+      current[tab] = new Date().toISOString()
+      localStorage.setItem(`md1_lastViewed_${plantId}`, JSON.stringify(current))
+    } catch {}
+  }
+
+  useEffect(() => {
+    if (!activePlantId) return
+    const lastViewed = getLastViewed(activePlantId)
+    if (!lastViewed) return // first ever visit — no badges until user has context
+    fetchNewCounts(activePlantId, lastViewed).then(setNewCounts).catch(() => {})
+  }, [activePlantId])
+
   const tog = (arr, setArr, v) => setArr(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])
 
   function switchView(v) {
@@ -96,6 +125,12 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
     setFStatus([])
     setFCat([])
     setFProc([])
+    setAddFormOpen(false)
+    setReportEventOpen(false)
+    if (activePlantId && BADGE_TABS.includes(v)) {
+      markViewed(activePlantId, v)
+      setNewCounts(prev => ({ ...prev, [v]: 0 }))
+    }
   }
 
   const showSearch = view === 'rules' || view === 'assertions'
@@ -109,8 +144,22 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
       <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 16, background: '#062044' }}>
 
         {/* Logo */}
-        <div style={{ fontSize: 17, fontWeight: 700, color: '#FFFFFF', fontFamily: FNT, letterSpacing: 3, border: '1.5px solid rgba(255,255,255,0.85)', padding: '3px 9px 4px', lineHeight: 1, flexShrink: 0 }}>
-          M/D/1
+        <div
+          onClick={() => switchView('query')}
+          style={{ position: 'relative', flexShrink: 0, display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}
+        >
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#FFFFFF', fontFamily: FNT, letterSpacing: 3, border: '1.5px solid rgba(255,255,255,0.85)', padding: '3px 9px 4px', lineHeight: 1 }}>
+            M/D/1
+          </div>
+          <span style={{
+            position: 'absolute', top: -7, right: -22,
+            fontSize: 7, fontWeight: 700, letterSpacing: 0.8,
+            background: '#4FA89A', color: '#fff',
+            padding: '2px 5px', borderRadius: 2,
+            fontFamily: FNT, textTransform: 'uppercase',
+          }}>
+            BETA
+          </span>
         </div>
 
         {/* Plant switcher */}
@@ -229,6 +278,14 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
         <div style={{ flex: 1 }} />
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {(view === 'rules' || view === 'assertions') && (
+            <button
+              onClick={() => setAddFormOpen(true)}
+              style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
+            >
+              + Add {view === 'assertions' ? 'Assertion' : 'Rule'}
+            </button>
+          )}
           <button
             onClick={() => { switchView('events'); setReportEventOpen(true) }}
             style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
@@ -240,12 +297,6 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid rgba(242,101,47,0.6)', color: '#F2652F', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
           >
             + Narrative Input
-          </button>
-          <button
-            onClick={() => setAddFormOpen(true)}
-            style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
-          >
-            + Add {view === 'assertions' ? 'Assertion' : 'Rule'}
           </button>
 
           <div style={{ width: 1, height: 22, background: 'rgba(255,255,255,0.15)', margin: '0 2px' }} />
@@ -267,6 +318,8 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             light
             onNavigate={switchView}
             onOpen={() => setShowProfile(false)}
+            userId={getUserId()}
+            plantId={activePlantId}
           />
 
           {/* Profile */}
@@ -281,9 +334,10 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               {shortName(user?.displayName)}
             </button>
             {showProfile && (
-              <div style={{ position: 'absolute', top: 38, right: 0, width: 260, background: '#fff', border: '1px solid #e8e4e0', borderRadius: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 999, padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 38, right: 0, width: 240, background: '#fff', border: '1px solid #e8e4e0', borderRadius: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 999, overflow: 'hidden' }}>
+                {/* User identity */}
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid #e8e4e0', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                     {initials(user?.displayName)}
                   </div>
                   <div style={{ overflow: 'hidden' }}>
@@ -291,14 +345,19 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, textTransform: 'capitalize' }}>{user?.role || 'Member'}</div>
                   </div>
                 </div>
-                <div style={{ borderTop: '1px solid #e8e4e0', paddingTop: 10 }}>
-                  <button
-                    onClick={() => { setShowProfile(false); onLogout?.() }}
-                    style={{ width: '100%', padding: '8px 0', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, textAlign: 'center', letterSpacing: 0.4 }}
-                  >
-                    Log Out
-                  </button>
-                </div>
+                {/* Menu items */}
+                <button
+                  onClick={() => { setShowProfile(false); switchView('profile') }}
+                  style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 12, color: '#1F1F1F' }}
+                >
+                  ◉ My Profile
+                </button>
+                <button
+                  onClick={() => { setShowProfile(false); onLogout?.() }}
+                  style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 12, color: '#c0392b' }}
+                >
+                  ← Log Out
+                </button>
               </div>
             )}
           </div>
@@ -327,24 +386,39 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
           {/* Nav tabs */}
           <div style={{ marginBottom: 24 }}>
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => switchView(tab.id)}
-                style={{
-                  display: 'block', width: '100%', padding: '8px 12px', marginBottom: 2,
-                  borderRadius: 3, fontSize: 12, fontWeight: view === tab.id ? 700 : 400,
-                  background: view === tab.id ? '#f0eeec' : 'transparent',
-                  color: view === tab.id ? '#062044' : '#555',
-                  border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FNT,
-                }}
-              >
-                {tab.icon} {tab.label}
-                {tab.id === 'rules' && ruleCounts.total > 0 && (
-                  <span style={{ float: 'right', color: '#D8CEC3', fontSize: 11 }}>{ruleCounts.total}</span>
-                )}
-              </button>
-            ))}
+            {TABS.map(tab => {
+              const countKey = tab.id === 'questions' ? 'questions' : tab.id.replace(/s$/, '') + 's'
+              // map tab id → newCounts key: rules→rules, assertions→assertions, events→events, questions→questions
+              const badgeCount = BADGE_TABS.includes(tab.id) ? (newCounts[tab.id] || 0) : 0
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => switchView(tab.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    width: '100%', padding: '8px 12px', marginBottom: 2,
+                    borderRadius: 3, fontSize: 12, fontWeight: view === tab.id ? 700 : 400,
+                    background: view === tab.id ? '#f0eeec' : 'transparent',
+                    color: view === tab.id ? '#062044' : '#555',
+                    border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FNT,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <span>{tab.icon} {tab.label}</span>
+                  {badgeCount > 0 && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      minWidth: 18, height: 18, padding: '0 5px',
+                      background: '#4FA89A', color: '#fff',
+                      borderRadius: 9, fontSize: 9, fontWeight: 700, fontFamily: FNT,
+                      flexShrink: 0,
+                    }}>
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
 
           {/* Filters */}
@@ -419,6 +493,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               processAreas={vocabulary.processAreas}
               categories={vocabulary.categories}
               onItemSaved={refreshVocabulary}
+              onViewProfile={name => setViewingUser(name)}
             />
           )}
 
@@ -435,6 +510,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               processAreas={vocabulary.processAreas}
               categories={vocabulary.categories}
               onItemSaved={refreshVocabulary}
+              onViewProfile={name => setViewingUser(name)}
             />
           )}
 
@@ -444,7 +520,10 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               reportOpen={reportEventOpen}
               onReportClose={() => setReportEventOpen(false)}
               processAreas={vocabulary.processAreas}
+              industry={activeMembership?.industry}
+              plantId={activePlantId}
               onItemSaved={refreshVocabulary}
+              onViewProfile={name => setViewingUser(name)}
             />
           )}
 
@@ -454,6 +533,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               processAreas={vocabulary.processAreas}
               industry={activeMembership?.industry}
               onItemSaved={refreshVocabulary}
+              onViewProfile={name => setViewingUser(name)}
             />
           )}
 
@@ -470,19 +550,30 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             />
           )}
 
-          {view === 'query' && <QueryView key={activePlantId} onNavigate={switchView} industry={activeMembership?.industry} />}
+          {view === 'query' && <QueryView key={activePlantId} onNavigate={switchView} industry={activeMembership?.industry} plantId={activePlantId} />}
 
           {view === 'capture' && (
             <CaptureView
               key={activePlantId}
               processAreas={vocabulary.processAreas}
               industry={activeMembership?.industry}
+              plantName={activeMembership?.plantName || user?.plantName}
+              plantId={activePlantId}
               onNavigate={switchView}
               onItemSaved={refreshVocabulary}
             />
           )}
 
-          {view !== 'rules' && view !== 'assertions' && view !== 'events' && view !== 'questions' && view !== 'health' && view !== 'graph' && view !== 'query' && view !== 'capture' && (
+          {view === 'profile' && (
+            <ProfileView
+              user={user}
+              plantId={activePlantId}
+              memberships={memberships}
+              onNavigate={switchView}
+            />
+          )}
+
+          {view !== 'rules' && view !== 'assertions' && view !== 'events' && view !== 'questions' && view !== 'health' && view !== 'graph' && view !== 'query' && view !== 'capture' && view !== 'profile' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 32, color: '#D8CEC3' }}>{TABS.find(t => t.id === view)?.icon}</div>
               <div style={{ fontSize: 13, color: '#b0a898', fontFamily: FNT }}>{TABS.find(t => t.id === view)?.label} — coming soon</div>
@@ -514,12 +605,23 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
           isSuperAdmin={isSuperAdmin}
           onPendingCountChange={setPendingCount}
           onClose={() => setShowPlantSettings(false)}
+          onDeleted={() => { setShowPlantSettings(false); navigate('/plants') }}
         />
       )}
 
       {/* Backdrop to close plant menu */}
       {showPlantMenu && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowPlantMenu(false)} />
+      )}
+
+      {/* User profile modal (opened by clicking any username in the app) */}
+      {viewingUser && (
+        <UserProfileModal
+          displayName={viewingUser}
+          plantId={activePlantId}
+          onClose={() => setViewingUser(null)}
+          onNavigate={switchView}
+        />
       )}
     </div>
   )

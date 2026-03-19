@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react'
 import { FNT, FNTM, iS, STATUSES, CONFIDENCES, formatDate, statusColor, paColor } from '../lib/constants.js'
 import { Badge, Tag, Modal, Field, TypeaheadInput } from './shared.jsx'
 import { fetchRules, fetchComments, fetchVerifications, fetchItemById, createRule, updateRule } from '../lib/db.js'
-import { getDisplayName } from '../lib/userContext.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
 
-export default function RulesView({ search, fStatus, fCat, fProc, onCountsChange, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved }) {
+export default function RulesView({ search, fStatus, fCat, fProc, onCountsChange, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile }) {
   const [rules, setRules] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
@@ -251,7 +250,10 @@ export default function RulesView({ search, fStatus, fCat, fProc, onCountsChange
 
             {/* Footer meta */}
             <div style={{ padding: '10px 0', borderTop: '1px solid #D8CEC3', marginTop: 12, fontSize: 10, color: '#D8CEC3', fontFamily: FNT, lineHeight: 1.8 }}>
-              <div>Created by: {sel.createdBy}</div>
+              <div>Created by: <span
+                onClick={() => sel.createdBy && onViewProfile?.(sel.createdBy)}
+                style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : '#D8CEC3', textDecoration: onViewProfile ? 'underline' : 'none' }}
+              >{sel.createdBy}</span></div>
               <div>Created: {formatDate(sel.createdAt)}</div>
             </div>
 
@@ -267,7 +269,7 @@ export default function RulesView({ search, fStatus, fCat, fProc, onCountsChange
           <div style={{ padding: 40, textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
         {crossSel?.data && (
-          <LinkedItemDetail item={crossSel.data} onOpenItem={openLinkedItem} />
+          <LinkedItemDetail item={crossSel.data} onOpenItem={openLinkedItem} onViewProfile={onViewProfile} />
         )}
       </Modal>
 
@@ -334,7 +336,7 @@ function EditRuleForm({ item, onClose, onSavedFull, processAreas = [], categorie
     setError(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-      const newVersion = await updateRule(item.id, { ...form, tags, author: getDisplayName() })
+      const newVersion = await updateRule(item.id, { ...form, tags })
       onSavedFull({ title: form.title, category: form.category, processArea: form.processArea, scope: form.scope, rationale: form.rationale, confidence: form.confidence, status: form.status, tags }, newVersion)
     } catch (err) {
       setError(err.message)
@@ -423,7 +425,7 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
     setError(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-      const rule = await createRule({ ...form, tags, createdBy: getDisplayName() })
+      const rule = await createRule({ ...form, tags })
       onCreated(rule)
     } catch (err) {
       setError(err.message)
@@ -434,7 +436,7 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
   return (
     <form onSubmit={handleSubmit}>
       <Field label="Title *">
-        <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Limit Sims scrap to 40% of charge…" style={iS} autoFocus />
+        <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Limit non-standard input to 40% of batch…" style={iS} autoFocus />
       </Field>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -462,19 +464,19 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
       </div>
 
       <Field label="Scope" hint="What conditions or situations does this rule apply to?">
-        <textarea value={form.scope} onChange={e => set('scope', e.target.value)} rows={3} placeholder="e.g. Applies during EAF heats when using shredded scrap grades…" style={{ ...iS, resize: 'vertical' }} />
+        <textarea value={form.scope} onChange={e => set('scope', e.target.value)} rows={3} placeholder="e.g. Applies when operating under non-standard conditions or with variable input materials…" style={{ ...iS, resize: 'vertical' }} />
       </Field>
 
       <Field label="Rationale" hint="Why does this rule exist? What's the evidence or reasoning?">
-        <textarea value={form.rationale} onChange={e => set('rationale', e.target.value)} rows={3} placeholder="e.g. High residuals in Sims scrap cause surface cracks at casting…" style={{ ...iS, resize: 'vertical' }} />
+        <textarea value={form.rationale} onChange={e => set('rationale', e.target.value)} rows={3} placeholder="e.g. Off-spec input materials cause downstream quality defects if not managed at source…" style={{ ...iS, resize: 'vertical' }} />
       </Field>
 
       <Field label="Initial Evidence" hint="Optional — describe any observation, incident, or test that supports this rule">
-        <textarea value={form.evidenceText} onChange={e => set('evidenceText', e.target.value)} rows={2} placeholder="e.g. Heat #4782 — 70% Sims scrap resulted in transverse surface cracks…" style={{ ...iS, resize: 'vertical' }} />
+        <textarea value={form.evidenceText} onChange={e => set('evidenceText', e.target.value)} rows={2} placeholder="e.g. Batch #4782 — high proportion of off-spec material resulted in quality failure…" style={{ ...iS, resize: 'vertical' }} />
       </Field>
 
       <Field label="Tags" hint="Comma-separated">
-        <input value={form.tagsInput} onChange={e => set('tagsInput', e.target.value)} placeholder="e.g. scrap, EAF, HSLA" style={iS} />
+        <input value={form.tagsInput} onChange={e => set('tagsInput', e.target.value)} placeholder="e.g. quality, materials, best-practice" style={iS} />
       </Field>
 
       {error && (
@@ -497,7 +499,7 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
 
 // ── Shared linked-item detail view (used in cross-type stacked modal) ─────────
 
-function LinkedItemDetail({ item, onOpenItem }) {
+function LinkedItemDetail({ item, onOpenItem, onViewProfile }) {
   return (
     <div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -540,7 +542,10 @@ function LinkedItemDetail({ item, onOpenItem }) {
       )}
 
       <div style={{ padding: '8px 0', borderTop: '1px solid #D8CEC3', marginTop: 12, fontSize: 10, color: '#D8CEC3', fontFamily: FNT, lineHeight: 1.8 }}>
-        <div>Created by: {item.createdBy}</div>
+        <div>Created by: <span
+          onClick={() => item.createdBy && onViewProfile?.(item.createdBy)}
+          style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : '#D8CEC3', textDecoration: onViewProfile ? 'underline' : 'none' }}
+        >{item.createdBy}</span></div>
         <div>Created: {formatDate(item.createdAt)}</div>
       </div>
     </div>

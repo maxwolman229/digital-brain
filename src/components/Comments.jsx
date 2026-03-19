@@ -1,12 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FNT, iS } from '../lib/constants.js'
-import { fetchItemComments, addComment } from '../lib/db.js'
+import { fetchItemComments, addComment, fetchPlantMembers } from '../lib/db.js'
 import { getDisplayName } from '../lib/userContext.js'
+import { MentionDropdown } from './shared.jsx'
+import { useMention } from '../lib/useMention.js'
 
 export default function Comments({ targetType, targetId, onCommentPosted }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [text, setText] = useState('')
+  const [members, setMembers] = useState([])
+  const inputRef = useRef(null)
+  const { mentionQuery, handleMentionChange, insertMention } = useMention(text, setText, inputRef)
 
   useEffect(() => {
     if (!targetId) return
@@ -17,6 +22,10 @@ export default function Comments({ targetType, targetId, onCommentPosted }) {
     })
   }, [targetType, targetId])
 
+  useEffect(() => {
+    fetchPlantMembers().then(setMembers).catch(() => {})
+  }, [])
+
   async function handlePost() {
     if (!text.trim()) return
     const by = getDisplayName()
@@ -24,7 +33,7 @@ export default function Comments({ targetType, targetId, onCommentPosted }) {
     setItems(prev => [...prev, comment])
     setText('')
     onCommentPosted?.()
-    await addComment(targetType, targetId, text, by)
+    await addComment(targetType, targetId, text)
   }
 
   return (
@@ -43,13 +52,17 @@ export default function Comments({ targetType, targetId, onCommentPosted }) {
       ))}
 
       <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-        <input
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Add a comment..."
-          style={{ ...iS, flex: 1, fontSize: 11, padding: '6px 10px' }}
-          onKeyDown={e => { if (e.key === 'Enter' && text.trim()) handlePost() }}
-        />
+        <div style={{ flex: 1, position: 'relative' }}>
+          <input
+            ref={inputRef}
+            value={text}
+            onChange={handleMentionChange}
+            placeholder="Add a comment… (type @ to mention someone)"
+            style={{ ...iS, width: '100%', boxSizing: 'border-box', fontSize: 11, padding: '6px 10px' }}
+            onKeyDown={e => { if (e.key === 'Enter' && text.trim()) handlePost() }}
+          />
+          <MentionDropdown query={mentionQuery} members={members} onSelect={insertMention} />
+        </div>
         <button
           onClick={handlePost}
           style={{ padding: '6px 12px', borderRadius: 3, fontSize: 10, background: '#062044', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}

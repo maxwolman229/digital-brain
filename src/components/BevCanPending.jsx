@@ -1,10 +1,7 @@
-import { useNavigate } from 'react-router-dom'
-
 const FNT  = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
 const FNTM = "'IBM Plex Mono', 'Courier New', monospace"
 
 export default function BevCanPending() {
-  const navigate = useNavigate()
 
   return (
     <div style={{
@@ -51,27 +48,6 @@ export default function BevCanPending() {
             Our team will review your application and be in touch within 48 hours.
           </div>
 
-          {/* Divider */}
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 24 }} />
-
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>
-            In the meantime, feel free to explore the demo
-          </div>
-
-          <button
-            onClick={() => navigate('/auth')}
-            style={{
-              width: '100%', padding: '12px 0', borderRadius: 3,
-              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
-              color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: 600,
-              letterSpacing: 0.8, cursor: 'pointer', fontFamily: FNT,
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
-          >
-            See Demo →
-          </button>
         </div>
 
         <div style={{ marginTop: 24, fontSize: 10, color: 'rgba(255,255,255,0.15)', fontFamily: FNTM, letterSpacing: 1 }}>

@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FNT, FNTM, iS, formatDate } from '../lib/constants.js'
-import { Badge, Tag, Modal, Field, TypeaheadInput } from './shared.jsx'
+import { Badge, Tag, Modal, Field, TypeaheadInput, MentionDropdown } from './shared.jsx'
 import {
   fetchQuestions, addQuestion, updateQuestionStatus, saveResponse, fetchResponses,
-  addRuleFromExtraction, addAssertionFromExtraction,
+  addRuleFromExtraction, addAssertionFromExtraction, fetchPlantMembers,
 } from '../lib/db.js'
+import { useMention } from '../lib/useMention.js'
 
-const EMPTY_ASK = { question: '', detail: '', processArea: '', askedBy: '', taggedPeople: [] }
+const EMPTY_ASK = { question: '', detail: '', processArea: '', taggedPeople: [] }
 
-export default function QuestionsView({ processAreas = [], industry, onItemSaved }) {
+export default function QuestionsView({ processAreas = [], industry, onItemSaved, onViewProfile }) {
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
@@ -21,9 +22,17 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
   const [extractParsed, setExtractParsed] = useState(null)
   const [extractError, setExtractError] = useState(null)
   const [accepting, setAccepting] = useState(false)
+  const [members, setMembers] = useState([])
+  const detailRef = useRef(null)
+  const { mentionQuery, handleMentionChange, insertMention } = useMention(
+    askForm.detail,
+    v => setAskForm(f => ({ ...f, detail: v })),
+    detailRef
+  )
 
   useEffect(() => {
     load()
+    fetchPlantMembers().then(setMembers).catch(() => {})
   }, [])
 
   // Load responses from DB when opening a question
@@ -56,7 +65,6 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
       question: askForm.question,
       detail: askForm.detail,
       processArea: askForm.processArea || 'General',
-      askedBy: askForm.askedBy || 'You',
       askedAt: now,
       status: 'open',
       responses: [],
@@ -93,7 +101,7 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
     setAnswerText('')
     setReplyTo(null)
     setExtractParsed(null)
-    const saved = await saveResponse(sel.id, answerText, 'You', replyTo)
+    const saved = await saveResponse(sel.id, answerText, replyTo)
     if (saved) {
       // Replace optimistic entry with real DB row (gets real UUID)
       setSel(prev => prev ? { ...prev, responses: prev.responses.map(r => r.id === optimistic.id ? saved : r) } : prev)
@@ -130,8 +138,8 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
       if (!resp.ok) throw new Error(data.error || 'Extraction failed')
 
       setExtractParsed({
-        rules: (data.rules || []).map((r, i) => ({ ...r, id: i, category: r.category || '', processArea: r.process_area || sel.processArea, tags: ['from-question', sel.id.toLowerCase()], createdBy: sel.responses[0]?.by || 'You' })),
-        assertions: (data.assertions || []).map((a, i) => ({ ...a, id: i, category: a.category || '', processArea: a.process_area || sel.processArea, tags: ['from-question', sel.id.toLowerCase()], createdBy: sel.responses[0]?.by || 'You' })),
+        rules: (data.rules || []).map((r, i) => ({ ...r, id: i, category: r.category || '', processArea: r.process_area || sel.processArea, tags: ['from-question', sel.id.toLowerCase()] })),
+        assertions: (data.assertions || []).map((a, i) => ({ ...a, id: i, category: a.category || '', processArea: a.process_area || sel.processArea, tags: ['from-question', sel.id.toLowerCase()] })),
       })
     } catch (err) {
       setExtractError(err.message || 'Extraction failed.')
@@ -147,11 +155,11 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
     const createdAssertionIds = []
 
     for (const r of extractParsed.rules) {
-      const saved = await addRuleFromExtraction({ ...r, processArea: sel.processArea, createdBy: sel.responses[0]?.by || 'You', createdAt: now })
+      const saved = await addRuleFromExtraction({ ...r, processArea: sel.processArea, createdAt: now, captureSource: `Extracted from Question ${sel.id}` })
       if (saved) createdRuleIds.push(saved.id)
     }
     for (const a of extractParsed.assertions) {
-      const saved = await addAssertionFromExtraction({ ...a, processArea: sel.processArea, createdBy: sel.responses[0]?.by || 'You', createdAt: now })
+      const saved = await addAssertionFromExtraction({ ...a, processArea: sel.processArea, createdAt: now, captureSource: `Extracted from Question ${sel.id}` })
       if (saved) createdAssertionIds.push(saved.id)
     }
 
@@ -188,7 +196,10 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
               )}
               <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.6 }}>{r.text}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT }}>— {r.by} · {new Date(r.date).toLocaleDateString()}</div>
+                <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT }}>— <span
+                  onClick={() => r.by && onViewProfile?.(r.by)}
+                  style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
+                >{r.by}</span> · {new Date(r.date).toLocaleDateString()}</div>
                 <button
                   onClick={() => { setReplyTo(r.id); setAnswerText(''); document.getElementById('answer-input')?.focus() }}
                   style={{ fontSize: 9, color: '#4FA89A', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
@@ -294,7 +305,10 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
                 {sel.status === 'open' ? 'OPEN' : 'ANSWERED'}
               </span>
               <Tag label={sel.processArea} />
-              <span style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT }}>Asked by {sel.askedBy} · {new Date(sel.askedAt).toLocaleDateString()}</span>
+              <span style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT }}>Asked by <span
+                onClick={() => sel.askedBy && onViewProfile?.(sel.askedBy)}
+                style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
+              >{sel.askedBy}</span> · {new Date(sel.askedAt).toLocaleDateString()}</span>
             </div>
 
             {sel.detail && (
@@ -471,22 +485,21 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
         </Field>
 
         <Field label="Details" hint="Add context — what were you doing, what did you try, why does this matter?">
-          <textarea
-            style={{ ...iS, height: 90, resize: 'vertical', lineHeight: 1.5 }}
-            value={askForm.detail}
-            onChange={e => setAskForm({ ...askForm, detail: e.target.value })}
-            placeholder="e.g. Had this happen on night shift. Ended up calling the quality lab and waiting 20 minutes. There must be a faster backup procedure..."
-          />
+          <div style={{ position: 'relative' }}>
+            <textarea
+              ref={detailRef}
+              style={{ ...iS, height: 90, resize: 'vertical', lineHeight: 1.5 }}
+              value={askForm.detail}
+              onChange={handleMentionChange}
+              placeholder="e.g. Had this happen on night shift. Ended up calling the quality lab and waiting 20 minutes. There must be a faster backup procedure..."
+            />
+            <MentionDropdown query={mentionQuery} members={members} onSelect={insertMention} />
+          </div>
         </Field>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Field label="Process Area">
-            <TypeaheadInput value={askForm.processArea} onChange={v => setAskForm({ ...askForm, processArea: v })} options={processAreas} placeholder="Type process area..." />
-          </Field>
-          <Field label="Your Name">
-            <input style={iS} value={askForm.askedBy} onChange={e => setAskForm({ ...askForm, askedBy: e.target.value })} placeholder="e.g. D. Novak" />
-          </Field>
-        </div>
+        <Field label="Process Area">
+          <TypeaheadInput value={askForm.processArea} onChange={v => setAskForm({ ...askForm, processArea: v })} options={processAreas} placeholder="Type process area..." />
+        </Field>
 
         <Field label="Tag People" hint="People who might know the answer">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>

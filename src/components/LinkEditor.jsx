@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { FNT, iS } from '../lib/constants.js'
 import { fetchLinks, saveLink, deleteLink, searchKnowledge, fetchSuggestedLinks } from '../lib/db.js'
-import { getDisplayName } from '../lib/userContext.js'
 
 // ── Relationship type config ───────────────────────────────────────────────────
 
@@ -93,7 +92,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
   async function handleSave() {
     if (!selected) return
     setSaving(true)
-    await saveLink(sourceType, sourceId, selected.type, selected.id, relType, comment, getDisplayName())
+    await saveLink(sourceType, sourceId, selected.type, selected.id, relType, comment)
     await load()
     setSelected(null)
     setSearch('')

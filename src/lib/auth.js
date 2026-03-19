@@ -1,4 +1,4 @@
-import { supabase, storeJwt, clearJwt, getStoredJwt } from './supabase.js'
+import { supabase, storeJwt, storeRefreshToken, clearJwt, getStoredJwt } from './supabase.js'
 import { setUserContext, clearUserContext } from './userContext.js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -30,6 +30,7 @@ async function rawSignIn(email, password) {
   }
 
   storeJwt(json.access_token)
+  if (json.refresh_token) storeRefreshToken(json.refresh_token)
   return json // { access_token, refresh_token, user, ... }
 }
 
@@ -54,7 +55,7 @@ export async function signUp(email, password) {
       'Authorization': 'Bearer ' + SUPABASE_KEY,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, data: { email_confirm: true } }),
   })
   clearTimeout(timer)
 
@@ -65,6 +66,7 @@ export async function signUp(email, password) {
   }
 
   if (json.access_token) storeJwt(json.access_token)
+  if (json.refresh_token) storeRefreshToken(json.refresh_token)
   return { user: json.user || json, session: json }
 }
 

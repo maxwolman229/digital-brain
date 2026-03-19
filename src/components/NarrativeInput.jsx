@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { FNT, FNTM, iS, CONFIDENCES } from '../lib/constants.js'
-import { Modal, Field, TypeaheadInput } from './shared.jsx'
-import { createRule, createAssertion } from '../lib/db.js'
+import { Modal, Field, TypeaheadInput, MentionDropdown } from './shared.jsx'
+import { createRule, createAssertion, fetchPlantMembers } from '../lib/db.js'
+import { useMention } from '../lib/useMention.js'
 
 const EMPTY_FORM = { text: '', processArea: '', source: '', submittedBy: '' }
 
@@ -14,6 +15,17 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
   const [saving, setSaving] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
   const [saveError, setSaveError] = useState(null)
+  const [members, setMembers] = useState([])
+  const textRef = useRef(null)
+  const { mentionQuery, handleMentionChange, insertMention } = useMention(
+    form.text,
+    v => setForm(f => ({ ...f, text: v })),
+    textRef
+  )
+
+  useEffect(() => {
+    fetchPlantMembers().then(setMembers).catch(() => {})
+  }, [])
 
   function reset() {
     setStep('input')
@@ -91,7 +103,6 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
     setSaveError(null)
     let count = 0
     const evidenceText = form.source?.trim() || ''
-    const createdBy = form.submittedBy?.trim() || 'Max Wolman'
 
     for (const item of items) {
       try {
@@ -105,8 +116,8 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
             confidence: item.confidence || 'Medium',
             status: 'Proposed',
             tags: ['narrative-input'],
+            captureSource: 'Narrative input',
             evidenceText,
-            createdBy,
           })
           if (created) { count++; onCreated?.(created) }
         } else {
@@ -118,8 +129,8 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
             confidence: item.confidence || 'Medium',
             status: 'Proposed',
             tags: ['narrative-input'],
+            captureSource: 'Narrative input',
             evidenceText,
-            createdBy,
           })
           if (created) { count++; onCreated?.(created) }
         }
@@ -156,13 +167,17 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
           </div>
 
           <Field label="Narrative" hint="Speak naturally — include context, conditions, and consequences">
-            <textarea
-              style={{ ...iS, height: 160, resize: 'vertical', lineHeight: 1.6, fontSize: 13 }}
-              value={form.text}
-              onChange={e => setForm(f => ({ ...f, text: e.target.value }))}
-              placeholder={'e.g. "When we get high copper scrap above 0.25% we need to cap the EAF power at 85% during refining otherwise the electrodes wear out fast and the arc gets unstable. We\'ve seen this cause tap-to-tap time increases of 8-10 minutes when ignored..."'}
-              autoFocus
-            />
+            <div style={{ position: 'relative' }}>
+              <textarea
+                ref={textRef}
+                style={{ ...iS, height: 160, resize: 'vertical', lineHeight: 1.6, fontSize: 13 }}
+                value={form.text}
+                onChange={handleMentionChange}
+                placeholder={'e.g. "When material quality drops below threshold we reduce line speed by 15% to avoid downstream defects. Ignoring this causes reject rates to spike — we\'ve seen this add 20+ minutes of rework..."'}
+                autoFocus
+              />
+              <MentionDropdown query={mentionQuery} members={members} onSelect={insertMention} />
+            </div>
           </Field>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -179,7 +194,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
                 style={iS}
                 value={form.submittedBy}
                 onChange={e => setForm(f => ({ ...f, submittedBy: e.target.value }))}
-                placeholder="e.g. Max Wolman"
+                placeholder="e.g. Your Name"
               />
             </Field>
           </div>
@@ -189,7 +204,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
               style={iS}
               value={form.source}
               onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-              placeholder="e.g. Interview with Marco Rossi, EAF Foreman · 12 Mar 2026"
+              placeholder="e.g. Interview with J. Smith, Line Supervisor · 12 Mar 2026"
             />
           </Field>
 

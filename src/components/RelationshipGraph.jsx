@@ -20,6 +20,56 @@ function edgeCol(relType) {
   })[relType] || '#B0A898'
 }
 
+// Draw a rounded rectangle path (reusable)
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y)
+  ctx.closePath()
+}
+
+// Soft pastel background colours per process area (distinct enough to be useful)
+const CLUSTER_FILLS = [
+  '#D6EAF8', '#D5F5E3', '#FEF9E7', '#FDEDEC', '#F4ECF7',
+  '#E8F8F5', '#FDF2E9', '#EBF5FB', '#F9EBEA', '#E9F7EF',
+]
+const clusterFillCache = {}
+let clusterFillIdx = 0
+function clusterFill(pa) {
+  if (!clusterFillCache[pa]) {
+    clusterFillCache[pa] = CLUSTER_FILLS[clusterFillIdx % CLUSTER_FILLS.length]
+    clusterFillIdx++
+  }
+  return clusterFillCache[pa]
+}
+
+// Wrap text into lines fitting within maxWidth (canvas units). Returns array of strings.
+function wrapText(ctx, text, maxW, maxLines) {
+  const words = text.split(' ')
+  const lines = []
+  let line = ''
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w
+    if (ctx.measureText(test).width <= maxW) {
+      line = test
+    } else {
+      if (line) lines.push(line)
+      line = w
+    }
+    if (lines.length >= maxLines) break
+  }
+  if (line && lines.length < maxLines) lines.push(line)
+  // Truncate last line if needed
+  const last = lines[lines.length - 1]
+  if (last && ctx.measureText(last).width > maxW) {
+    lines[lines.length - 1] = last.slice(0, Math.floor(last.length * 0.7)) + '…'
+  }
+  return lines
+}
+
 function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId, processAreas = [] }) {
   const canvasRef = useRef(null)
   const nodesRef = useRef([])
@@ -32,18 +82,33 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
   const didDragRef = useRef(false)
   const mouseDownPosRef = useRef(null)
   const szRef = useRef({ w: 800, h: 600 })
+  const clusterIdealRef = useRef({})
+
+  // Zoom / pan
+  const zoomRef = useRef(1)
+  const targetZoomRef = useRef(1)
+  const camRef = useRef({ x: 400, y: 300 })   // world coords shown at screen centre
+  const isPanningRef = useRef(false)
+  const panStartRef = useRef(null)             // { sx, sy, camX, camY }
+
   const [tip, setTip] = useState(null)
   const highlightRef = useRef(highlightId)
 
+  // Convert screen (CSS pixel) coords to world coords
+  const toWorld = (sx, sy) => {
+    const { w: W, h: H } = szRef.current
+    const z = zoomRef.current
+    const c = camRef.current
+    return { x: (sx - W / 2) / z + c.x, y: (sy - H / 2) / z + c.y }
+  }
+
   useEffect(() => {
     highlightRef.current = highlightId
-    // When a highlight is set, nudge that node towards center
     if (highlightId) {
       const n = nodesRef.current.find(x => x.id === highlightId)
       if (n) {
-        const W = szRef.current.w, H = szRef.current.h
-        n.x = W / 2 + (Math.random() - 0.5) * 60
-        n.y = H / 2 + (Math.random() - 0.5) * 60
+        camRef.current = { x: n.x, y: n.y }
+        targetZoomRef.current = 1.6
         n.vx = 0; n.vy = 0
       }
     }
@@ -60,7 +125,6 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
     })
     const ids = new Set(fit.map(i => i.id))
 
-    // Group by process area for clustered initial placement
     const groups = {}
     fit.forEach(i => {
       const pa = i.processArea || 'Other'
@@ -70,28 +134,30 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
 
     const W = szRef.current.w, H = szRef.current.h
     const cx = W / 2, cy = H / 2
-    const keys = Object.keys(groups)
-    const nodes = []
 
-    keys.forEach((pa, gi) => {
-      const ang = (gi / Math.max(keys.length, 1)) * Math.PI * 2 - Math.PI / 2
-      const cr = Math.min(W, H) * 0.25
-      const gx = cx + Math.cos(ang) * cr
-      const gy = cy + Math.sin(ang) * cr
+    const allPAs = processAreas.length > 0 ? [...processAreas] : Object.keys(groups)
+    Object.keys(groups).forEach(pa => { if (!allPAs.includes(pa)) allPAs.push(pa) })
+
+    const ideal = {}
+    allPAs.forEach((pa, i) => {
+      const ang = (i / Math.max(allPAs.length, 1)) * Math.PI * 2 - Math.PI / 2
+      const cr = Math.min(W, H) * 0.29
+      ideal[pa] = { x: cx + Math.cos(ang) * cr, y: cy + Math.sin(ang) * cr }
+    })
+    clusterIdealRef.current = ideal
+
+    const nodes = []
+    Object.keys(groups).forEach(pa => {
+      const { x: gx, y: gy } = ideal[pa] || { x: cx, y: cy }
       groups[pa].forEach((item, i) => {
         const sa = (i / Math.max(groups[pa].length, 1)) * Math.PI * 2
-        const sr = 25 + groups[pa].length * 14
+        const sr = 28 + groups[pa].length * 13
         nodes.push({
-          id: item.id,
-          label: item.id,
-          title: item.title,
-          type: item.type,
-          processArea: item.processArea || 'Other',
-          category: item.category,
-          confidence: item.confidence,
-          status: item.status,
-          x: gx + Math.cos(sa) * sr + (Math.random() - 0.5) * 15,
-          y: gy + Math.sin(sa) * sr + (Math.random() - 0.5) * 15,
+          id: item.id, label: item.id, title: item.title || '',
+          type: item.type, processArea: item.processArea || 'Other',
+          category: item.category, confidence: item.confidence, status: item.status,
+          x: gx + Math.cos(sa) * sr + (Math.random() - 0.5) * 12,
+          y: gy + Math.sin(sa) * sr + (Math.random() - 0.5) * 12,
           vx: 0, vy: 0,
           r: item.type === 'rule' ? 24 : 17,
         })
@@ -110,7 +176,14 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
 
     nodesRef.current = nodes
     edgesRef.current = edges
-  }, [rules, assertions, links, gpf, gcf])
+
+    // Reset view to show all nodes
+    if (nodes.length) {
+      camRef.current = { x: cx, y: cy }
+      targetZoomRef.current = 1
+      zoomRef.current = 1
+    }
+  }, [rules, assertions, links, gpf, gcf, processAreas])
 
   // Resize observer
   useEffect(() => {
@@ -131,6 +204,25 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
     return () => ro.disconnect()
   }, [])
 
+  // Fit-all helper (also used by button)
+  const fitAll = () => {
+    const ns = nodesRef.current
+    if (!ns.length) return
+    const { w: W, h: H } = szRef.current
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    ns.forEach(n => {
+      minX = Math.min(minX, n.x - n.r)
+      maxX = Math.max(maxX, n.x + n.r)
+      minY = Math.min(minY, n.y - n.r)
+      maxY = Math.max(maxY, n.y + n.r)
+    })
+    const gw = maxX - minX, gh = maxY - minY
+    if (!gw || !gh) return
+    const newZoom = Math.min((W - 80) / gw, (H - 80) / gh, 2.5) * 0.9
+    targetZoomRef.current = newZoom
+    camRef.current = { x: (minX + maxX) / 2, y: (minY + maxY) / 2 }
+  }
+
   // Animation loop (force simulation + render)
   useEffect(() => {
     const c = canvasRef.current
@@ -142,9 +234,17 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
       if (!on) return
       const ns = nodesRef.current
       const es = edgesRef.current
-      const W = szRef.current.w, H = szRef.current.h
+      const { w: W, h: H } = szRef.current
+      const ideal = clusterIdealRef.current
 
-      // Repulsion
+      // Smooth zoom interpolation (for button-driven zoom only; wheel sets directly)
+      const tz = targetZoomRef.current
+      const cz = zoomRef.current
+      if (Math.abs(tz - cz) > 0.001) zoomRef.current = cz + (tz - cz) * 0.15
+      const zoom = zoomRef.current
+
+      // ── Force simulation ────────────────────────────────────────────────────
+      // Node-node repulsion
       for (let i = 0; i < ns.length; i++) {
         for (let j = i + 1; j < ns.length; j++) {
           const dx = ns[j].x - ns[i].x, dy = ns[j].y - ns[i].y
@@ -156,7 +256,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
         }
       }
 
-      // Attraction along edges
+      // Edge spring attraction
       const nm = {}; ns.forEach(n => (nm[n.id] = n))
       es.forEach(e => {
         const a = nm[e.s], b = nm[e.t]
@@ -168,84 +268,140 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
         b.vx -= dx / d * f; b.vy -= dy / d * f
       })
 
-      // Gravity + damping + integration
+      // Cluster attraction toward ideal positions
       ns.forEach(n => {
-        n.vx += (W / 2 - n.x) * 0.012
-        n.vy += (H / 2 - n.y) * 0.012
+        const ip = ideal[n.processArea]
+        if (ip) {
+          n.vx += (ip.x - n.x) * 0.016
+          n.vy += (ip.y - n.y) * 0.016
+        } else {
+          n.vx += (W / 2 - n.x) * 0.008
+          n.vy += (H / 2 - n.y) * 0.008
+        }
+      })
+
+      // Damping + integration (no viewport clamping — pan/zoom handles visibility)
+      ns.forEach(n => {
         if (dragRef.current && dragRef.current.id === n.id) return
         n.vx *= 0.86; n.vy *= 0.86
         n.x += n.vx; n.y += n.vy
-        n.x = Math.max(n.r + 10, Math.min(W - n.r - 10, n.x))
-        n.y = Math.max(n.r + 10, Math.min(H - n.r - 10, n.y))
       })
 
-      // Render
+      // ── RENDER ────────────────────────────────────────────────────────────────
+      const cam = camRef.current
+
       ctx.save()
-      ctx.scale(2, 2)
+      ctx.scale(2, 2)  // retina DPR
       ctx.clearRect(0, 0, W, H)
       ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H)
 
-      // Dot grid
-      ctx.fillStyle = '#e8e4e0'
-      for (let x = 0; x < W; x += 30)
-        for (let y = 0; y < H; y += 30)
-          ctx.fillRect(x, y, 1, 1)
+      // Apply camera transform — everything below is in world coordinates
+      ctx.save()
+      ctx.translate(W / 2, H / 2)
+      ctx.scale(zoom, zoom)
+      ctx.translate(-cam.x, -cam.y)
 
-      // Cluster boundary circles + labels
-      const cl = {}
+      // Dot grid (world-space, only within visible region)
+      const wx0 = cam.x - W / 2 / zoom, wx1 = cam.x + W / 2 / zoom
+      const wy0 = cam.y - H / 2 / zoom, wy1 = cam.y + H / 2 / zoom
+      const gs = 30
+      ctx.fillStyle = '#e8e4e0'
+      for (let x = Math.floor(wx0 / gs) * gs; x < wx1; x += gs)
+        for (let y = Math.floor(wy0 / gs) * gs; y < wy1; y += gs)
+          ctx.fillRect(x, y, 1 / zoom, 1 / zoom)
+
+      // ── Cluster backgrounds ────────────────────────────────────────────────
+      const bounds = {}
       ns.forEach(n => {
-        if (!cl[n.processArea]) cl[n.processArea] = { x: 0, y: 0, c: 0 }
-        cl[n.processArea].x += n.x; cl[n.processArea].y += n.y; cl[n.processArea].c++
+        if (!bounds[n.processArea]) bounds[n.processArea] = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
+        const b = bounds[n.processArea]
+        b.minX = Math.min(b.minX, n.x - n.r)
+        b.minY = Math.min(b.minY, n.y - n.r)
+        b.maxX = Math.max(b.maxX, n.x + n.r)
+        b.maxY = Math.max(b.maxY, n.y + n.r)
       })
-      Object.entries(cl).forEach(([pa, v]) => {
-        const ccx = v.x / v.c, ccy = v.y / v.c
-        ctx.font = 'bold 10px IBM Plex Sans, sans-serif'
-        ctx.textAlign = 'center'
-        ctx.fillStyle = paColor(pa) + '50'
-        ctx.fillText(pa.toUpperCase(), ccx, ccy - 55)
-        ctx.beginPath()
-        ctx.arc(ccx, ccy, 65 + v.c * 16, 0, Math.PI * 2)
-        ctx.strokeStyle = paColor(pa) + '10'; ctx.lineWidth = 1.5
-        ctx.setLineDash([4, 6]); ctx.stroke(); ctx.setLineDash([])
+
+      const PAD = 26, LH = 18
+      Object.entries(bounds).forEach(([pa, b]) => {
+        const fill = clusterFill(pa)
+        const col = paColor(pa)
+        const x = b.minX - PAD, y = b.minY - PAD - LH
+        const w = (b.maxX - b.minX) + PAD * 2
+        const h = (b.maxY - b.minY) + PAD * 2 + LH
+        roundRect(ctx, x, y, w, h, 14)
+        ctx.fillStyle = fill + 'cc'; ctx.fill()
+        ctx.strokeStyle = col + '40'; ctx.lineWidth = 1; ctx.stroke()
+        ctx.font = 'bold 9px "IBM Plex Sans", sans-serif'
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'
+        ctx.fillStyle = col + 'dd'
+        ctx.fillText(pa.toUpperCase(), x + 10, y + 12)
       })
+
+      // ── Empty process area ghost regions ──────────────────────────────────
+      if (gpf.length === 0) {
+        const activePAs = new Set(Object.keys(bounds))
+        processAreas.filter(pa => !activePAs.has(pa)).forEach(pa => {
+          const ip = ideal[pa]; if (!ip) return
+          const gw = 100, gh = 52, gr = 12
+          const gx = ip.x - gw / 2, gy = ip.y - gh / 2
+          const col = paColor(pa)
+          roundRect(ctx, gx, gy, gw, gh, gr)
+          ctx.fillStyle = col + '08'; ctx.fill()
+          ctx.setLineDash([4, 5])
+          ctx.strokeStyle = col + '45'; ctx.lineWidth = 1; ctx.stroke()
+          ctx.setLineDash([])
+          ctx.font = 'bold 8px "IBM Plex Sans", sans-serif'
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
+          ctx.fillStyle = col + '70'
+          ctx.fillText(pa.toUpperCase(), ip.x, ip.y - 6)
+          ctx.font = '8px "IBM Plex Sans", sans-serif'
+          ctx.fillStyle = col + '55'
+          ctx.fillText('no knowledge yet', ip.x, ip.y + 8)
+        })
+      }
 
       const hov = hovRef.current
       const hovEdge = hovEdgeRef.current
 
-      // Edges
+      // ── Edges ────────────────────────────────────────────────────────────────
       const mids = []
       es.forEach(e => {
         const a = nm[e.s], b = nm[e.t]; if (!a || !b) return
+        const crossCluster = a.processArea !== b.processArea
         const hl = hov && (hov.id === e.s || hov.id === e.t)
         const isHovEdge = hovEdge && hovEdge.s === e.s && hovEdge.t === e.t
         const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
         const dx = b.x - a.x, dy = b.y - a.y
         const nx = -dy * 0.08, ny = dx * 0.08
         const col = edgeCol(e.relType)
-        // Store curve midpoint for hover detection (Q(0.5) of bezier)
-        mids.push({ cx: mx + nx * 0.5, cy: my + ny * 0.5, e })
+        mids.push({ cx: mx + nx * 0.5, cy: my + ny * 0.5, e, crossCluster })
+        const baseAlpha = crossCluster ? '99' : '55'
+        const hlAlpha   = crossCluster ? 'ff' : 'cc'
         ctx.beginPath()
         ctx.moveTo(a.x, a.y)
         ctx.quadraticCurveTo(mx + nx, my + ny, b.x, b.y)
-        ctx.strokeStyle = (hl || isHovEdge) ? col + 'cc' : col + '55'
-        ctx.lineWidth = (hl || isHovEdge) ? 2.5 : 1
-        ctx.stroke()
-        // Arrowhead at midpoint
+        if (crossCluster && !hl && !isHovEdge) ctx.setLineDash([6, 3])
+        ctx.strokeStyle = (hl || isHovEdge) ? col + hlAlpha : col + baseAlpha
+        ctx.lineWidth = (crossCluster ? (hl || isHovEdge ? 3 : 1.5) : (hl || isHovEdge ? 2.5 : 1)) / zoom
+        ctx.stroke(); ctx.setLineDash([])
+        // Arrowhead
         const at = 0.5, dt = 0.01
-        const px = (1 - at) * (1 - at) * a.x + 2 * (1 - at) * at * (mx + nx) + at * at * b.x
-        const py = (1 - at) * (1 - at) * a.y + 2 * (1 - at) * at * (my + ny) + at * at * b.y
-        const px2 = (1 - at - dt) * (1 - at - dt) * a.x + 2 * (1 - at - dt) * (at + dt) * (mx + nx) + (at + dt) * (at + dt) * b.x
-        const py2 = (1 - at - dt) * (1 - at - dt) * a.y + 2 * (1 - at - dt) * (at + dt) * (my + ny) + (at + dt) * (at + dt) * b.y
-        const ang = Math.atan2(py2 - py, px2 - px)
-        ctx.save()
-        ctx.translate(px, py); ctx.rotate(ang)
-        ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -4); ctx.lineTo(-4, 4); ctx.closePath()
-        ctx.fillStyle = (hl || isHovEdge) ? col + 'aa' : col + '44'; ctx.fill()
+        const px = (1-at)*(1-at)*a.x + 2*(1-at)*at*(mx+nx) + at*at*b.x
+        const py = (1-at)*(1-at)*a.y + 2*(1-at)*at*(my+ny) + at*at*b.y
+        const px2 = (1-at-dt)*(1-at-dt)*a.x + 2*(1-at-dt)*(at+dt)*(mx+nx) + (at+dt)*(at+dt)*b.x
+        const py2 = (1-at-dt)*(1-at-dt)*a.y + 2*(1-at-dt)*(at+dt)*(my+ny) + (at+dt)*(at+dt)*b.y
+        const ang = Math.atan2(py2-py, px2-px)
+        ctx.save(); ctx.translate(px, py); ctx.rotate(ang)
+        ctx.beginPath(); ctx.moveTo(6/zoom, 0); ctx.lineTo(-4/zoom, -4/zoom); ctx.lineTo(-4/zoom, 4/zoom); ctx.closePath()
+        ctx.fillStyle = (hl || isHovEdge) ? col + 'cc' : col + (crossCluster ? '88' : '44'); ctx.fill()
         ctx.restore()
       })
       edgeMidsRef.current = mids
 
-      // Nodes
+      // ── Nodes ────────────────────────────────────────────────────────────────
+      // Label alpha: fades in from zoom 0.4→0.8
+      const labelAlpha = Math.max(0, Math.min(1, (zoom - 0.4) / 0.4))
+
       ns.forEach(n => {
         const isH = hov && hov.id === n.id
         const isC = hov && es.some(e =>
@@ -255,14 +411,14 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
         const col = paColor(n.processArea)
         const isHL = highlightRef.current === n.id
 
-        // Highlight ring for "View in Graph" target
+        // Highlight ring
         if (isHL) {
           ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 14, 0, Math.PI * 2)
           const g = ctx.createRadialGradient(n.x, n.y, n.r, n.x, n.y, n.r + 14)
           g.addColorStop(0, '#F2652F60'); g.addColorStop(1, 'transparent')
           ctx.fillStyle = g; ctx.fill()
           ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 8, 0, Math.PI * 2)
-          ctx.strokeStyle = '#F2652F'; ctx.lineWidth = 2.5; ctx.setLineDash([4, 3])
+          ctx.strokeStyle = '#F2652F'; ctx.lineWidth = 2.5 / zoom; ctx.setLineDash([4, 3])
           ctx.stroke(); ctx.setLineDash([])
         }
 
@@ -274,7 +430,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
           ctx.fillStyle = g; ctx.fill()
         }
 
-        // Node shape: rounded rect for rules, circle for assertions
+        // Node shape
         ctx.beginPath()
         if (n.type === 'rule') {
           const s = n.r, x = n.x - s, y = n.y - s, w = s * 2, h = s * 2, cr = 7
@@ -289,16 +445,33 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
         } else {
           ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
         }
-
         ctx.fillStyle = dim ? '#FFFFFF0d' : '#FFFFFFf0'; ctx.fill()
         ctx.strokeStyle = dim ? col + '28' : isH ? col : col + '80'
-        ctx.lineWidth = isH ? 2.5 : 1.5; ctx.stroke()
+        ctx.lineWidth = (isH ? 2.5 : 1.5) / zoom; ctx.stroke()
 
-        // Label
-        ctx.font = `bold ${n.type === 'rule' ? 10 : 9}px 'IBM Plex Mono', monospace`
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-        ctx.fillStyle = dim ? col + '28' : col
-        ctx.fillText(n.label, n.x, n.y)
+        // Title label — world-space font size stays fixed so it scales up on
+        // screen as the user zooms in. Capped at 16px on screen to avoid overflow.
+        if (labelAlpha > 0 && n.title) {
+          const BASE_WORLD_PX = 7.5          // font size in world coords (appears as 7.5*zoom px on screen)
+          const MAX_SCREEN_PX = 16           // cap so text never overflows node at high zoom
+          const fontSize = Math.min(BASE_WORLD_PX, MAX_SCREEN_PX / zoom)
+          // maxW widens as zoom increases so more text wraps at higher zoom
+          const maxW = n.r * (zoom < 1 ? 1.55 : Math.min(2.2, 1.55 + (zoom - 1) * 0.5))
+          ctx.font = `${fontSize}px "IBM Plex Sans", sans-serif`
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+          // More lines as zoom increases — zooming in reveals more of the title
+          const maxLines = n.type === 'rule'
+            ? (zoom < 0.9 ? 1 : zoom < 1.8 ? 2 : 3)
+            : (zoom < 1.4 ? 1 : 2)
+          const lines = wrapText(ctx, n.title, maxW, maxLines)
+          const lineH = fontSize * 1.3
+          const totalH = lines.length * lineH
+          const startY = n.y - totalH / 2 + lineH / 2
+          ctx.globalAlpha = labelAlpha * (dim ? 0.2 : 0.8)
+          ctx.fillStyle = '#1F1F1F'
+          lines.forEach((line, i) => ctx.fillText(line, n.x, startY + i * lineH))
+          ctx.globalAlpha = 1
+        }
 
         // Status dot
         const cc = statusColor(n.status || 'Active')
@@ -306,7 +479,9 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
         ctx.fillStyle = dim ? cc.text + '18' : cc.text; ctx.fill()
       })
 
-      ctx.restore()
+      ctx.restore() // camera transform
+      ctx.restore() // retina scale
+
       animRef.current = requestAnimationFrame(tick)
     }
 
@@ -314,79 +489,147 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
     return () => { on = false; cancelAnimationFrame(animRef.current) }
   }, [rules, assertions, links, gpf, gcf])
 
-  const getNode = e => {
-    const r = canvasRef.current.getBoundingClientRect()
-    const mx = e.clientX - r.left, my = e.clientY - r.top
-    return nodesRef.current.find(n => Math.sqrt((n.x - mx) ** 2 + (n.y - my) ** 2) < n.r + 4)
+  // Get node under screen coords
+  const getNode = (sx, sy) => {
+    const w = toWorld(sx, sy)
+    return nodesRef.current.find(n => Math.sqrt((n.x - w.x) ** 2 + (n.y - w.y) ** 2) < n.r + 4 / zoomRef.current)
+  }
+
+  const btnStyle = {
+    width: 28, height: 28, borderRadius: 3,
+    background: '#FFFFFFee', border: '1px solid #D8CEC3',
+    color: '#062044', fontSize: 16, fontWeight: 700,
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    lineHeight: 1, fontFamily: FNT,
+    boxShadow: '0 1px 4px rgba(6,32,68,0.08)',
   }
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas
         ref={canvasRef}
+        onWheel={e => {
+          e.preventDefault()
+          const rect = canvasRef.current.getBoundingClientRect()
+          const sx = e.clientX - rect.left, sy = e.clientY - rect.top
+          const { w: W, h: H } = szRef.current
+          const z = zoomRef.current
+          const cam = camRef.current
+          // World point under cursor before zoom change
+          const wx0 = (sx - W / 2) / z + cam.x
+          const wy0 = (sy - H / 2) / z + cam.y
+          // Zoom factor — support trackpad (deltaMode 0, small values) and mouse wheel
+          const delta = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY
+          const factor = Math.pow(0.999, delta)
+          const newZoom = Math.max(0.15, Math.min(5, z * factor))
+          zoomRef.current = newZoom
+          targetZoomRef.current = newZoom
+          // Shift cam so cursor stays on same world point
+          camRef.current = {
+            x: wx0 - (sx - W / 2) / newZoom,
+            y: wy0 - (sy - H / 2) / newZoom,
+          }
+        }}
         onMouseDown={e => {
-          const n = getNode(e)
+          const rect = canvasRef.current.getBoundingClientRect()
+          const sx = e.clientX - rect.left, sy = e.clientY - rect.top
+          const n = getNode(sx, sy)
           didDragRef.current = false
           mouseDownPosRef.current = { x: e.clientX, y: e.clientY }
-          if (n) { dragRef.current = n; n.vx = 0; n.vy = 0 }
+          if (n) {
+            dragRef.current = n; n.vx = 0; n.vy = 0
+          } else {
+            isPanningRef.current = true
+            panStartRef.current = { sx: e.clientX, sy: e.clientY, camX: camRef.current.x, camY: camRef.current.y }
+            canvasRef.current.style.cursor = 'grabbing'
+          }
         }}
         onMouseMove={e => {
-          const r = canvasRef.current.getBoundingClientRect()
-          const mx = e.clientX - r.left, my = e.clientY - r.top
+          const rect = canvasRef.current.getBoundingClientRect()
+          const sx = e.clientX - rect.left, sy = e.clientY - rect.top
+
           if (dragRef.current) {
             const dp = mouseDownPosRef.current
             if (dp && (Math.abs(e.clientX - dp.x) > 4 || Math.abs(e.clientY - dp.y) > 4)) {
               didDragRef.current = true
             }
-            dragRef.current.x = mx; dragRef.current.y = my; return
+            const w = toWorld(sx, sy)
+            dragRef.current.x = w.x; dragRef.current.y = w.y
+            return
           }
-          const n = getNode(e)
+
+          if (isPanningRef.current && panStartRef.current) {
+            didDragRef.current = true
+            const dx = e.clientX - panStartRef.current.sx
+            const dy = e.clientY - panStartRef.current.sy
+            camRef.current = {
+              x: panStartRef.current.camX - dx / zoomRef.current,
+              y: panStartRef.current.camY - dy / zoomRef.current,
+            }
+            return
+          }
+
+          const n = getNode(sx, sy)
           hovRef.current = n || null
           if (n) {
             hovEdgeRef.current = null
             canvasRef.current.style.cursor = 'pointer'
-            setTip({ x: mx, y: my, node: n })
+            setTip({ x: sx, y: sy, node: n })
           } else {
+            // Edge hover — check in world coords
+            const w = toWorld(sx, sy)
+            const hoverRadiusSq = (12 / zoomRef.current) ** 2
             const em = edgeMidsRef.current.find(m => {
-              const ddx = m.cx - mx, ddy = m.cy - my
-              return ddx * ddx + ddy * ddy < 225 // 15px radius
+              return (m.cx - w.x) ** 2 + (m.cy - w.y) ** 2 < hoverRadiusSq
             })
             hovEdgeRef.current = em?.e || null
-            canvasRef.current.style.cursor = 'default'
-            setTip(em ? { x: mx, y: my, edge: em.e } : null)
+            canvasRef.current.style.cursor = 'grab'
+            setTip(em ? { x: sx, y: sy, edge: em.e, crossCluster: em.crossCluster } : null)
           }
         }}
-        onMouseUp={() => { dragRef.current = null }}
-        onMouseLeave={() => { dragRef.current = null; hovRef.current = null; hovEdgeRef.current = null; setTip(null) }}
+        onMouseUp={() => {
+          dragRef.current = null
+          isPanningRef.current = false
+          panStartRef.current = null
+          if (canvasRef.current) canvasRef.current.style.cursor = 'grab'
+        }}
+        onMouseLeave={() => {
+          dragRef.current = null
+          isPanningRef.current = false
+          panStartRef.current = null
+          hovRef.current = null
+          hovEdgeRef.current = null
+          setTip(null)
+        }}
         onClick={e => {
           if (didDragRef.current) return
-          const n = getNode(e)
+          const rect = canvasRef.current.getBoundingClientRect()
+          const sx = e.clientX - rect.left, sy = e.clientY - rect.top
+          const n = getNode(sx, sy)
           if (n) onSelect(n.id, n.type)
         }}
-        style={{ display: 'block', width: '100%', height: '100%' }}
+        style={{ display: 'block', width: '100%', height: '100%', cursor: 'grab' }}
       />
+
+      {/* Zoom controls */}
+      <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <button style={btnStyle} onClick={() => { targetZoomRef.current = Math.min(5, zoomRef.current * 1.35) }} title="Zoom in">+</button>
+        <button style={btnStyle} onClick={() => { targetZoomRef.current = Math.max(0.15, zoomRef.current / 1.35) }} title="Zoom out">−</button>
+        <button style={{ ...btnStyle, fontSize: 11, fontWeight: 700, letterSpacing: 0.3, marginTop: 4 }} onClick={fitAll} title="Fit all">fit</button>
+      </div>
 
       {/* Legend */}
       <div style={{ position: 'absolute', bottom: 16, left: 16, background: '#FFFFFFee', border: '1px solid #D8CEC3', borderRadius: 3, padding: '10px 14px', fontSize: 10, fontFamily: FNT, color: '#8a8278' }}>
         <div style={{ marginBottom: 6, fontWeight: 700, color: '#062044', letterSpacing: 0.8 }}>LEGEND</div>
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 5 }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 8 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: 2, border: '1.5px solid #F2652F' }} /> Rule
+            <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: 2, border: '1.5px solid #062044' }} /> Rule
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '1.5px solid #4FA89A' }} /> Assertion
+            <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '1.5px solid #062044' }} /> Assertion
           </span>
         </div>
-        {processAreas.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-            {processAreas.map(pa => (
-              <span key={pa} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: paColor(pa) }} /> {pa}
-              </span>
-            ))}
-          </div>
-        )}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 5, borderTop: '1px solid #D8CEC3', paddingTop: 5 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '1px solid #D8CEC3', paddingTop: 6, marginBottom: 2 }}>
           {['Proposed', 'Active', 'Verified', 'Established'].map(s => (
             <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: statusColor(s).text }} /> {s}
@@ -399,8 +642,12 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
               <span style={{ display: 'inline-block', width: 16, height: 2, background: edgeCol(rt), borderRadius: 1 }} /> {label}
             </span>
           ))}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
+            <span style={{ display: 'inline-block', width: 16, height: 0, borderTop: '2px dashed #B0A898', borderRadius: 1 }} />
+            <span style={{ color: '#8a6800' }}>cross-process link</span>
+          </span>
         </div>
-        <div style={{ marginTop: 4, color: '#b0a898', fontStyle: 'italic' }}>Click to inspect · Drag to reposition</div>
+        <div style={{ marginTop: 4, color: '#b0a898', fontStyle: 'italic' }}>Scroll to zoom · Drag to pan · Click to inspect</div>
       </div>
 
       {/* Hover tooltip */}
@@ -425,8 +672,13 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
             </>
           ) : tip.edge ? (
             <>
-              <div style={{ fontSize: 11, fontWeight: 700, fontFamily: FNT, marginBottom: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, fontFamily: FNT, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ color: edgeCol(tip.edge.relType) }}>{tip.edge.relType.replace(/_/g, ' ')}</span>
+                {tip.crossCluster && (
+                  <span style={{ fontSize: 9, background: '#FEF3CD', color: '#8a6800', padding: '1px 5px', borderRadius: 2, fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}>
+                    CROSS-PROCESS
+                  </span>
+                )}
               </div>
               <div style={{ fontSize: 10, color: '#5a5550', fontFamily: FNT, marginBottom: tip.edge.comment ? 4 : 0 }}>
                 {tip.edge.s} → {tip.edge.t}
@@ -588,7 +840,7 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
             {' · '}
             <span style={{ color: '#4FA89A', fontWeight: 700 }}>{linkedCount}</span> linked
           </div>
-          Nodes clustered by process area. Edges show explicit links. Filter to isolate knowledge chains.
+          Nodes cluster by process area. Dashed lines = cross-process links — the most valuable connections. Filter to isolate a knowledge chain.
         </div>
       </div>
 

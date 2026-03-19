@@ -190,7 +190,7 @@ export default function GraphView({ rules, assertions, gpf, gcf, onSelect, focus
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", border: "1.5px solid #4FA89A" }} /> Assertion</span>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-          {["EAF", "Casting", "Ladle Furnace"].map(pa => <span key={pa} style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: paColor(pa) }} /> {pa}</span>)}
+          {[...new Set([...rules, ...assertions].map(i => i.processArea).filter(Boolean))].slice(0, 6).map(pa => <span key={pa} style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: paColor(pa) }} /> {pa}</span>)}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 5, borderTop: "1px solid #D8CEC3", paddingTop: 5 }}>
           {["Proposed", "Active", "Verified", "Established"].map(s => <span key={s} style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: statusColor(s).bg === "#155724" ? "#155724" : statusColor(s).text }} /> {s}</span>)}

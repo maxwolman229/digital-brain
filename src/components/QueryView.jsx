@@ -8,13 +8,13 @@ import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
 
-const PLANT_ID = import.meta.env.VITE_PLANT_ID || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+const FALLBACK_PLANT_ID = import.meta.env.VITE_PLANT_ID || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 
 const QUICK_PROMPTS = [
-  'Running HSLA on strand 2, 60% Sims scrap',
-  'EAF heat with high-residual shredded scrap',
-  'Casting crack-sensitive grade, what should I check?',
-  'Ladle going to high-alloy heat, refractory concerns',
+  'What are the key checks before starting a new batch?',
+  'What causes the most common defects in this process?',
+  'What should I watch for with non-standard input materials?',
+  'What are the early warning signs that something is going wrong?',
 ]
 
 // ── Full item detail shown in the query citation modal ─────────────────────────
@@ -148,7 +148,8 @@ function SourceChips({ sources, onCiteClick }) {
   )
 }
 
-export default function QueryView({ onNavigate, industry }) {
+export default function QueryView({ onNavigate, industry, plantId }) {
+  const PLANT_ID = plantId || FALLBACK_PLANT_ID
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -372,7 +373,7 @@ export default function QueryView({ onNavigate, industry }) {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}
-            placeholder="e.g. Running HSLA on strand 2, 60% Sims scrap…"
+            placeholder="e.g. What are the limits when running with non-standard materials?"
             style={{ ...iS, flex: 1, height: 44, fontSize: 13, padding: '0 14px', borderRadius: 8, border: '1.5px solid #D8CEC3', fontFamily: FNT }}
           />
           <button

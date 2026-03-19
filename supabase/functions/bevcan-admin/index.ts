@@ -44,7 +44,73 @@ Deno.serve(async (req: Request) => {
   console.log(`[bevcan-admin] ${req.method} ${req.url}`)
 
   try {
-    // ── Validate JWT and extract caller identity ──────────────────────────────
+    // ── Parse body first so we can check action before auth ──────────────────
+    let body: Record<string, unknown>
+    try { body = await req.json() }
+    catch { return json({ error: 'Body must be JSON' }, 400) }
+
+    const action = body.action as string | undefined
+    console.log(`[bevcan-admin] action=${action}`)
+
+    // ── Service role client (needed by all actions) ───────────────────────────
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const serviceKey  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const admin = createClient(supabaseUrl, serviceKey)
+
+    // ── REGISTER APPLICANT (public — no admin auth required) ──────────────────
+    // Creates a confirmed auth user + profile + application row in one call.
+    // Used by BevCanSignup so applicants never receive a confirmation email.
+    if (action === 'register_applicant') {
+      const { email, password, nickname, full_name, current_position, current_company,
+              past_positions, year_joined_industry, bio, confirmed_industry } = body as Record<string, unknown>
+
+      if (!email || !password) return json({ error: 'email and password required' }, 400)
+      if (!full_name || !nickname || !current_position) return json({ error: 'full_name, nickname, and current_position required' }, 400)
+
+      // Create auth user with email_confirm: true to skip confirmation email
+      const { data: authData, error: authErr } = await admin.auth.admin.createUser({
+        email: email as string,
+        password: password as string,
+        email_confirm: true,
+      })
+      if (authErr) {
+        // Handle duplicate email gracefully
+        if (authErr.message?.includes('already been registered') || authErr.message?.includes('already exists')) {
+          return json({ error: 'An account with this email already exists. Please use the Log In tab.' }, 409)
+        }
+        throw new Error('Account creation failed: ' + authErr.message)
+      }
+
+      const userId = authData.user.id
+
+      // Create profile (ignore if already exists)
+      await admin.from('profiles').upsert({
+        user_id: userId,
+        display_name: (nickname as string).trim(),
+        role: 'member',
+      }, { onConflict: 'user_id' })
+
+      // Insert application
+      const { error: appErr } = await admin.from('bevcan_applications').insert({
+        user_id: userId,
+        email: email as string,
+        full_name: (full_name as string).trim(),
+        nickname: (nickname as string).trim(),
+        current_position: (current_position as string).trim(),
+        current_company: current_company ? (current_company as string).trim() || null : null,
+        past_positions: past_positions ?? [],
+        year_joined_industry: year_joined_industry ? Number(year_joined_industry) : null,
+        bio: bio ? (bio as string).trim() || null : null,
+        confirmed_industry: confirmed_industry === true,
+        status: 'pending',
+      })
+      if (appErr) throw new Error('Application insert failed: ' + appErr.message)
+
+      console.log(`[bevcan-admin] Registered applicant ${email} (user_id: ${userId})`)
+      return json({ ok: true, user_id: userId })
+    }
+
+    // ── All actions below require admin auth ──────────────────────────────────
     const authHeader = req.headers.get('Authorization') || ''
     const jwt = authHeader.replace(/^Bearer\s+/i, '')
     if (!jwt) return json({ error: 'Unauthorized' }, 401)
@@ -59,12 +125,6 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Invalid token' }, 401)
     }
 
-    // ── Service role client ───────────────────────────────────────────────────
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const serviceKey  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const admin = createClient(supabaseUrl, serviceKey)
-
-    // ── Admin check: email whitelist OR is_super_admin in profiles ────────────
     let isAdmin = ADMIN_EMAILS.includes(callerEmail)
     if (!isAdmin && callerUserId) {
       const { data: prof } = await admin
@@ -79,13 +139,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Forbidden' }, 403)
     }
 
-    // ── Parse body ────────────────────────────────────────────────────────────
-    let body: { action?: string; application_id?: string; membership_id?: string; role?: string }
-    try { body = await req.json() }
-    catch { return json({ error: 'Body must be JSON' }, 400) }
-
-    const { action, application_id, membership_id, role } = body
-    console.log(`[bevcan-admin] action=${action}`)
+    const { application_id, membership_id, role } = body as Record<string, unknown>
 
     // ── LIST applications ─────────────────────────────────────────────────────
     if (action === 'list') {
