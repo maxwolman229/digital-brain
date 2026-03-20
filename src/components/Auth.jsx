@@ -64,14 +64,18 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
     setLoading(true)
     try {
       if (mode === 'login') {
+        console.log('[Auth] calling signIn...')
         const { user } = await signIn(email.trim(), password)
-        onSignedIn(user)
+        console.log('[Auth] signIn success, user:', user?.id, '— calling onSignedIn')
+        onSignedIn(user)  // fire-and-forget: App.jsx loads profile/memberships async
       } else {
         const { user } = await signUp(email.trim(), password)
         onNeedsOnboarding(user, displayName.trim())
       }
     } catch (err) {
-      setError(err.message || 'Authentication failed.')
+      console.error('[Auth] signIn error:', err.name, err.message)
+      const isAbort = err.name === 'AbortError' || err.message?.includes('aborted')
+      setError(isAbort ? 'Connection is slow — please try again.' : (err.message || 'Authentication failed.'))
     }
     setLoading(false)
   }
@@ -80,10 +84,14 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
     setDemoLoading(true)
     setError(null)
     try {
+      console.log('[Auth] demo login...')
       const { user } = await signIn(DEMO_EMAIL, DEMO_PASSWORD)
+      console.log('[Auth] demo signIn success, user:', user?.id)
       onSignedIn(user)
     } catch (err) {
-      setError(err.message)
+      console.error('[Auth] demo error:', err.name, err.message)
+      const isAbort = err.name === 'AbortError' || err.message?.includes('aborted')
+      setError(isAbort ? 'Connection is slow — please try again.' : err.message)
     }
     setDemoLoading(false)
   }

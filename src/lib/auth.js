@@ -9,7 +9,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 async function rawSignIn(email, password) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 12000)
+  const timer = setTimeout(() => controller.abort(), 20000)
 
   const resp = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
     method: 'POST',
@@ -45,7 +45,7 @@ export async function signIn(email, password) {
 
 export async function signUp(email, password) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 12000)
+  const timer = setTimeout(() => controller.abort(), 20000)
 
   const resp = await fetch(SUPABASE_URL + '/auth/v1/signup', {
     method: 'POST',
@@ -85,7 +85,7 @@ export async function loadProfile(userId) {
   if (!jwt) return null
 
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 10000)
+  const timer = setTimeout(() => controller.abort(), 20000)
 
   let resp
   try {

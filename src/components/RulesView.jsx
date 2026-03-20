@@ -6,7 +6,7 @@ import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
 
-export default function RulesView({ search, fStatus, fCat, fProc, onCountsChange, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile }) {
+export default function RulesView({ search, fStatus, fCat, fProc, onCountsChange, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile, plantId }) {
   const [rules, setRules] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
@@ -425,7 +425,7 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
     setError(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-      const rule = await createRule({ ...form, tags })
+      const rule = await createRule({ ...form, tags, plantId })
       onCreated(rule)
     } catch (err) {
       setError(err.message)

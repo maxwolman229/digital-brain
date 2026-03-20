@@ -494,6 +494,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               categories={vocabulary.categories}
               onItemSaved={refreshVocabulary}
               onViewProfile={name => setViewingUser(name)}
+              plantId={activePlantId}
             />
           )}
 
@@ -511,6 +512,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               categories={vocabulary.categories}
               onItemSaved={refreshVocabulary}
               onViewProfile={name => setViewingUser(name)}
+              plantId={activePlantId}
             />
           )}
 
@@ -590,6 +592,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
         categories={vocabulary.categories}
         industry={activeMembership?.industry}
         onItemSaved={refreshVocabulary}
+        plantId={activePlantId}
       />
 
       {showPlantSettings && user && (

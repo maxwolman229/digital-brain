@@ -6,7 +6,7 @@ import { useMention } from '../lib/useMention.js'
 
 const EMPTY_FORM = { text: '', processArea: '', source: '', submittedBy: '' }
 
-export default function NarrativeInput({ open, onClose, onCreated, processAreas = [], categories = [], industry, onItemSaved }) {
+export default function NarrativeInput({ open, onClose, onCreated, processAreas = [], categories = [], industry, onItemSaved, plantId }) {
   const [step, setStep] = useState('input') // 'input' | 'review' | 'done'
   const [form, setForm] = useState(EMPTY_FORM)
   const [extracting, setExtracting] = useState(false)
@@ -118,6 +118,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
             tags: ['narrative-input'],
             captureSource: 'Narrative input',
             evidenceText,
+            plantId,
           })
           if (created) { count++; onCreated?.(created) }
         } else {
@@ -131,6 +132,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
             tags: ['narrative-input'],
             captureSource: 'Narrative input',
             evidenceText,
+            plantId,
           })
           if (created) { count++; onCreated?.(created) }
         }

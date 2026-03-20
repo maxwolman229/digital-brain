@@ -129,12 +129,17 @@ export default function App() {
             !session ? (
               <Auth
                 onSignedIn={async (user) => {
-                  // Load all data before setting state to avoid mid-flight redirect
+                  console.log('[App.onSignedIn] start, userId:', user?.id)
+                  // Load everything before setting state to avoid mid-flight redirects
                   let p = null, membs = [], plantId = null
                   try {
+                    console.log('[App.onSignedIn] loading profile...')
                     p = await loadProfile(user.id)
+                    console.log('[App.onSignedIn] profile:', p?.displayName ?? 'null')
                     if (p) {
+                      console.log('[App.onSignedIn] fetching memberships...')
                       membs = await fetchMemberships(user.id)
+                      console.log('[App.onSignedIn] memberships:', membs.length, membs.map(m => m.plantName))
                       if (membs.length > 0) {
                         const stored = getStoredActivePlant()
                         const valid = membs.find(m => m.plantId === stored)
@@ -147,9 +152,10 @@ export default function App() {
                       }
                     }
                   } catch (e) {
-                    console.error('post-signin error', e)
+                    console.error('[App.onSignedIn] error:', e.name, e.message)
                   }
-                  // Batch all state updates together
+                  console.log('[App.onSignedIn] done — setting session, profile, memberships')
+                  // Batch all state updates together to avoid mid-flight redirects
                   setSession({ user })
                   setProfile(p)
                   setMemberships(membs)

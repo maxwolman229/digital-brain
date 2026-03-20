@@ -153,6 +153,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ history, context }),
+      timeout: 60000,
     })
     if (!resp.ok) {
       const body = await resp.json().catch(() => ({}))
@@ -224,7 +225,9 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
       setCurrentQuestion(result.question || '')
       setTurnNum(1)
     } catch (err) {
-      setError(err.message)
+      setError(err.name === 'AbortError' || err.message?.includes('aborted')
+        ? 'Claude is taking longer than usual — please try again.'
+        : err.message)
       setPhase('setup')
     } finally {
       setLoading(false)

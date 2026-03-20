@@ -101,17 +101,19 @@ export async function refreshAccessToken() {
 // On 401: attempts token refresh once, then retries the original request.
 // On second 401 after refresh: gives up (session expired — user must re-login).
 
+// timeout: ms before aborting. Default 15s for DB calls; pass 60000 for AI edge functions.
 export async function authFetch(url, options = {}) {
+  const { timeout = 15000, ...fetchOptions } = options
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 15000)
+  const timer = setTimeout(() => controller.abort(), timeout)
 
   // Safely extract incoming headers — options.headers may be a Headers instance
   const incoming = {}
-  if (options.headers) {
-    if (typeof options.headers.forEach === 'function') {
-      options.headers.forEach((value, key) => { incoming[key] = value })
+  if (fetchOptions.headers) {
+    if (typeof fetchOptions.headers.forEach === 'function') {
+      fetchOptions.headers.forEach((value, key) => { incoming[key] = value })
     } else {
-      Object.assign(incoming, options.headers)
+      Object.assign(incoming, fetchOptions.headers)
     }
   }
 
@@ -125,7 +127,7 @@ export async function authFetch(url, options = {}) {
 
   let resp
   try {
-    resp = await fetch(url, { ...options, headers: buildHeaders(), signal: controller.signal })
+    resp = await fetch(url, { ...fetchOptions, headers: buildHeaders(), signal: controller.signal })
   } finally {
     clearTimeout(timer)
   }
@@ -136,16 +138,13 @@ export async function authFetch(url, options = {}) {
     if (refreshed) {
       // Retry with the new token (fresh controller — old one already fired)
       const controller2 = new AbortController()
-      const timer2 = setTimeout(() => controller2.abort(), 15000)
+      const timer2 = setTimeout(() => controller2.abort(), timeout)
       try {
-        resp = await fetch(url, { ...options, headers: buildHeaders(), signal: controller2.signal })
+        resp = await fetch(url, { ...fetchOptions, headers: buildHeaders(), signal: controller2.signal })
       } finally {
         clearTimeout(timer2)
       }
     }
-    // If refresh failed or second attempt also 401, return original 401 — caller
-    // will see empty data and the user will be prompted to log in again on next
-    // page load (getRestoredSession() clears expired JWTs at startup).
   }
 
   return resp

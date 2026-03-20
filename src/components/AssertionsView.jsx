@@ -6,7 +6,7 @@ import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
 
-export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile }) {
+export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile, plantId }) {
   const [assertions, setAssertions] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
@@ -408,7 +408,7 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
     setError(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-      const assertion = await createAssertion({ ...form, tags })
+      const assertion = await createAssertion({ ...form, tags, plantId })
       onCreated(assertion)
     } catch (err) {
       setError(err.message)
