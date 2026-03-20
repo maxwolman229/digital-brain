@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { FNT, FNTM, statusColor, paColor } from '../lib/constants.js'
 import { Badge, PillFilter, Modal } from './shared.jsx'
+import { useIsMobile } from '../lib/hooks.js'
 import { fetchRules, fetchAssertions, fetchAllLinksForGraph, fetchItemById } from '../lib/db.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
@@ -93,6 +94,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
 
   const [tip, setTip] = useState(null)
   const highlightRef = useRef(highlightId)
+  const onSelectRef = useRef(onSelect)
 
   // Convert screen (CSS pixel) coords to world coords
   const toWorld = (sx, sy) => {
@@ -101,6 +103,8 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
     const c = camRef.current
     return { x: (sx - W / 2) / z + c.x, y: (sy - H / 2) / z + c.y }
   }
+
+  useEffect(() => { onSelectRef.current = onSelect }, [onSelect])
 
   useEffect(() => {
     highlightRef.current = highlightId
@@ -489,6 +493,126 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
     return () => { on = false; cancelAnimationFrame(animRef.current) }
   }, [rules, assertions, links, gpf, gcf])
 
+  // Touch event handlers (passive: false so we can call preventDefault)
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    let lastPinch = null
+
+    function getTouchPos(touch) {
+      const rect = canvas.getBoundingClientRect()
+      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top }
+    }
+
+    function getNodeAt(sx, sy) {
+      const { w: W, h: H } = szRef.current
+      const z = zoomRef.current
+      const c = camRef.current
+      const wx = (sx - W / 2) / z + c.x
+      const wy = (sy - H / 2) / z + c.y
+      return nodesRef.current.find(n => Math.sqrt((n.x - wx) ** 2 + (n.y - wy) ** 2) < n.r + 4 / z)
+    }
+
+    function onTouchStart(e) {
+      e.preventDefault()
+      setTip(null)
+      if (e.touches.length === 1) {
+        const pos = getTouchPos(e.touches[0])
+        const node = getNodeAt(pos.x, pos.y)
+        didDragRef.current = false
+        mouseDownPosRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        if (node) {
+          dragRef.current = node; node.vx = 0; node.vy = 0
+        } else {
+          isPanningRef.current = true
+          panStartRef.current = { sx: e.touches[0].clientX, sy: e.touches[0].clientY, camX: camRef.current.x, camY: camRef.current.y }
+        }
+        lastPinch = null
+      } else if (e.touches.length === 2) {
+        dragRef.current = null
+        isPanningRef.current = false
+        const t0 = getTouchPos(e.touches[0])
+        const t1 = getTouchPos(e.touches[1])
+        lastPinch = {
+          dist: Math.hypot(t1.x - t0.x, t1.y - t0.y),
+          midX: (t0.x + t1.x) / 2,
+          midY: (t0.y + t1.y) / 2,
+          zoom: zoomRef.current,
+          camX: camRef.current.x,
+          camY: camRef.current.y,
+        }
+      }
+    }
+
+    function onTouchMove(e) {
+      e.preventDefault()
+      if (e.touches.length === 1 && !lastPinch) {
+        const pos = getTouchPos(e.touches[0])
+        if (dragRef.current) {
+          didDragRef.current = true
+          const { w: W, h: H } = szRef.current
+          const z = zoomRef.current
+          const c = camRef.current
+          dragRef.current.x = (pos.x - W / 2) / z + c.x
+          dragRef.current.y = (pos.y - H / 2) / z + c.y
+          return
+        }
+        if (isPanningRef.current && panStartRef.current) {
+          didDragRef.current = true
+          const dx = e.touches[0].clientX - panStartRef.current.sx
+          const dy = e.touches[0].clientY - panStartRef.current.sy
+          camRef.current = {
+            x: panStartRef.current.camX - dx / zoomRef.current,
+            y: panStartRef.current.camY - dy / zoomRef.current,
+          }
+        }
+      } else if (e.touches.length === 2 && lastPinch) {
+        const t0 = getTouchPos(e.touches[0])
+        const t1 = getTouchPos(e.touches[1])
+        const dist = Math.hypot(t1.x - t0.x, t1.y - t0.y)
+        const midX = (t0.x + t1.x) / 2
+        const midY = (t0.y + t1.y) / 2
+        const { w: W, h: H } = szRef.current
+        const newZoom = Math.max(0.15, Math.min(5, lastPinch.zoom * (dist / lastPinch.dist)))
+        const wx0 = (lastPinch.midX - W / 2) / lastPinch.zoom + lastPinch.camX
+        const wy0 = (lastPinch.midY - H / 2) / lastPinch.zoom + lastPinch.camY
+        zoomRef.current = newZoom
+        targetZoomRef.current = newZoom
+        camRef.current = {
+          x: wx0 - (midX - W / 2) / newZoom,
+          y: wy0 - (midY - H / 2) / newZoom,
+        }
+      }
+    }
+
+    function onTouchEnd(e) {
+      e.preventDefault()
+      if (e.touches.length === 0) {
+        if (!didDragRef.current && dragRef.current) {
+          onSelectRef.current(dragRef.current.id, dragRef.current.type)
+        }
+        dragRef.current = null
+        isPanningRef.current = false
+        panStartRef.current = null
+        lastPinch = null
+      } else if (e.touches.length === 1) {
+        lastPinch = null
+        isPanningRef.current = true
+        panStartRef.current = { sx: e.touches[0].clientX, sy: e.touches[0].clientY, camX: camRef.current.x, camY: camRef.current.y }
+      }
+    }
+
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false })
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false })
+    canvas.addEventListener('touchend', onTouchEnd, { passive: false })
+    return () => {
+      canvas.removeEventListener('touchstart', onTouchStart)
+      canvas.removeEventListener('touchmove', onTouchMove)
+      canvas.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [])
+
   // Get node under screen coords
   const getNode = (sx, sy) => {
     const w = toWorld(sx, sy)
@@ -647,7 +771,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
             <span style={{ color: '#8a6800' }}>cross-process link</span>
           </span>
         </div>
-        <div style={{ marginTop: 4, color: '#b0a898', fontStyle: 'italic' }}>Scroll to zoom · Drag to pan · Click to inspect</div>
+        <div style={{ marginTop: 4, color: '#b0a898', fontStyle: 'italic' }}>Pinch to zoom · Drag to pan · Tap to inspect</div>
       </div>
 
       {/* Hover tooltip */}
@@ -774,6 +898,7 @@ function ItemDetailModal({ item, loading, onClose, onNavigate }) {
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function RelationshipGraph({ onNavigate, highlightId, onClearHighlight, processAreas = [], categories = [] }) {
+  const isMobile = useIsMobile()
   const [rules, setRules] = useState([])
   const [assertions, setAssertions] = useState([])
   const [links, setLinks] = useState([])
@@ -807,42 +932,88 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
   const linkedCount = [...rules, ...assertions].filter(i => linkedIds.has(i.id)).length
 
   return (
-    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
 
-      {/* Filter panel */}
-      <div style={{ width: 200, borderRight: '1px solid #e8e4e0', padding: '20px 14px', flexShrink: 0, background: '#FAFAF9', overflowY: 'auto' }}>
-        <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>Graph Filters</div>
-
-        <PillFilter
-          label="Process Area"
-          options={processAreas}
-          selected={gpf}
-          onToggle={v => tog(gpf, setGpf, v)}
-          colorFn={p => ({ bg: paColor(p) + '22', text: paColor(p) })}
-        />
-        <PillFilter
-          label="Category"
-          options={categories}
-          selected={gcf}
-          onToggle={v => tog(gcf, setGcf, v)}
-        />
-
-        {(gpf.length > 0 || gcf.length > 0) && (
-          <button
-            onClick={() => { setGpf([]); setGcf([]) }}
-            style={{ marginTop: 4, background: 'none', border: 'none', color: '#4FA89A', fontSize: 11, cursor: 'pointer', fontFamily: FNT }}
-          >✕ Clear filters</button>
-        )}
-
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #D8CEC3', fontSize: 10, color: '#b0a898', fontFamily: FNT, lineHeight: 1.7 }}>
-          <div style={{ marginBottom: 8 }}>
-            <span style={{ color: '#062044', fontWeight: 700 }}>{totalNodes}</span> nodes
-            {' · '}
-            <span style={{ color: '#4FA89A', fontWeight: 700 }}>{linkedCount}</span> linked
+      {isMobile ? (
+        /* Mobile: compact horizontal filter strip */
+        <div style={{ flexShrink: 0, borderBottom: '1px solid #e8e4e0', background: '#FAFAF9', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '8px 12px', minWidth: 'max-content' }}>
+            <span style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, fontFamily: FNT, flexShrink: 0, marginRight: 4 }}>Filter:</span>
+            {processAreas.map(p => (
+              <button
+                key={p}
+                onClick={() => tog(gpf, setGpf, p)}
+                style={{
+                  padding: '4px 10px', borderRadius: 12, fontSize: 11, fontFamily: FNT, cursor: 'pointer',
+                  background: gpf.includes(p) ? paColor(p) + '33' : '#f0eeec',
+                  color: gpf.includes(p) ? paColor(p) : '#5a5550',
+                  border: gpf.includes(p) ? `1px solid ${paColor(p)}55` : '1px solid #D8CEC3',
+                  fontWeight: gpf.includes(p) ? 700 : 400,
+                  whiteSpace: 'nowrap',
+                }}
+              >{p}</button>
+            ))}
+            {categories.map(c => (
+              <button
+                key={c}
+                onClick={() => tog(gcf, setGcf, c)}
+                style={{
+                  padding: '4px 10px', borderRadius: 12, fontSize: 11, fontFamily: FNT, cursor: 'pointer',
+                  background: gcf.includes(c) ? '#062044' : '#f0eeec',
+                  color: gcf.includes(c) ? '#fff' : '#5a5550',
+                  border: gcf.includes(c) ? '1px solid #062044' : '1px solid #D8CEC3',
+                  fontWeight: gcf.includes(c) ? 700 : 400,
+                  whiteSpace: 'nowrap',
+                }}
+              >{c}</button>
+            ))}
+            {(gpf.length > 0 || gcf.length > 0) && (
+              <button
+                onClick={() => { setGpf([]); setGcf([]) }}
+                style={{ padding: '4px 10px', borderRadius: 12, fontSize: 11, fontFamily: FNT, cursor: 'pointer', background: 'none', border: '1px solid #4FA89A', color: '#4FA89A', whiteSpace: 'nowrap' }}
+              >✕ Clear</button>
+            )}
+            <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, flexShrink: 0, marginLeft: 8 }}>
+              <b style={{ color: '#062044' }}>{totalNodes}</b> nodes · <b style={{ color: '#4FA89A' }}>{linkedCount}</b> linked
+            </span>
           </div>
-          Nodes cluster by process area. Dashed lines = cross-process links — the most valuable connections. Filter to isolate a knowledge chain.
         </div>
-      </div>
+      ) : (
+        /* Desktop: vertical filter sidebar */
+        <div style={{ width: 200, borderRight: '1px solid #e8e4e0', padding: '20px 14px', flexShrink: 0, background: '#FAFAF9', overflowY: 'auto' }}>
+          <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>Graph Filters</div>
+
+          <PillFilter
+            label="Process Area"
+            options={processAreas}
+            selected={gpf}
+            onToggle={v => tog(gpf, setGpf, v)}
+            colorFn={p => ({ bg: paColor(p) + '22', text: paColor(p) })}
+          />
+          <PillFilter
+            label="Category"
+            options={categories}
+            selected={gcf}
+            onToggle={v => tog(gcf, setGcf, v)}
+          />
+
+          {(gpf.length > 0 || gcf.length > 0) && (
+            <button
+              onClick={() => { setGpf([]); setGcf([]) }}
+              style={{ marginTop: 4, background: 'none', border: 'none', color: '#4FA89A', fontSize: 11, cursor: 'pointer', fontFamily: FNT }}
+            >✕ Clear filters</button>
+          )}
+
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #D8CEC3', fontSize: 10, color: '#b0a898', fontFamily: FNT, lineHeight: 1.7 }}>
+            <div style={{ marginBottom: 8 }}>
+              <span style={{ color: '#062044', fontWeight: 700 }}>{totalNodes}</span> nodes
+              {' · '}
+              <span style={{ color: '#4FA89A', fontWeight: 700 }}>{linkedCount}</span> linked
+            </div>
+            Nodes cluster by process area. Dashed lines = cross-process links — the most valuable connections. Filter to isolate a knowledge chain.
+          </div>
+        </div>
+      )}
 
       {/* Canvas area */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>

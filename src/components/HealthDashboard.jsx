@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FNT, FNTM, statusColor, formatDate } from '../lib/constants.js'
 import { Badge, Tag } from './shared.jsx'
+import { useIsMobile } from '../lib/hooks.js'
 import { fetchRules, fetchAssertions, fetchEvents, fetchComments, fetchVerifications, fetchContradictions } from '../lib/db.js'
 
 // ─── Staleness detection ────────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ function checkStaleness(item, events) {
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 export default function HealthDashboard({ onNavigate }) {
+  const isMobile = useIsMobile()
   const [rules, setRules] = useState([])
   const [assertions, setAssertions] = useState([])
   const [events, setEvents] = useState([])
@@ -129,8 +131,8 @@ export default function HealthDashboard({ onNavigate }) {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* ── Sticky stats bar ── */}
-      <div style={{ flexShrink: 0, padding: '16px 28px', borderBottom: '1px solid #e8e4e0', background: '#FAFAF9' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+      <div style={{ flexShrink: 0, padding: isMobile ? '12px 16px' : '16px 28px', borderBottom: '1px solid #e8e4e0', background: '#FAFAF9' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 8 }}>
           <div style={{ padding: 16, background: contradictions.length > 0 ? '#fde8e5' : '#e6f5f1', borderRadius: 3, border: `1px solid ${contradictions.length > 0 ? '#c0392b20' : '#4FA89A20'}` }}>
             <div style={{ fontSize: 28, fontWeight: 700, color: contradictions.length > 0 ? '#c0392b' : '#4FA89A', fontFamily: FNT }}>{contradictions.length}</div>
             <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, fontWeight: 600 }}>Contradicted</div>
@@ -146,15 +148,21 @@ export default function HealthDashboard({ onNavigate }) {
         </div>
       </div>
 
-      {/* ── 3-column body, each scrolls independently ── */}
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', overflow: 'hidden' }}>
+      {/* ── Body: 3-column on desktop, stacked on mobile ── */}
+      <div style={isMobile
+        ? { flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }
+        : { flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', overflow: 'hidden' }
+      }>
 
         {/* ── Column 1: Needs Review ── */}
-        <div style={{ borderRight: '1px solid #e8e4e0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={isMobile
+          ? { borderBottom: '1px solid #e8e4e0' }
+          : { borderRight: '1px solid #e8e4e0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
+        }>
           <div style={{ flexShrink: 0, padding: '14px 20px 12px', borderBottom: '1px solid #e8e4e0' }}>
             <div style={{ fontSize: 13, color: '#c0392b', fontFamily: FNT, fontWeight: 700 }}>Needs Review</div>
           </div>
-          <div style={{ flex: 1, padding: '16px 20px', overflowY: 'auto' }}>
+          <div style={isMobile ? { padding: '16px 20px' } : { flex: 1, padding: '16px 20px', overflowY: 'auto' }}>
 
             {(contradictions.length > 0 || staleItems.length > 0) ? (
               <>
@@ -244,7 +252,10 @@ export default function HealthDashboard({ onNavigate }) {
         </div>
 
         {/* ── Column 2: Top Knowledge ── */}
-        <div style={{ borderRight: '1px solid #e8e4e0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={isMobile
+          ? { borderBottom: '1px solid #e8e4e0' }
+          : { borderRight: '1px solid #e8e4e0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
+        }>
           <div style={{ flexShrink: 0, padding: '14px 20px 12px', borderBottom: '1px solid #e8e4e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: 13, color: '#062044', fontFamily: FNT, fontWeight: 700 }}>Top Knowledge</div>
             <div style={{ display: 'flex', gap: 3 }}>
@@ -264,7 +275,7 @@ export default function HealthDashboard({ onNavigate }) {
               ))}
             </div>
           </div>
-          <div style={{ flex: 1, padding: '16px 20px', overflowY: 'auto' }}>
+          <div style={isMobile ? { padding: '16px 20px' } : { flex: 1, padding: '16px 20px', overflowY: 'auto' }}>
 
             {topItems.length > 0 ? topItems.map((item, idx) => (
               <div
@@ -293,11 +304,11 @@ export default function HealthDashboard({ onNavigate }) {
         </div>
 
         {/* ── Column 3: Knowledge Archive ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={isMobile ? {} : { display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ flexShrink: 0, padding: '14px 20px 12px', borderBottom: '1px solid #e8e4e0' }}>
             <div style={{ fontSize: 13, color: '#8a8278', fontFamily: FNT, fontWeight: 700 }}>Knowledge Archive</div>
           </div>
-          <div style={{ flex: 1, padding: '16px 20px', overflowY: 'auto' }}>
+          <div style={isMobile ? { padding: '16px 20px' } : { flex: 1, padding: '16px 20px', overflowY: 'auto' }}>
 
             <div style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, marginBottom: 14, lineHeight: 1.6 }}>
               Retired knowledge is preserved for reference. These items are no longer active but remain part of the plant's institutional memory.

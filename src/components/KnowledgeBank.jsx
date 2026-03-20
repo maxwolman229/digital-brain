@@ -667,36 +667,35 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
           {/* Overlay body — scrollable */}
           <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
 
-            {/* Plant switcher */}
-            {memberships.length > 0 && (
-              <div style={{ padding: '12px 0', borderBottom: '1px solid #e8e4e0' }}>
-                {memberships.map(m => (
-                  <button
-                    key={m.plantId}
-                    onClick={() => { onSwitchPlant(m.plantId); setMenuOpen(false); navigate('/app') }}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      width: '100%', padding: '10px 20px', minHeight: 48,
-                      background: m.plantId === activePlantId ? '#f0f4fb' : 'transparent',
-                      border: 'none', cursor: 'pointer', fontFamily: FNT, textAlign: 'left',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: m.plantId === activePlantId ? 700 : 500, color: '#062044' }}>
-                        {m.plantId === activePlantId ? '◆ ' : ''}{m.plantName}
-                      </div>
-                      <div style={{ fontSize: 10, color: '#8a8278', marginTop: 1 }}>{m.orgName} · {m.role}</div>
-                    </div>
-                  </button>
-                ))}
+            {/* Action buttons — always at the top */}
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #e8e4e0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(view === 'rules' || view === 'assertions') && (
                 <button
-                  onClick={() => { setMenuOpen(false); navigate('/plants') }}
-                  style={{ display: 'block', width: '100%', padding: '10px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#4FA89A', fontWeight: 600 }}
+                  onClick={() => { setAddFormOpen(true); setMenuOpen(false) }}
+                  style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: '#062044', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, textAlign: 'left' }}
                 >
-                  + Join or Create Plant
+                  + Add {view === 'assertions' ? 'Assertion' : 'Rule'}
                 </button>
-              </div>
-            )}
+              )}
+              <button
+                onClick={() => { switchView('events'); setReportEventOpen(true); setMenuOpen(false) }}
+                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid #D8CEC3', color: '#333', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
+              >
+                + Report Event
+              </button>
+              <button
+                onClick={() => { setNarrativeOpen(true); setMenuOpen(false) }}
+                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid rgba(242,101,47,0.4)', color: '#F2652F', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
+              >
+                + Narrative Input
+              </button>
+              <button
+                onClick={() => { switchView('capture'); setMenuOpen(false) }}
+                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid rgba(79,168,154,0.5)', color: '#4FA89A', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
+              >
+                ◈ Capture Knowledge
+              </button>
+            </div>
 
             {/* Search — if on rules/assertions view */}
             {showSearch && (
@@ -718,9 +717,9 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               </div>
             )}
 
-            {/* Nav tabs */}
+            {/* Nav tabs (capture is an action, not a tab here) */}
             <div style={{ padding: '8px 0', borderBottom: '1px solid #e8e4e0' }}>
-              {TABS.map(tab => {
+              {TABS.filter(tab => tab.id !== 'capture').map(tab => {
                 const badgeCount = BADGE_TABS.includes(tab.id) ? (newCounts[tab.id] || 0) : 0
                 return (
                   <button
@@ -773,29 +772,36 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               </div>
             )}
 
-            {/* Action buttons */}
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #e8e4e0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(view === 'rules' || view === 'assertions') && (
+            {/* Plant switcher */}
+            {memberships.length > 0 && (
+              <div style={{ padding: '12px 0', borderBottom: '1px solid #e8e4e0' }}>
+                {memberships.map(m => (
+                  <button
+                    key={m.plantId}
+                    onClick={() => { onSwitchPlant(m.plantId); setMenuOpen(false); navigate('/app') }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', padding: '10px 20px', minHeight: 48,
+                      background: m.plantId === activePlantId ? '#f0f4fb' : 'transparent',
+                      border: 'none', cursor: 'pointer', fontFamily: FNT, textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: m.plantId === activePlantId ? 700 : 500, color: '#062044' }}>
+                        {m.plantId === activePlantId ? '◆ ' : ''}{m.plantName}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#8a8278', marginTop: 1 }}>{m.orgName} · {m.role}</div>
+                    </div>
+                  </button>
+                ))}
                 <button
-                  onClick={() => { setAddFormOpen(true); setMenuOpen(false) }}
-                  style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: '#062044', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, textAlign: 'left' }}
+                  onClick={() => { setMenuOpen(false); navigate('/plants') }}
+                  style={{ display: 'block', width: '100%', padding: '10px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#4FA89A', fontWeight: 600 }}
                 >
-                  + Add {view === 'assertions' ? 'Assertion' : 'Rule'}
+                  + Join or Create Plant
                 </button>
-              )}
-              <button
-                onClick={() => { switchView('events'); setReportEventOpen(true); setMenuOpen(false) }}
-                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid #D8CEC3', color: '#333', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
-              >
-                + Report Event
-              </button>
-              <button
-                onClick={() => { setNarrativeOpen(true); setMenuOpen(false) }}
-                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid rgba(242,101,47,0.4)', color: '#F2652F', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
-              >
-                + Narrative Input
-              </button>
-            </div>
+              </div>
+            )}
 
             {/* Profile & settings */}
             <div style={{ padding: '8px 0' }}>

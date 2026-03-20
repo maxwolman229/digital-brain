@@ -41,6 +41,9 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [demoLoading, setDemoLoading] = useState(false)
+  const [showDemoGate, setShowDemoGate] = useState(false)
+  const [demoGateInput, setDemoGateInput] = useState('')
+  const [demoGateError, setDemoGateError] = useState(null)
 
   function switchMode(m) {
     setMode(m)
@@ -82,7 +85,7 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
 
   async function handleDemo() {
     setDemoLoading(true)
-    setError(null)
+    setDemoGateError(null)
     try {
       console.log('[Auth] demo login...')
       const { user } = await signIn(DEMO_EMAIL, DEMO_PASSWORD)
@@ -91,9 +94,19 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
     } catch (err) {
       console.error('[Auth] demo error:', err.name, err.message)
       const isAbort = err.name === 'AbortError' || err.message?.includes('aborted')
-      setError(isAbort ? 'Connection is slow — please try again.' : err.message)
+      setDemoGateError(isAbort ? 'Connection is slow — please try again.' : err.message)
     }
     setDemoLoading(false)
+  }
+
+  async function handleDemoGateSubmit(e) {
+    e.preventDefault()
+    setDemoGateError(null)
+    if (demoGateInput !== DEMO_PASSWORD) {
+      setDemoGateError('Incorrect password.')
+      return
+    }
+    await handleDemo()
   }
 
   const isLogin = mode === 'login'
@@ -250,20 +263,58 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
             <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
           </div>
 
-          <button
-            onClick={handleDemo}
-            disabled={demoLoading}
-            style={{
-              width: '100%', padding: '11px 0', borderRadius: 3,
-              background: 'transparent',
-              border: '1px solid rgba(79,168,154,0.5)',
-              color: demoLoading ? 'rgba(79,168,154,0.4)' : '#4FA89A',
-              fontSize: 12, fontWeight: 700, letterSpacing: 0.8,
-              cursor: demoLoading ? 'default' : 'pointer', fontFamily: FNT,
-            }}
-          >
-            {demoLoading ? 'Signing in…' : 'Continue as Demo →'}
-          </button>
+          {!showDemoGate ? (
+            <button
+              onClick={() => setShowDemoGate(true)}
+              style={{
+                width: '100%', padding: '11px 0', borderRadius: 3,
+                background: 'transparent',
+                border: '1px solid rgba(79,168,154,0.5)',
+                color: '#4FA89A',
+                fontSize: 12, fontWeight: 700, letterSpacing: 0.8,
+                cursor: 'pointer', fontFamily: FNT,
+              }}
+            >
+              Continue as Demo →
+            </button>
+          ) : (
+            <form onSubmit={handleDemoGateSubmit}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8, fontFamily: FNT }}>
+                Demo Password
+              </div>
+              <input
+                autoFocus
+                type="password"
+                value={demoGateInput}
+                onChange={e => { setDemoGateInput(e.target.value); setDemoGateError(null) }}
+                placeholder="Enter demo password"
+                style={{ ...inputStyle, marginBottom: 8 }}
+              />
+              {demoGateError && (
+                <div style={{
+                  padding: '7px 10px', marginBottom: 8,
+                  background: 'rgba(231,76,60,0.15)', border: '1px solid rgba(231,76,60,0.3)',
+                  borderRadius: 3, fontSize: 12, color: '#e74c3c',
+                }}>
+                  {demoGateError}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={demoLoading}
+                style={{
+                  width: '100%', padding: '11px 0', borderRadius: 3,
+                  background: 'transparent',
+                  border: '1px solid rgba(79,168,154,0.5)',
+                  color: demoLoading ? 'rgba(79,168,154,0.4)' : '#4FA89A',
+                  fontSize: 12, fontWeight: 700, letterSpacing: 0.8,
+                  cursor: demoLoading ? 'default' : 'pointer', fontFamily: FNT,
+                }}
+              >
+                {demoLoading ? 'Signing in…' : 'Continue as Demo →'}
+              </button>
+            </form>
+          )}
 
 
         </div>
