@@ -6,7 +6,7 @@ import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
 
-export default function RulesView({ search, fStatus, fCat, fProc, onCountsChange, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile, plantId }) {
+export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile, plantId }) {
   const [rules, setRules] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
@@ -23,22 +23,22 @@ export default function RulesView({ search, fStatus, fCat, fProc, onCountsChange
   }, [])
 
   async function load() {
+    const t0 = Date.now()
     setLoading(true)
     const data = await fetchRules()
+    console.log('[RulesView] fetchRules:', Date.now() - t0, 'ms,', data.length, 'rules')
     const ids = data.map(r => r.id)
+    const t1 = Date.now()
     const [commentsData, verificationsData] = await Promise.all([
       fetchComments('rule', ids),
       fetchVerifications('rule', ids),
     ])
+    console.log('[RulesView] fetchComments+Verifications:', Date.now() - t1, 'ms')
     setRules(data)
     setComments(commentsData)
     setVerifications(verificationsData)
-
-    const byStatus = {}
-    data.forEach(r => { byStatus[r.status] = (byStatus[r.status] || 0) + 1 })
-    onCountsChange({ total: data.length, byStatus })
-
     setLoading(false)
+    console.log('[RulesView] total load:', Date.now() - t0, 'ms')
   }
 
   // ── Filtering ────────────────────────────────────────────────────────────

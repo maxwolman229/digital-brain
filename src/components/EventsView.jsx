@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { FNT, iS, IMPACTS, EVENT_STATUSES, EVENT_OUTCOMES, ISHIKAWA_CATS, formatDate, outcomeColor, impactColor, eventStatusColor, statusColor } from '../lib/constants.js'
 import { Badge, Tag, Modal, Field, TypeaheadInput, MentionDropdown } from './shared.jsx'
-import { fetchEvents, addEvent, fetchEventKnowledgeCounts, fetchEventConnectedKnowledge, saveLink, searchKnowledge, fetchItemById, fetchPlantMembers } from '../lib/db.js'
+import { fetchEvents, addEvent, updateEvent, updateEventStatus, fetchEventKnowledgeCounts, fetchEventConnectedKnowledge, saveLink, searchKnowledge, fetchItemById, fetchPlantMembers } from '../lib/db.js'
+import { getDisplayName } from '../lib/userContext.js'
 import { useMention } from '../lib/useMention.js'
 import Comments from './Comments.jsx'
 import EventCaptureView from './EventCaptureView.jsx'
@@ -44,6 +45,12 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
   const [fImpact, setFImpact] = useState([])
   const [fEvStatus, setFEvStatus] = useState([])
   const [fProc, setFProc] = useState([])
+
+  // Edit / close state
+  const [editingEventId, setEditingEventId] = useState(null) // id of event being edited
+  const [showCloseModal, setShowCloseModal] = useState(false)
+  const [closeResolution, setCloseResolution] = useState('')
+  const [closeSaving, setCloseSaving] = useState(false)
 
   // Knowledge counts per event (for badges on cards)
   const [knowledgeCounts, setKnowledgeCounts] = useState({})
@@ -199,8 +206,71 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
 
   function closeForm() {
     setShowForm(false)
+    setEditingEventId(null)
     setForm(EMPTY_FORM)
     setTagInput('')
+  }
+
+  function openEditForm(ev) {
+    setEditingEventId(ev.id)
+    setForm({
+      title: ev.title,
+      outcome: ev.outcome,
+      processArea: ev.processArea || '',
+      impact: ev.impact,
+      description: ev.description || '',
+      ishikawa: { ...EMPTY_FORM.ishikawa, ...(ev.ishikawa || {}) },
+      resolution: ev.resolution || '',
+      taggedPeople: [...(ev.taggedPeople || [])],
+      tags: (ev.tags || []).join(', '),
+    })
+    setSel(null)
+    setShowForm(true)
+  }
+
+  async function handleEditSubmit() {
+    if (!form.title.trim() || !editingEventId) return
+    const cleanIshikawa = {}
+    ISHIKAWA_CATS.forEach(c => { cleanIshikawa[c] = form.ishikawa[c].filter(s => s.trim()) })
+
+    const updated = {
+      title: form.title,
+      outcome: form.outcome,
+      processArea: form.processArea,
+      impact: form.impact,
+      description: form.description,
+      ishikawa: cleanIshikawa,
+      resolution: form.resolution,
+      taggedPeople: form.taggedPeople,
+      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+      changeNote: 'Edited by tagged member',
+    }
+
+    setEvents(prev => prev.map(e => e.id === editingEventId ? { ...e, ...updated, tags: updated.tags } : e))
+    const id = editingEventId
+    closeForm()
+
+    try {
+      await updateEvent(id, updated)
+      onItemSaved?.()
+    } catch (err) {
+      console.error('[handleEditSubmit]', err.message)
+    }
+  }
+
+  async function handleCloseEvent() {
+    if (!sel || !closeResolution.trim()) return
+    setCloseSaving(true)
+    try {
+      await updateEventStatus(sel.id, { status: 'Closed', resolution: closeResolution.trim() })
+      setEvents(prev => prev.map(e => e.id === sel.id ? { ...e, status: 'Closed', resolution: closeResolution.trim() } : e))
+      setSel(prev => prev ? { ...prev, status: 'Closed', resolution: closeResolution.trim() } : null)
+      setShowCloseModal(false)
+      setCloseResolution('')
+    } catch (err) {
+      console.error('[handleCloseEvent]', err.message)
+    }
+    setCloseSaving(false)
   }
 
   return (
@@ -257,7 +327,11 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
 
       {/* ── Detail modal ── */}
       <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `Event ${sel.id}` : ''} width={760}>
-        {sel && (
+        {sel && (() => {
+          const me = getDisplayName()
+          const canEdit = me && (sel.reportedBy === me || (sel.taggedPeople || []).includes(me))
+          const canClose = canEdit && sel.status !== 'Closed'
+          return (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
               <Badge label={sel.outcome} colorFn={outcomeColor} />
@@ -270,6 +344,22 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
                   style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
                 >{sel.reportedBy}</span>
               </span>
+              {canEdit && (
+                <button
+                  onClick={() => openEditForm(sel)}
+                  style={{ padding: '3px 10px', borderRadius: 2, fontSize: 10, fontFamily: FNT, fontWeight: 700, background: 'none', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', letterSpacing: 0.4 }}
+                >
+                  Edit
+                </button>
+              )}
+              {canClose && (
+                <button
+                  onClick={() => { setShowCloseModal(true); setCloseResolution(sel.resolution || '') }}
+                  style={{ padding: '3px 10px', borderRadius: 2, fontSize: 10, fontFamily: FNT, fontWeight: 700, background: 'none', border: '1px solid #c0392b40', color: '#c0392b', cursor: 'pointer', letterSpacing: 0.4 }}
+                >
+                  Close Event
+                </button>
+              )}
             </div>
 
             <h3 style={{ fontSize: 16, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 12, fontFamily: FNT }}>
@@ -345,7 +435,39 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             {/* Comments */}
             <Comments targetType="event" targetId={sel.id} />
           </div>
-        )}
+          )
+        })()}
+      </Modal>
+
+      {/* ── Close Event confirmation modal ── */}
+      <Modal open={showCloseModal} onClose={() => { setShowCloseModal(false); setCloseResolution('') }} title="Close Event" width={480}>
+        <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, marginBottom: 16 }}>
+          Closing this event marks it as resolved. Provide a resolution summary — this will be saved on the event and visible to all plant members.
+        </div>
+        <Field label="Resolution Summary" hint="Required — describe how the event was resolved or what was learned">
+          <textarea
+            style={{ ...iS, height: 80, resize: 'vertical' }}
+            value={closeResolution}
+            onChange={e => setCloseResolution(e.target.value)}
+            placeholder="What was done to resolve this? What was the outcome?"
+            autoFocus
+          />
+        </Field>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => { setShowCloseModal(false); setCloseResolution('') }}
+            style={{ padding: '8px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleCloseEvent}
+            disabled={!closeResolution.trim() || closeSaving}
+            style={{ padding: '8px 18px', borderRadius: 3, fontSize: 12, fontWeight: 700, background: closeResolution.trim() ? '#c0392b' : '#f0eeec', border: 'none', color: closeResolution.trim() ? '#FFFFFF' : '#888', cursor: closeResolution.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT }}
+          >
+            {closeSaving ? 'Closing…' : 'Close Event'}
+          </button>
+        </div>
       </Modal>
 
       {/* ── Knowledge item mini detail modal ── */}
@@ -415,11 +537,13 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
         </div>
       )}
 
-      {/* ── Report Event form modal ── */}
-      <Modal open={showForm} onClose={closeForm} title="Report Event" width={760}>
-        <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.6, marginBottom: 16 }}>
-          Document an operational event — positive or negative — with structured Ishikawa analysis. Each Ishikawa category captures contributing factors.
-        </div>
+      {/* ── Report / Edit Event form modal ── */}
+      <Modal open={showForm} onClose={closeForm} title={editingEventId ? 'Edit Event' : 'Report Event'} width={760}>
+        {!editingEventId && (
+          <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.6, marginBottom: 16 }}>
+            Document an operational event — positive or negative — with structured Ishikawa analysis. Each Ishikawa category captures contributing factors.
+          </div>
+        )}
 
         <Field label="Event Title">
           <input style={iS} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Brief title describing what happened or what went well" />
@@ -549,7 +673,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
         </Field>
 
         <button
-          onClick={handleSubmit}
+          onClick={editingEventId ? handleEditSubmit : handleSubmit}
           disabled={!form.title.trim()}
           style={{
             width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, marginTop: 8, letterSpacing: 0.4,
@@ -560,7 +684,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             fontFamily: FNT, fontWeight: 700,
           }}
         >
-          File Event Report
+          {editingEventId ? 'Save Changes' : 'File Event Report'}
         </button>
       </Modal>
     </div>

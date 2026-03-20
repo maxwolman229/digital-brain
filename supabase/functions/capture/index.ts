@@ -109,9 +109,23 @@ RESPONSE FORMAT — respond ONLY with valid JSON. No markdown fences, no prose, 
       "rationale": "why this rule exists — the consequence of ignoring it",
       "confidence": "Low | Medium | High | Very High",
       "scope": "specific conditions or constraints where this applies"
+    },
+    {
+      "type": "assertion",
+      "title": "Concise observational title — under 80 characters",
+      "category": "Material | Process | Equipment | People | Measurement | Environment",
+      "processArea": "specific process area from the interview context",
+      "rationale": "",
+      "confidence": "Low | Medium | High | Very High",
+      "scope": "specific conditions or constraints where this applies"
     }
   ]
-}`
+}
+
+TYPE SELECTION — you MUST classify each extracted item correctly:
+- Use "rule" for actionable directives: what to do, what NOT to do, when to do something, step-by-step procedures, thresholds that trigger an action
+- Use "assertion" for factual observations: cause-and-effect relationships, how the process behaves, why something happens, correlations, patterns, thresholds that describe behaviour rather than trigger action
+Most interviews produce a mix of both. Do NOT default everything to "rule". If the operator is describing how something works (not what to do), it is an "assertion".`
 
 function fillTemplate(template: string, ctx: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => ctx[key] ?? `{{${key}}}`)

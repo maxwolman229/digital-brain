@@ -72,6 +72,24 @@ export default function App() {
       setLoading(false)
     }
     restore()
+
+    // When user returns to an idle tab, check if the JWT is still valid.
+    // If it has expired, force logout so they see the login screen instead of broken state.
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        const s = getRestoredSession()
+        if (!s) {
+          // JWT expired while tab was hidden
+          clearUserContext()
+          setSession(null)
+          setProfile(null)
+          setMemberships([])
+          setActivePlantId(null)
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   function handleSwitchPlant(plantId) {

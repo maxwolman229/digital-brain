@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom'
+import { useIsMobile } from '../lib/hooks.js'
 
 export default function LandingPage({ loggedInAs, onLogout }) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
 
   return (
     <div style={{
@@ -28,18 +30,18 @@ export default function LandingPage({ loggedInAs, onLogout }) {
       {loggedInAs && (
         <div style={{
           position: 'fixed',
-          top: 20,
-          right: 24,
+          top: 12,
+          right: 16,
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
+          gap: 8,
           fontSize: 11,
           color: 'rgba(255,255,255,0.4)',
           fontFamily: "'IBM Plex Mono', monospace",
           letterSpacing: 0.3,
         }}>
-          <span>Logged in as {loggedInAs}</span>
-          <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
+          {!isMobile && <span>Logged in as {loggedInAs}</span>}
+          {!isMobile && <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>}
           <button
             onClick={onLogout}
             style={{
@@ -49,12 +51,11 @@ export default function LandingPage({ loggedInAs, onLogout }) {
               fontSize: 11,
               cursor: 'pointer',
               fontFamily: "'IBM Plex Mono', monospace",
-              padding: 0,
+              padding: '8px 0',
               textDecoration: 'underline',
               letterSpacing: 0.3,
+              minHeight: 44,
             }}
-            onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
           >
             Log Out
           </button>
@@ -66,47 +67,57 @@ export default function LandingPage({ loggedInAs, onLogout }) {
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        padding: 40,
+        padding: isMobile ? '32px 24px' : 40,
+        width: '100%',
+        maxWidth: 560,
+        boxSizing: 'border-box',
         animation: 'fadeIn 1.2s ease-out',
       }}>
         {/* Logo */}
         <div style={{
-          fontSize: 72,
+          fontSize: isMobile ? 52 : 72,
           fontWeight: 700,
-          letterSpacing: 6,
+          letterSpacing: isMobile ? 4 : 6,
           color: '#FFFFFF',
           lineHeight: 1,
           border: '2.5px solid #FFFFFF',
-          padding: '12px 28px 16px',
-          marginBottom: 16,
+          padding: isMobile ? '10px 20px 13px' : '12px 28px 16px',
+          marginBottom: 14,
         }}>
           M/D/1
         </div>
 
         <div style={{
-          fontSize: 15,
+          fontSize: isMobile ? 12 : 15,
           fontWeight: 300,
           color: 'rgba(255,255,255,0.5)',
           letterSpacing: 4,
           textTransform: 'uppercase',
-          marginBottom: 80,
+          marginBottom: isMobile ? 48 : 80,
         }}>
           The Knowledge Bank
         </div>
 
         <div style={{
-          fontSize: 18,
+          fontSize: isMobile ? 15 : 18,
           fontWeight: 400,
           color: 'rgba(255,255,255,0.35)',
           letterSpacing: 0.5,
           lineHeight: 1.6,
           maxWidth: 440,
-          marginBottom: 60,
+          marginBottom: isMobile ? 40 : 60,
+          padding: '0 8px',
         }}>
           The operational brain that never retires.
         </div>
 
-        <div style={{ display: 'flex', gap: 16 }}>
+        {/* Buttons — stacked on mobile, side by side on desktop */}
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: 12,
+          width: isMobile ? '100%' : 'auto',
+        }}>
           <button
             onClick={() => navigate('/auth')}
             style={{
@@ -121,6 +132,8 @@ export default function LandingPage({ loggedInAs, onLogout }) {
               borderRadius: 2,
               cursor: 'pointer',
               transition: 'all 0.3s',
+              minHeight: 52,
+              width: isMobile ? '100%' : 'auto',
             }}
             onMouseEnter={e => {
               e.currentTarget.style.borderColor = '#FFFFFF'
@@ -148,6 +161,8 @@ export default function LandingPage({ loggedInAs, onLogout }) {
               borderRadius: 2,
               cursor: 'pointer',
               transition: 'all 0.3s',
+              minHeight: 52,
+              width: isMobile ? '100%' : 'auto',
             }}
             onMouseEnter={e => {
               e.currentTarget.style.background = 'rgba(255,255,255,0.88)'

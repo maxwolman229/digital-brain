@@ -23,17 +23,22 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
   }, [])
 
   async function load() {
+    const t0 = Date.now()
     setLoading(true)
     const data = await fetchAssertions()
+    console.log('[AssertionsView] fetchAssertions:', Date.now() - t0, 'ms,', data.length, 'assertions')
     const ids = data.map(a => a.id)
+    const t1 = Date.now()
     const [commentsData, verificationsData] = await Promise.all([
       fetchComments('assertion', ids),
       fetchVerifications('assertion', ids),
     ])
+    console.log('[AssertionsView] fetchComments+Verifications:', Date.now() - t1, 'ms')
     setAssertions(data)
     setComments(commentsData)
     setVerifications(verificationsData)
     setLoading(false)
+    console.log('[AssertionsView] total load:', Date.now() - t0, 'ms')
   }
 
   // ── Filtering ────────────────────────────────────────────────────────────

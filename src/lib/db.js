@@ -149,8 +149,10 @@ function normaliseAssertion(a, evidence = [], versions = [], linkedRules = [], r
 
 export async function fetchRules() {
   const pid = PLANT_ID()
+  const t0 = Date.now()
   console.log('[fetchRules] plant_id:', pid)
   const rulesRes = await supabase.from('rules').select('*').eq('plant_id', pid).order('created_at', { ascending: false })
+  console.log('[fetchRules] main query:', Date.now() - t0, 'ms, rows:', rulesRes.data?.length ?? 0, rulesRes.error?.message ?? '')
   if (!rulesRes.data?.length) {
     if (pid === DEMO_PLANT_ID) {
       console.warn('[fetchRules] EAF demo plant returned empty — using seed data fallback')
@@ -160,11 +162,13 @@ export async function fetchRules() {
   }
 
   const ruleIds = rulesRes.data.map(r => r.id)
+  const t1 = Date.now()
   const [evidenceRes, versionsRes, linksRes] = await Promise.all([
     supabase.from('evidence').select('*').eq('parent_type', 'rule').in('parent_id', ruleIds),
     supabase.from('versions').select('*').eq('target_type', 'rule').in('target_id', ruleIds),
     supabase.from('links').select('source_id, target_id').eq('source_type', 'rule').eq('target_type', 'assertion').in('source_id', ruleIds),
   ])
+  console.log('[fetchRules] evidence+versions+links:', Date.now() - t1, 'ms')
 
   const linksBySource = {}
   linksRes.data?.forEach(l => {
@@ -1076,6 +1080,75 @@ export async function updateAssertion(id, { title, category, processArea, scope,
   })
   const displayName = getDisplayName() || userId
   return { version: versionNum, date: now, author: displayName, change: changeNote || 'Updated', snapshot: title }
+}
+
+// ─── Contribution counts (for summary bar) ───────────────────────────────────
+
+export async function fetchContributionCounts(plantId) {
+  if (!plantId) return { total: 0 }
+  const [r, a, e, q] = await Promise.all([
+    supabase.from('rules').select('id', { count: 'exact', head: true }).eq('plant_id', plantId),
+    supabase.from('assertions').select('id', { count: 'exact', head: true }).eq('plant_id', plantId),
+    supabase.from('events').select('id', { count: 'exact', head: true }).eq('plant_id', plantId),
+    supabase.from('questions').select('id', { count: 'exact', head: true }).eq('plant_id', plantId),
+  ])
+  return {
+    rules: r.count || 0,
+    assertions: a.count || 0,
+    events: e.count || 0,
+    questions: q.count || 0,
+    total: (r.count || 0) + (a.count || 0) + (e.count || 0) + (q.count || 0),
+  }
+}
+
+// ─── Update event ─────────────────────────────────────────────────────────────
+
+export async function updateEvent(id, { title, processArea, impact, outcome, description, ishikawa, resolution, taggedPeople, tags, changeNote }) {
+  const userId = getUserId()
+  const now = new Date().toISOString()
+
+  const { error } = await supabase
+    .from('events')
+    .update({
+      title,
+      process_area: processArea,
+      impact,
+      outcome,
+      description: description || '',
+      root_cause: ishikawa || {},
+      resolution: resolution || '',
+      tagged_people: taggedPeople || [],
+      tags: tags || [],
+      updated_at: now,
+    })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+
+  const versionNum = await nextVersionNum('event', id)
+  await supabase.from('versions').insert({
+    target_type: 'event', target_id: id, version_num: versionNum,
+    date: now, author: userId,
+    change_note: changeNote || 'Updated', snapshot_title: title,
+  })
+}
+
+export async function updateEventStatus(id, { status, resolution }) {
+  const userId = getUserId()
+  const now = new Date().toISOString()
+  const updates = { status, updated_at: now }
+  if (resolution !== undefined) updates.resolution = resolution
+
+  const { error } = await supabase.from('events').update(updates).eq('id', id)
+  if (error) throw new Error(error.message)
+
+  const versionNum = await nextVersionNum('event', id)
+  const note = status === 'Closed' ? 'Event closed' : `Status changed to ${status}`
+  const { data: ev } = await supabase.from('events').select('title').eq('id', id).maybeSingle()
+  await supabase.from('versions').insert({
+    target_type: 'event', target_id: id, version_num: versionNum,
+    date: now, author: userId,
+    change_note: note, snapshot_title: ev?.title || id,
+  })
 }
 
 // ─── Plant vocabulary (dynamic process areas + categories) ───────────────────
