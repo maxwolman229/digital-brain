@@ -109,6 +109,7 @@ function normaliseRule(r, evidence = [], versions = [], linkedAssertions = [], r
     createdById: r.created_by,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    photos: r.photos || [],
     evidence: evidence
       .filter(e => e.parent_id === r.id)
       .map(e => ({ type: e.type, text: e.text, date: e.date })),
@@ -130,6 +131,7 @@ function normaliseAssertion(a, evidence = [], versions = [], linkedRules = [], r
     processArea: a.process_area,
     scope: a.scope,
     tags: a.tags || [],
+    photos: a.photos || [],
     createdBy: resolve(a.created_by),
     createdById: a.created_by,
     createdAt: a.created_at,
@@ -995,7 +997,7 @@ function randomId(prefix) {
   return `${prefix}-${suffix}`
 }
 
-export async function createRule({ title, category, processArea, scope, rationale, status, tags, evidenceText, captureSource, plantId: explicitPlantId }) {
+export async function createRule({ title, category, processArea, scope, rationale, status, tags, evidenceText, captureSource, photos, plantId: explicitPlantId }) {
   const pid = explicitPlantId || PLANT_ID()
   if (!pid) throw new Error('No active plant — cannot create rule')
   const id = randomId('R')
@@ -1012,6 +1014,7 @@ export async function createRule({ title, category, processArea, scope, rational
       rationale: rationale || '',
       status: status || 'Proposed',
       tags: tags || [],
+      photos: photos || [],
       created_by: userId,
     })
     .select()
@@ -1038,7 +1041,7 @@ export async function createRule({ title, category, processArea, scope, rational
   return normaliseRule(data, evidenceInserts.map(e => ({ ...e, parent_id: id })), [{ ...versionRow, target_id: id }], [], resolve)
 }
 
-export async function createAssertion({ title, category, processArea, scope, status, tags, evidenceText, captureSource, plantId: explicitPlantId }) {
+export async function createAssertion({ title, category, processArea, scope, status, tags, evidenceText, captureSource, photos, plantId: explicitPlantId }) {
   const pid = explicitPlantId || PLANT_ID()
   if (!pid) throw new Error('No active plant — cannot create assertion')
   const id = randomId('A')
@@ -1054,6 +1057,7 @@ export async function createAssertion({ title, category, processArea, scope, sta
       scope: scope || '',
       status: status || 'Proposed',
       tags: tags || [],
+      photos: photos || [],
       created_by: userId,
     })
     .select()
@@ -1094,14 +1098,16 @@ async function nextVersionNum(targetType, targetId) {
   return (data?.version_num || 0) + 1
 }
 
-export async function updateRule(id, { title, category, processArea, scope, rationale, status, tags, changeNote }) {
+export async function updateRule(id, { title, category, processArea, scope, rationale, status, tags, photos, changeNote }) {
   const { data: prev } = await supabase.from('rules').select('status, created_by').eq('id', id).maybeSingle()
   const userId = getUserId()
 
   const now = new Date().toISOString()
+  const updatePayload = { title, category, process_area: processArea, scope: scope || '', rationale: rationale || '', status, tags: tags || [], updated_at: now }
+  if (photos !== undefined) updatePayload.photos = photos
   const { error } = await supabase
     .from('rules')
-    .update({ title, category, process_area: processArea, scope: scope || '', rationale: rationale || '', status, tags: tags || [], updated_at: now })
+    .update(updatePayload)
     .eq('id', id)
   if (error) throw new Error(error.message)
 
@@ -1120,14 +1126,16 @@ export async function updateRule(id, { title, category, processArea, scope, rati
   return { version: versionNum, date: now, author: displayName, change: changeNote || 'Updated', snapshot: title }
 }
 
-export async function updateAssertion(id, { title, category, processArea, scope, status, tags, changeNote }) {
+export async function updateAssertion(id, { title, category, processArea, scope, status, tags, photos, changeNote }) {
   const { data: prev } = await supabase.from('assertions').select('status, created_by').eq('id', id).maybeSingle()
   const userId = getUserId()
 
   const now = new Date().toISOString()
+  const updatePayload = { title, category, process_area: processArea, scope: scope || '', status, tags: tags || [], updated_at: now }
+  if (photos !== undefined) updatePayload.photos = photos
   const { error } = await supabase
     .from('assertions')
-    .update({ title, category, process_area: processArea, scope: scope || '', status, tags: tags || [], updated_at: now })
+    .update(updatePayload)
     .eq('id', id)
   if (error) throw new Error(error.message)
 
@@ -1567,4 +1575,26 @@ export async function deletePlant(plantId) {
   // Finally delete the plant
   const { error } = await supabase.from('plants').delete().eq('id', plantId)
   if (error) throw new Error(error.message)
+}
+
+// ─── Photo upload ─────────────────────────────────────────────────────────────
+
+export async function uploadPhoto(file, itemType, itemId) {
+  const ext = file.name.split('.').pop()
+  const path = `${PLANT_ID()}/${itemType}/${itemId}/${Date.now()}.${ext}`
+  const { error } = await supabase.storage.from('knowledge-photos').upload(path, file, { upsert: false })
+  if (error) throw new Error(error.message)
+  const { data } = supabase.storage.from('knowledge-photos').getPublicUrl(path)
+  return data.publicUrl
+}
+
+export async function deletePhoto(publicUrl) {
+  // Extract the storage path from the public URL
+  // URL format: https://<ref>.supabase.co/storage/v1/object/public/knowledge-photos/<path>
+  const marker = '/storage/v1/object/public/knowledge-photos/'
+  const idx = publicUrl.indexOf(marker)
+  if (idx === -1) return // not a storage URL we recognise
+  const path = decodeURIComponent(publicUrl.slice(idx + marker.length))
+  const { error } = await supabase.storage.from('knowledge-photos').remove([path])
+  if (error) console.warn('[deletePhoto] storage remove failed:', error.message)
 }

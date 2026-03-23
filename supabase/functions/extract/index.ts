@@ -84,7 +84,7 @@ JSON schema:
       "title": "Short actionable directive an operator must follow",
       "category": "one of: Material | Process | Equipment | People | Measurement | Environment",
       "process_area": "use the primary process area above, or a more specific area if mentioned in the narrative",
-      "scope": "specific conditions or constraints where this applies",
+      "scope": "expanded detail, step-by-step instructions, conditions, or context",
       "rationale": "why this rule exists — the consequence of not following it"
     }
   ],
@@ -93,7 +93,7 @@ JSON schema:
       "title": "Short factual observation about how the process behaves",
       "category": "one of: Material | Process | Equipment | People | Measurement | Environment",
       "process_area": "use the primary process area above, or a more specific area if mentioned in the narrative",
-      "scope": "specific conditions under which this is true"
+      "scope": "expanded detail, conditions under which this is true, or additional context"
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FNT, FNTM, iS, STATUSES, formatDate, statusColor, paColor } from '../lib/constants.js'
 import { Badge, Tag, Modal, Field, TypeaheadInput } from './shared.jsx'
-import { fetchRules, fetchComments, fetchVerifications, fetchItemById, createRule, updateRule, requestArchive, confirmArchive, rejectArchive } from '../lib/db.js'
+import { fetchRules, fetchComments, fetchVerifications, fetchItemById, createRule, updateRule, uploadPhoto, deletePhoto, requestArchive, confirmArchive, rejectArchive } from '../lib/db.js'
 import { getUserId } from '../lib/userContext.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
@@ -235,10 +235,29 @@ export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, o
             {/* Verify */}
             <Verifications targetType="rule" targetId={sel.id} />
 
-            {/* Scope */}
-            <DetailSection label="Scope">
-              <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{sel.scope || '—'}</div>
+            {/* Detail */}
+            <DetailSection label="Detail">
+              <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{sel.scope || '—'}</div>
             </DetailSection>
+
+            {/* Photos */}
+            <PhotosSection
+              photos={sel.photos || []}
+              onAdd={async (file) => {
+                const url = await uploadPhoto(file, 'rule', sel.id)
+                const updated = { ...sel, photos: [...(sel.photos || []), url] }
+                await updateRule(sel.id, { title: sel.title, category: sel.category, processArea: sel.processArea, scope: sel.scope, rationale: sel.rationale, status: sel.status, tags: sel.tags, photos: updated.photos, changeNote: 'Added photo' })
+                setSel(updated)
+                setRules(prev => prev.map(r => r.id === sel.id ? updated : r))
+              }}
+              onRemove={async (url) => {
+                const updated = { ...sel, photos: (sel.photos || []).filter(p => p !== url) }
+                await updateRule(sel.id, { title: sel.title, category: sel.category, processArea: sel.processArea, scope: sel.scope, rationale: sel.rationale, status: sel.status, tags: sel.tags, photos: updated.photos, changeNote: 'Removed photo' })
+                await deletePhoto(url)
+                setSel(updated)
+                setRules(prev => prev.map(r => r.id === sel.id ? updated : r))
+              }}
+            />
 
             {/* Rationale */}
             {sel.rationale && (
@@ -363,6 +382,7 @@ function EditRuleForm({ item, onClose, onSavedFull, onArchived, processAreas = [
     tagsInput: (item.tags || []).join(', '),
     changeNote: '',
   })
+  const [photos, setPhotos] = useState(item.photos || [])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [archiveConfirm, setArchiveConfirm] = useState(false)
@@ -400,19 +420,29 @@ function EditRuleForm({ item, onClose, onSavedFull, onArchived, processAreas = [
         </Field>
       </div>
 
-      <Field label="Status">
-        <select value={form.status} onChange={e => set('status', e.target.value)} style={iS}>
-          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-      </Field>
-
-      <Field label="Scope">
-        <textarea value={form.scope} onChange={e => set('scope', e.target.value)} rows={3} style={{ ...iS, resize: 'vertical' }} />
+      <Field label="Detail" hint="Step-by-step instructions, context, conditions — anything beyond the concise title">
+        <textarea value={form.scope} onChange={e => set('scope', e.target.value)} rows={4} style={{ ...iS, resize: 'vertical', whiteSpace: 'pre-wrap' }} />
       </Field>
 
       <Field label="Rationale">
         <textarea value={form.rationale} onChange={e => set('rationale', e.target.value)} rows={3} style={{ ...iS, resize: 'vertical' }} />
       </Field>
+
+      <PhotosSection
+        photos={photos}
+        onAdd={async (file) => {
+          const url = await uploadPhoto(file, 'rule', item.id)
+          const next = [...photos, url]
+          setPhotos(next)
+          await updateRule(item.id, { title: form.title, category: form.category, processArea: form.processArea, scope: form.scope, rationale: form.rationale, status: form.status, tags: form.tagsInput.split(',').map(t => t.trim()).filter(Boolean), photos: next, changeNote: 'Added photo' })
+        }}
+        onRemove={async (url) => {
+          const next = photos.filter(p => p !== url)
+          setPhotos(next)
+          await updateRule(item.id, { title: form.title, category: form.category, processArea: form.processArea, scope: form.scope, rationale: form.rationale, status: form.status, tags: form.tagsInput.split(',').map(t => t.trim()).filter(Boolean), photos: next, changeNote: 'Removed photo' })
+          await deletePhoto(url)
+        }}
+      />
 
       <Field label="Tags" hint="Comma-separated">
         <input value={form.tagsInput} onChange={e => set('tagsInput', e.target.value)} style={iS} />
@@ -485,10 +515,25 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
     title: '', category: '', processArea: '', scope: '', rationale: '',
     status: 'Proposed', tagsInput: '', evidenceText: '',
   })
+  const [stagedFiles, setStagedFiles] = useState([])  // { file, preview }
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  function stagePhoto(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setStagedFiles(prev => [...prev, { file, preview: URL.createObjectURL(file) }])
+    e.target.value = ''
+  }
+
+  function unstagePhoto(idx) {
+    setStagedFiles(prev => {
+      URL.revokeObjectURL(prev[idx].preview)
+      return prev.filter((_, i) => i !== idx)
+    })
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -497,7 +542,14 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
     setError(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
+      // Create the rule first (without photos), then upload and update
       const rule = await createRule({ ...form, tags, plantId })
+      if (stagedFiles.length > 0) {
+        const urls = await Promise.all(stagedFiles.map(s => uploadPhoto(s.file, 'rule', rule.id)))
+        await updateRule(rule.id, { title: rule.title, category: rule.category, processArea: rule.processArea, scope: rule.scope, rationale: rule.rationale, status: rule.status, tags: rule.tags, photos: urls, changeNote: 'Added photos' })
+        rule.photos = urls
+      }
+      stagedFiles.forEach(s => URL.revokeObjectURL(s.preview))
       onCreated(rule)
     } catch (err) {
       setError(err.message)
@@ -520,16 +572,8 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
         </Field>
       </div>
 
-      <Field label="Status">
-        <select value={form.status} onChange={e => set('status', e.target.value)} style={iS}>
-          {STATUSES.filter(s => !['Stale', 'Contradicted', 'Retired'].includes(s)).map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Scope" hint="What conditions or situations does this rule apply to?">
-        <textarea value={form.scope} onChange={e => set('scope', e.target.value)} rows={3} placeholder="e.g. Applies when operating under non-standard conditions or with variable input materials…" style={{ ...iS, resize: 'vertical' }} />
+      <Field label="Detail" hint="Step-by-step instructions, context, conditions — anything beyond the concise title">
+        <textarea value={form.scope} onChange={e => set('scope', e.target.value)} rows={4} placeholder="e.g. Applies when operating under non-standard conditions. Step 1: check material grade. Step 2:…" style={{ ...iS, resize: 'vertical', whiteSpace: 'pre-wrap' }} />
       </Field>
 
       <Field label="Rationale" hint="Why does this rule exist? What's the evidence or reasoning?">
@@ -539,6 +583,9 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] })
       <Field label="Initial Evidence" hint="Optional — describe any observation, incident, or test that supports this rule">
         <textarea value={form.evidenceText} onChange={e => set('evidenceText', e.target.value)} rows={2} placeholder="e.g. Batch #4782 — high proportion of off-spec material resulted in quality failure…" style={{ ...iS, resize: 'vertical' }} />
       </Field>
+
+      {/* Photos (staged before creation) */}
+      <StagedPhotosSection files={stagedFiles} onAdd={stagePhoto} onRemove={unstagePhoto} />
 
       <Field label="Tags" hint="Comma-separated">
         <input value={form.tagsInput} onChange={e => set('tagsInput', e.target.value)} placeholder="e.g. quality, materials, best-practice" style={iS} />
@@ -579,8 +626,8 @@ function LinkedItemDetail({ item, onOpenItem, onViewProfile }) {
 
       {item.scope && (
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Scope</div>
-          <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.scope}</div>
+          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Detail</div>
+          <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{item.scope}</div>
         </div>
       )}
 
@@ -647,6 +694,15 @@ function RuleCard({ item, selected, commentCount, verificationCount, onClick }) 
               {commentCount} comment{commentCount > 1 ? 's' : ''}
             </span>
           )}
+          {(item.photos || []).length > 0 && (
+            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontWeight: 700, fontFamily: FNT }} title={`${item.photos.length} photo${item.photos.length > 1 ? 's' : ''}`}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-1px' }}>
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              {' '}{item.photos.length}
+            </span>
+          )}
         </div>
         <span style={{ fontSize: 9, color: '#D8CEC3', fontFamily: FNT }}>
           created {formatDate(item.createdAt)}
@@ -679,6 +735,107 @@ function DetailSection({ label, children }) {
         {label}
       </div>
       {children}
+    </div>
+  )
+}
+
+const CameraIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-2px', marginRight: 4 }}>
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+)
+
+function PhotosSection({ photos, onAdd, onRemove }) {
+  const [uploading, setUploading] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
+  const [err, setErr] = useState(null)
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true); setErr(null)
+    try { await onAdd(file) } catch (ex) { setErr(ex.message) }
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT }}>Photos</div>
+        <label style={{ cursor: 'pointer', fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+          {uploading ? 'Uploading…' : <><CameraIcon /> Add Photo</>}
+          <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style={{ display: 'none' }} onChange={handleFile} disabled={uploading} />
+        </label>
+      </div>
+      {err && <div style={{ fontSize: 11, color: '#c0392b', marginBottom: 6 }}>{err}</div>}
+      {photos.length === 0 && !uploading && (
+        <div style={{ fontSize: 12, color: '#D8CEC3' }}>No photos attached</div>
+      )}
+      {photos.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {photos.map((url, i) => (
+            <div key={url} style={{ position: 'relative', flexShrink: 0 }}>
+              <img
+                src={url}
+                alt={`Photo ${i + 1}`}
+                onClick={() => setLightbox(url)}
+                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 3, border: '1px solid #D8CEC3', cursor: 'pointer' }}
+              />
+              <button
+                onClick={() => onRemove(url)}
+                title="Remove photo"
+                style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(192,57,43,0.85)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 11, lineHeight: '20px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >×</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}
+        >
+          <img src={lightbox} alt="Full size" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StagedPhotosSection({ files, onAdd, onRemove }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT }}>Photos</div>
+        <label style={{ cursor: 'pointer', fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+          <CameraIcon /> Add Photo
+          <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style={{ display: 'none' }} onChange={onAdd} />
+        </label>
+      </div>
+      {files.length === 0 && (
+        <div style={{ fontSize: 12, color: '#D8CEC3' }}>No photos attached</div>
+      )}
+      {files.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {files.map((f, i) => (
+            <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
+              <img
+                src={f.preview}
+                alt={`Photo ${i + 1}`}
+                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 3, border: '1px solid #D8CEC3' }}
+              />
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                title="Remove photo"
+                style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(192,57,43,0.85)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 11, lineHeight: '20px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >×</button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

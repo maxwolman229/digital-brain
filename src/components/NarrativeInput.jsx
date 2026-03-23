@@ -393,15 +393,15 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
         </div>
       </div>
 
-      {/* Scope */}
+      {/* Detail */}
       {item.scope !== undefined && (
         <div style={{ marginBottom: isRule ? 10 : 0 }}>
-          <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Scope</label>
+          <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Detail</label>
           <input
             value={item.scope || ''}
             onChange={e => onChange({ scope: e.target.value })}
             style={{ ...iS, fontSize: 12 }}
-            placeholder="Specific conditions where this applies..."
+            placeholder="Step-by-step instructions, conditions, context..."
           />
         </div>
       )}

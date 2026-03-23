@@ -66,7 +66,7 @@ RESPONSE FORMAT — respond ONLY with valid JSON. No markdown fences, no prose:
       "category": "Material | Process | Equipment | People | Measurement | Environment",
       "processArea": "specific process area from the conversation",
       "rationale": "why this rule exists — what happened when it was violated",
-      "scope": "specific conditions where this applies"
+      "scope": "expanded detail, step-by-step instructions, conditions, or context"
     }
   ],
   "event": null

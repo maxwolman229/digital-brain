@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
 import { FNT, FNTM, statusColor, formatDate } from '../lib/constants.js'
-import { Badge, Tag } from './shared.jsx'
+import { Badge, Tag, Modal } from './shared.jsx'
 import { useIsMobile } from '../lib/hooks.js'
-import { fetchRules, fetchAssertions, fetchEvents, fetchComments, fetchVerifications, fetchContradictions } from '../lib/db.js'
+import { fetchRules, fetchAssertions, fetchEvents, fetchComments, fetchVerifications, fetchContradictions, updateRule, updateAssertion, uploadPhoto, deletePhoto, requestArchive, confirmArchive, rejectArchive } from '../lib/db.js'
+import { getUserId } from '../lib/userContext.js'
+import Comments from './Comments.jsx'
+import Verifications from './Verifications.jsx'
+import LinkEditor from './LinkEditor.jsx'
 
 // ─── Staleness detection ────────────────────────────────────────────────────────
 const STALE_DAYS = 90
@@ -37,6 +41,7 @@ export default function HealthDashboard({ onNavigate }) {
   const [contradictions, setContradictions] = useState([])
   const [loading, setLoading] = useState(true)
   const [topPeriod, setTopPeriod] = useState('all')
+  const [sel, setSel] = useState(null)
 
   useEffect(() => {
     Promise.all([fetchRules(), fetchAssertions(), fetchEvents(), fetchContradictions()]).then(async ([r, a, ev, ctrs]) => {
@@ -126,6 +131,19 @@ export default function HealthDashboard({ onNavigate }) {
     .slice(0, 20)
 
   const retiredItems = allItems.filter(i => i.status === 'Retired')
+  const pendingArchiveItems = allItems.filter(i => i.status === 'Pending Archive')
+
+  // Helper to find an item by id from either rules or assertions
+  function findItem(id) {
+    return rules.find(r => r.id === id) || assertions.find(a => a.id === id) || null
+  }
+
+  // Update an item in local state after modifications (photos, etc.)
+  function updateLocalItem(updated) {
+    if (updated.type === 'rule') setRules(prev => prev.map(r => r.id === updated.id ? updated : r))
+    else setAssertions(prev => prev.map(a => a.id === updated.id ? updated : a))
+    setSel(updated)
+  }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -180,27 +198,23 @@ export default function HealthDashboard({ onNavigate }) {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-                          <div style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F' }}>
+                          <div
+                            style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F', cursor: 'pointer' }}
+                            onClick={() => { const item = findItem(c.itemA.id); if (item) setSel(item) }}
+                          >
                             <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemA.type} · {c.itemA.id}</div>
                             <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.itemA.title}</div>
                             {c.itemA.processArea && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 3, fontFamily: FNT }}>{c.itemA.processArea}</div>}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#c0392b', fontWeight: 700 }}>⇄</div>
-                          <div style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F' }}>
+                          <div
+                            style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F', cursor: 'pointer' }}
+                            onClick={() => { const item = findItem(c.itemB.id); if (item) setSel(item) }}
+                          >
                             <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemB.type} · {c.itemB.id}</div>
                             <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.itemB.title}</div>
                             {c.itemB.processArea && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 3, fontFamily: FNT }}>{c.itemB.processArea}</div>}
                           </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button
-                            onClick={() => onNavigate?.(c.itemA.type === 'rule' ? 'rules' : 'assertions')}
-                            style={{ padding: '4px 10px', fontSize: 10, background: '#fff', border: '1px solid #D8CEC3', borderRadius: 3, cursor: 'pointer', fontFamily: FNT, fontWeight: 600, color: '#5a5550' }}
-                          >Edit {c.itemA.id}</button>
-                          <button
-                            onClick={() => onNavigate?.(c.itemB.type === 'rule' ? 'rules' : 'assertions')}
-                            style={{ padding: '4px 10px', fontSize: 10, background: '#fff', border: '1px solid #D8CEC3', borderRadius: 3, cursor: 'pointer', fontFamily: FNT, fontWeight: 600, color: '#5a5550' }}
-                          >Edit {c.itemB.id}</button>
                         </div>
                       </div>
                     ))}
@@ -216,7 +230,7 @@ export default function HealthDashboard({ onNavigate }) {
                         <div key={item.id} style={{ padding: '12px 16px', background: '#fff', border: '1px solid #D8CEC3', borderRadius: 3, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
                           <div
                             style={{ flex: 1, cursor: 'pointer' }}
-                            onClick={() => onNavigate?.(item.type === 'rule' ? 'rules' : 'assertions')}
+                            onClick={() => setSel(item)}
                           >
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
                               <span style={{ fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, textDecoration: 'underline' }}>{item.id}</span>
@@ -280,7 +294,7 @@ export default function HealthDashboard({ onNavigate }) {
             {topItems.length > 0 ? topItems.map((item, idx) => (
               <div
                 key={item.id}
-                onClick={() => onNavigate?.(item.type === 'rule' ? 'rules' : 'assertions')}
+                onClick={() => setSel(item)}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 3, marginBottom: 3, background: '#fff', border: '1px solid #e8e4e0', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#f8f6f4'}
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}
@@ -314,12 +328,32 @@ export default function HealthDashboard({ onNavigate }) {
               Retired knowledge is preserved for reference. These items are no longer active but remain part of the plant's institutional memory.
             </div>
 
-            {retiredItems.length === 0 ? (
+            {pendingArchiveItems.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: '#e67e22', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, fontFamily: FNT, fontWeight: 700 }}>Pending Archive</div>
+                {pendingArchiveItems.map(item => (
+                  <div
+                    key={item.id}
+                    onClick={() => setSel(item)}
+                    style={{ padding: '10px 14px', background: '#fef3e2', border: '1px solid #e67e2220', borderRadius: 3, marginBottom: 4, cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, color: '#e67e22', fontFamily: FNT, fontWeight: 600 }}>{item.id}</span>
+                      <Badge label="Pending Archive" colorFn={statusColor} />
+                      {item.processArea && <Tag label={item.processArea} />}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.3 }}>{item.title}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {retiredItems.length === 0 && pendingArchiveItems.length === 0 ? (
               <div style={{ padding: 16, textAlign: 'center', color: '#D8CEC3', fontSize: 12 }}>No retired knowledge yet.</div>
             ) : retiredItems.map(item => (
               <div
                 key={item.id}
-                onClick={() => onNavigate?.(item.type === 'rule' ? 'rules' : 'assertions')}
+                onClick={() => setSel(item)}
                 style={{ padding: '10px 14px', background: '#f8f6f4', border: '1px solid #e8e4e0', borderRadius: 3, marginBottom: 4, cursor: 'pointer', opacity: 0.7 }}
                 onMouseEnter={e => e.currentTarget.style.opacity = '1'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
@@ -337,6 +371,209 @@ export default function HealthDashboard({ onNavigate }) {
         </div>
 
       </div>
+
+      {/* ── Detail Modal ── */}
+      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `${sel.id}${sel.versions?.length ? ' · v' + sel.versions.length : ''}` : ''} width={640}>
+        {sel && (
+          <div>
+            {/* Pending Archive actions for the author */}
+            {sel.status === 'Pending Archive' && getUserId() === sel.createdById && (
+              <div style={{ marginBottom: 16, padding: '12px 14px', background: '#fef3e2', border: '1px solid #e67e2240', borderRadius: 3 }}>
+                <div style={{ fontSize: 12, color: '#e67e22', fontFamily: FNT, fontWeight: 700, marginBottom: 8 }}>
+                  Archive requested for this item — confirm or reject below.
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={async () => {
+                      await confirmArchive(sel.type, sel.id, sel.title)
+                      updateLocalItem({ ...sel, status: 'Retired' })
+                    }}
+                    style={{ padding: '6px 14px', borderRadius: 3, fontSize: 12, background: '#c0392b', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
+                  >Confirm Archive</button>
+                  <button
+                    onClick={async () => {
+                      const prevStatus = await rejectArchive(sel.type, sel.id, sel.title, sel.versions || [])
+                      updateLocalItem({ ...sel, status: prevStatus })
+                    }}
+                    style={{ padding: '6px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}
+                  >Reject Archive</button>
+                </div>
+              </div>
+            )}
+
+            {/* Title + badges */}
+            <h3 style={{ fontSize: 16, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 16, fontFamily: FNT }}>
+              {sel.title}
+            </h3>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+              {sel.status && <Badge label={sel.status} colorFn={statusColor} />}
+              {sel.isContradicted && (
+                <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#fde8e5', color: '#c0392b', fontFamily: FNT, fontWeight: 700, border: '1px solid #c0392b30' }}>⚠ Contradicted</span>
+              )}
+              {sel.category && <Tag label={sel.category} />}
+              {sel.processArea && <Tag label={sel.processArea} />}
+            </div>
+
+            {/* Verify */}
+            <Verifications targetType={sel.type} targetId={sel.id} />
+
+            {/* Detail */}
+            <DetailSection label="Detail">
+              <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{sel.scope || '—'}</div>
+            </DetailSection>
+
+            {/* Photos */}
+            <PhotosSection
+              photos={sel.photos || []}
+              onAdd={async (file) => {
+                const url = await uploadPhoto(file, sel.type, sel.id)
+                const updated = { ...sel, photos: [...(sel.photos || []), url] }
+                const updateFn = sel.type === 'rule' ? updateRule : updateAssertion
+                await updateFn(sel.id, { title: sel.title, category: sel.category, processArea: sel.processArea, scope: sel.scope, rationale: sel.rationale, status: sel.status, tags: sel.tags, photos: updated.photos, changeNote: 'Added photo' })
+                updateLocalItem(updated)
+              }}
+              onRemove={async (url) => {
+                const updated = { ...sel, photos: (sel.photos || []).filter(p => p !== url) }
+                const updateFn = sel.type === 'rule' ? updateRule : updateAssertion
+                await updateFn(sel.id, { title: sel.title, category: sel.category, processArea: sel.processArea, scope: sel.scope, rationale: sel.rationale, status: sel.status, tags: sel.tags, photos: updated.photos, changeNote: 'Removed photo' })
+                await deletePhoto(url)
+                updateLocalItem(updated)
+              }}
+            />
+
+            {/* Rationale (rules only) */}
+            {sel.rationale && (
+              <DetailSection label="Rationale">
+                <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{sel.rationale}</div>
+              </DetailSection>
+            )}
+
+            {/* Evidence */}
+            <DetailSection label="Evidence">
+              {(sel.evidence || []).length === 0 && (
+                <div style={{ fontSize: 12, color: '#D8CEC3' }}>None recorded</div>
+              )}
+              {(sel.evidence || []).map((ev, i) => (
+                <div key={i} style={{ padding: '8px 10px', background: '#f8f6f4', borderRadius: 4, marginBottom: 4, border: '1px solid #D8CEC3' }}>
+                  <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginBottom: 3 }}>
+                    {(ev.type || '').replace(/_/g, ' ').toUpperCase()} · {ev.date}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.4 }}>{ev.text}</div>
+                </div>
+              ))}
+            </DetailSection>
+
+            {/* Links */}
+            <div style={{ marginBottom: 18 }}>
+              <LinkEditor
+                sourceType={sel.type}
+                sourceId={sel.id}
+                onOpenItem={(type, id) => {
+                  const item = findItem(id)
+                  if (item) setSel(item)
+                }}
+                sourceMeta={{ processArea: sel.processArea, category: sel.category, title: sel.title }}
+              />
+            </div>
+
+            {/* Tags */}
+            {(sel.tags || []).length > 0 && (
+              <DetailSection label="Tags">
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {sel.tags.map(t => <Tag key={t} label={t} />)}
+                </div>
+              </DetailSection>
+            )}
+
+            {/* Footer meta */}
+            <div style={{ padding: '10px 0', borderTop: '1px solid #D8CEC3', marginTop: 12, fontSize: 10, color: '#D8CEC3', fontFamily: FNT, lineHeight: 1.8 }}>
+              <div>Created by: {sel.createdBy}</div>
+              <div>Created: {formatDate(sel.createdAt)}</div>
+            </div>
+
+            {/* Comments */}
+            <Comments targetType={sel.type} targetId={sel.id} />
+          </div>
+        )}
+      </Modal>
+    </div>
+  )
+}
+
+// ── Local helper components ──────────────────────────────────────────────────
+
+function DetailSection({ label, children }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>
+        {label}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+const CameraIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-2px', marginRight: 4 }}>
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+)
+
+function PhotosSection({ photos, onAdd, onRemove }) {
+  const [uploading, setUploading] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
+  const [err, setErr] = useState(null)
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true); setErr(null)
+    try { await onAdd(file) } catch (ex) { setErr(ex.message) }
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT }}>Photos</div>
+        <label style={{ cursor: 'pointer', fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+          {uploading ? 'Uploading…' : <><CameraIcon /> Add Photo</>}
+          <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style={{ display: 'none' }} onChange={handleFile} disabled={uploading} />
+        </label>
+      </div>
+      {err && <div style={{ fontSize: 11, color: '#c0392b', marginBottom: 6 }}>{err}</div>}
+      {photos.length === 0 && !uploading && (
+        <div style={{ fontSize: 12, color: '#D8CEC3' }}>No photos attached</div>
+      )}
+      {photos.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {photos.map((url, i) => (
+            <div key={url} style={{ position: 'relative', flexShrink: 0 }}>
+              <img
+                src={url}
+                alt={`Photo ${i + 1}`}
+                onClick={() => setLightbox(url)}
+                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 3, border: '1px solid #D8CEC3', cursor: 'pointer' }}
+              />
+              <button
+                onClick={() => onRemove(url)}
+                title="Remove photo"
+                style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(192,57,43,0.85)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 11, lineHeight: '20px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >×</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}
+        >
+          <img src={lightbox} alt="Full size" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   )
 }

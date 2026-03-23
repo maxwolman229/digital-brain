@@ -840,8 +840,8 @@ function ItemDetailModal({ item, loading, onClose, onNavigate }) {
 
           {item.scope && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Scope</div>
-              <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.scope}</div>
+              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Detail</div>
+              <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{item.scope}</div>
             </div>
           )}
           {item.rationale && (
