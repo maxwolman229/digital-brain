@@ -27,11 +27,6 @@ function QueryItemDetail({ item, onCiteClick }) {
         {item.status && <Badge label={item.status} colorFn={statusColor} />}
         {item.category && <Tag label={item.category} />}
         {item.processArea && <Tag label={item.processArea} />}
-        {item.confidence && (
-          <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, fontWeight: 600, border: '1px solid #D8CEC3' }}>
-            {item.confidence} confidence
-          </span>
-        )}
       </div>
 
       {/* Title */}

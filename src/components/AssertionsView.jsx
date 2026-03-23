@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { FNT, FNTM, iS, STATUSES, CONFIDENCES, formatDate, statusColor } from '../lib/constants.js'
+import { FNT, FNTM, iS, STATUSES, formatDate, statusColor } from '../lib/constants.js'
 import { Badge, Tag, Modal, Field, TypeaheadInput } from './shared.jsx'
-import { fetchAssertions, fetchComments, fetchVerifications, fetchItemById, createAssertion, updateAssertion } from '../lib/db.js'
+import { fetchAssertions, fetchComments, fetchVerifications, fetchItemById, createAssertion, updateAssertion, requestArchive, confirmArchive, rejectArchive } from '../lib/db.js'
+import { getUserId } from '../lib/userContext.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
@@ -183,19 +184,47 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
               </div>
             )}
 
+            {/* Pending Archive actions for the author */}
+            {sel.status === 'Pending Archive' && getUserId() === sel.createdById && (
+              <div style={{ marginBottom: 16, padding: '12px 14px', background: '#fef3e2', border: '1px solid #e67e2240', borderRadius: 3 }}>
+                <div style={{ fontSize: 12, color: '#e67e22', fontFamily: FNT, fontWeight: 700, marginBottom: 8 }}>
+                  Archive requested for this item — confirm or reject below.
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={async () => {
+                      await confirmArchive('assertion', sel.id, sel.title)
+                      const updated = { ...sel, status: 'Retired' }
+                      setSel(updated); setAssertions(prev => prev.map(a => a.id === sel.id ? updated : a)); onItemSaved?.()
+                    }}
+                    style={{ padding: '6px 14px', borderRadius: 3, fontSize: 12, background: '#c0392b', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
+                  >Confirm Archive</button>
+                  <button
+                    onClick={async () => {
+                      const prevStatus = await rejectArchive('assertion', sel.id, sel.title, sel.versions || [])
+                      const updated = { ...sel, status: prevStatus }
+                      setSel(updated); setAssertions(prev => prev.map(a => a.id === sel.id ? updated : a)); onItemSaved?.()
+                    }}
+                    style={{ padding: '6px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}
+                  >Reject Archive</button>
+                </div>
+              </div>
+            )}
+
             {/* Title + badges */}
             <h3 style={{ fontSize: 16, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 16, fontFamily: FNT }}>
               {sel.title}
             </h3>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
               {sel.status && <Badge label={sel.status} colorFn={statusColor} />}
+              {sel.isContradicted && (
+                <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#fde8e5', color: '#c0392b', fontFamily: FNT, fontWeight: 700, border: '1px solid #c0392b30' }}>⚠ Contradicted</span>
+              )}
+              {sel.status === 'Stale' && (
+                <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#fef3e2', color: '#e67e22', fontFamily: FNT, fontWeight: 700, border: '1px solid #e67e2230' }}>⚠ Stale</span>
+              )}
               {sel.category && <Tag label={sel.category} />}
               {sel.processArea && <Tag label={sel.processArea} />}
-              {sel.confidence && (
-                <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, fontWeight: 600, border: '1px solid #D8CEC3' }}>
-                  {sel.confidence} confidence
-                </span>
-              )}
             </div>
 
             {/* Verify */}
@@ -281,6 +310,12 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
               setShowEdit(false)
               onItemSaved?.()
             }}
+            onArchived={(newStatus) => {
+              const updated = { ...sel, status: newStatus }
+              setSel(updated)
+              setAssertions(prev => prev.map(a => a.id === sel.id ? updated : a))
+              onItemSaved?.()
+            }}
           />
         )}
       </Modal>
@@ -305,19 +340,20 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
 
 // ── Edit Assertion form ────────────────────────────────────────────────────────
 
-function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], categories = [] }) {
+function EditAssertionForm({ item, onClose, onSavedFull, onArchived, processAreas = [], categories = [] }) {
   const [form, setForm] = useState({
     title: item.title || '',
     category: item.category || '',
     processArea: item.processArea || '',
     scope: item.scope || '',
-    confidence: item.confidence || 'Medium',
     status: item.status || 'Proposed',
     tagsInput: (item.tags || []).join(', '),
     changeNote: '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [archiveConfirm, setArchiveConfirm] = useState(false)
+  const [archiving, setArchiving] = useState(false)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
@@ -329,7 +365,7 @@ function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], cate
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
       const newVersion = await updateAssertion(item.id, { ...form, tags })
-      onSavedFull({ title: form.title, category: form.category, processArea: form.processArea, scope: form.scope, confidence: form.confidence, status: form.status, tags }, newVersion)
+      onSavedFull({ title: form.title, category: form.category, processArea: form.processArea, scope: form.scope, status: form.status, tags }, newVersion)
     } catch (err) {
       setError(err.message)
       setSaving(false)
@@ -351,18 +387,11 @@ function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], cate
         </Field>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <Field label="Status">
-          <select value={form.status} onChange={e => set('status', e.target.value)} style={iS}>
-            {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </Field>
-        <Field label="Confidence">
-          <select value={form.confidence} onChange={e => set('confidence', e.target.value)} style={iS}>
-            {CONFIDENCES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </Field>
-      </div>
+      <Field label="Status">
+        <select value={form.status} onChange={e => set('status', e.target.value)} style={iS}>
+          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </Field>
 
       <Field label="Scope">
         <textarea value={form.scope} onChange={e => set('scope', e.target.value)} rows={3} style={{ ...iS, resize: 'vertical' }} />
@@ -390,6 +419,44 @@ function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], cate
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
+
+      {/* Archive section */}
+      {!archiveConfirm ? (
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #e8e4e0' }}>
+          <button
+            type="button"
+            onClick={() => setArchiveConfirm(true)}
+            style={{ padding: '6px 14px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid #D8CEC3', color: '#b0a898', cursor: 'pointer', fontFamily: FNT }}
+          >
+            Archive this assertion…
+          </button>
+        </div>
+      ) : (
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #e8e4e0', padding: '12px 14px', background: '#fef3e2', borderRadius: 3 }}>
+          <div style={{ fontSize: 12, color: '#8a8278', fontFamily: FNT, marginBottom: 10 }}>
+            Are you sure you want to archive this? The author will be notified for final confirmation.
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              disabled={archiving}
+              onClick={async () => {
+                setArchiving(true)
+                try {
+                  const result = await requestArchive('assertion', item.id, item.status, item.title, item.createdById)
+                  const newStatus = result.selfArchived ? 'Retired' : 'Pending Archive'
+                  onArchived?.(newStatus)
+                  onClose()
+                } catch (e) { setError(e.message); setArchiving(false); setArchiveConfirm(false) }
+              }}
+              style={{ padding: '6px 14px', borderRadius: 3, fontSize: 12, background: archiving ? '#D8CEC3' : '#c0392b', border: 'none', color: '#fff', cursor: archiving ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700 }}
+            >{archiving ? 'Archiving…' : 'Confirm Archive'}</button>
+            <button type="button" onClick={() => setArchiveConfirm(false)} style={{ padding: '6px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   )
 }
@@ -399,7 +466,7 @@ function EditAssertionForm({ item, onClose, onSavedFull, processAreas = [], cate
 function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = [] }) {
   const [form, setForm] = useState({
     title: '', category: '', processArea: '', scope: '',
-    confidence: 'Medium', status: 'Proposed', tagsInput: '', evidenceText: '',
+    status: 'Proposed', tagsInput: '', evidenceText: '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -436,20 +503,13 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
         </Field>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <Field label="Status">
-          <select value={form.status} onChange={e => set('status', e.target.value)} style={iS}>
-            {STATUSES.filter(s => !['Stale', 'Contradicted', 'Retired'].includes(s)).map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Confidence">
-          <select value={form.confidence} onChange={e => set('confidence', e.target.value)} style={iS}>
-            {CONFIDENCES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </Field>
-      </div>
+      <Field label="Status">
+        <select value={form.status} onChange={e => set('status', e.target.value)} style={iS}>
+          {STATUSES.filter(s => !['Stale', 'Contradicted', 'Retired'].includes(s)).map(s => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </Field>
 
       <Field label="Scope" hint="What conditions or situations does this assertion apply to?">
         <textarea value={form.scope} onChange={e => set('scope', e.target.value)} rows={3} placeholder="e.g. Observed across shredded grade heats from Sims supplier…" style={{ ...iS, resize: 'vertical' }} />
@@ -490,11 +550,6 @@ function LinkedItemDetail({ item, onOpenItem, onViewProfile }) {
         {item.status && <Badge label={item.status} colorFn={statusColor} />}
         {item.category && <Tag label={item.category} />}
         {item.processArea && <Tag label={item.processArea} />}
-        {item.confidence && (
-          <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, fontWeight: 600, border: '1px solid #D8CEC3' }}>
-            {item.confidence} confidence
-          </span>
-        )}
       </div>
 
       <h3 style={{ fontSize: 15, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 16, fontFamily: FNT }}>
@@ -555,6 +610,12 @@ function AssertionCard({ item, selected, commentCount, verificationCount, onClic
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{item.id}</span>
           {item.status && <Badge label={item.status} colorFn={statusColor} />}
+          {item.isContradicted && (
+            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#fde8e5', color: '#c0392b', fontWeight: 700, fontFamily: FNT }}>⚠ Contradicted</span>
+          )}
+          {item.status === 'Stale' && (
+            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#fef3e2', color: '#e67e22', fontWeight: 700, fontFamily: FNT }}>⚠ Stale</span>
+          )}
           {verificationCount > 0 && (
             <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#e6f5f1', color: '#4FA89A', fontWeight: 700, fontFamily: FNT }}>
               ✓ {verificationCount}
@@ -580,11 +641,6 @@ function AssertionCard({ item, selected, commentCount, verificationCount, onClic
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {item.category && <Tag label={item.category} />}
           {item.processArea && <Tag label={item.processArea} />}
-          {item.confidence && (
-            <span style={{ padding: '2px 6px', borderRadius: 2, fontSize: 9, background: '#f8f6f4', color: '#8a8278', fontFamily: FNT, border: '1px solid #e8e4e0' }}>
-              {item.confidence}
-            </span>
-          )}
           {(item.linkedRules || []).length > 0 && (
             <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#4FA89A', fontWeight: 600, fontFamily: FNT }}>
               {(item.linkedRules || []).length} rule{(item.linkedRules || []).length > 1 ? 's' : ''}

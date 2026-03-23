@@ -876,7 +876,6 @@ function KnowledgeItemDetail({ item }) {
         <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 2, fontFamily: FNT, background: sc.bg, color: sc.text, fontWeight: 600 }}>{item.status}</span>
         <Tag label={item.category} />
         {item.processArea && <Tag label={item.processArea} />}
-        <span style={{ fontSize: 9, padding: '3px 7px', borderRadius: 2, background: '#f8f6f4', color: '#8a8278', fontFamily: FNT }}>{item.confidence}</span>
       </div>
 
       <div style={{ fontSize: 15, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 14, fontFamily: FNT }}>

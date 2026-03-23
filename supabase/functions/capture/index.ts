@@ -107,7 +107,6 @@ RESPONSE FORMAT — respond ONLY with valid JSON. No markdown fences, no prose, 
       "category": "Material | Process | Equipment | People | Measurement | Environment",
       "processArea": "specific process area from the interview context",
       "rationale": "why this rule exists — the consequence of ignoring it",
-      "confidence": "Low | Medium | High | Very High",
       "scope": "specific conditions or constraints where this applies"
     },
     {
@@ -116,7 +115,6 @@ RESPONSE FORMAT — respond ONLY with valid JSON. No markdown fences, no prose, 
       "category": "Material | Process | Equipment | People | Measurement | Environment",
       "processArea": "specific process area from the interview context",
       "rationale": "",
-      "confidence": "Low | Medium | High | Very High",
       "scope": "specific conditions or constraints where this applies"
     }
   ]

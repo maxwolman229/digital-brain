@@ -834,7 +834,6 @@ function ItemDetailModal({ item, loading, onClose, onNavigate }) {
             {item.status && <Badge label={item.status} colorFn={statusColor} />}
             {item.category && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: '#8a8278', fontFamily: FNT }}>{item.category}</span>}
             {item.processArea && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: paColor(item.processArea) + '22', color: paColor(item.processArea), fontFamily: FNT, fontWeight: 700 }}>{item.processArea}</span>}
-            {item.confidence && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, border: '1px solid #D8CEC3' }}>{item.confidence} confidence</span>}
           </div>
 
           <div style={{ fontSize: 15, fontWeight: 700, color: '#062044', lineHeight: 1.4, marginBottom: 14, fontFamily: FNT }}>{item.title}</div>

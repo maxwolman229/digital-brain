@@ -414,7 +414,6 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
                           onChange={e => setExtractParsed(p => ({ ...p, assertions: p.assertions.map((x, j) => j === i ? { ...x, title: e.target.value } : x) }))}
                           style={{ ...iS, fontSize: 12, fontWeight: 500, background: '#fff' }}
                         />
-                        <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginTop: 4 }}>Confidence: {a.confidence}</div>
                       </div>
                     ))}
 

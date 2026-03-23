@@ -29,15 +29,6 @@ function Dots() {
   )
 }
 
-function confidenceColor(c) {
-  return ({
-    'Very High': { bg: '#e6f5f1', text: '#2d6b5e' },
-    'High':      { bg: '#e8edf4', text: '#062044' },
-    'Medium':    { bg: '#f0eeec', text: '#8a8278' },
-    'Low':       { bg: '#fef3e2', text: '#F2652F' },
-  })[c] || { bg: '#f0eeec', text: '#8a8278' }
-}
-
 export default function EventCaptureView({ processAreas = [], industry, plantId, onClose, onItemSaved }) {
   const [phase, setPhase] = useState('interview')
 
@@ -308,7 +299,6 @@ export default function EventCaptureView({ processAreas = [], industry, plantId,
               processArea: item.processArea || eventForm.processArea,
               scope: item.scope || '',
               rationale: item.rationale || '',
-              confidence: item.confidence || 'Medium',
               status: 'Proposed',
               tags: [],
               captureSource: `Extracted from Event ${savedEvent.id}`,
@@ -320,7 +310,6 @@ export default function EventCaptureView({ processAreas = [], industry, plantId,
               category: item.category || 'Process',
               processArea: item.processArea || eventForm.processArea,
               scope: item.scope || '',
-              confidence: item.confidence || 'Medium',
               status: 'Proposed',
               tags: [],
               captureSource: `Extracted from Event ${savedEvent.id}`,
@@ -739,7 +728,6 @@ export default function EventCaptureView({ processAreas = [], industry, plantId,
                 reviewItems.map(item => {
                   const isRejected = item.decision === 'rejected'
                   const isApproved = item.decision === 'approved' || item.decision === 'edited'
-                  const cc = confidenceColor(item.confidence)
                   return (
                     <div
                       key={item._id}
@@ -759,9 +747,6 @@ export default function EventCaptureView({ processAreas = [], industry, plantId,
                           color: item.type === 'rule' ? '#062044' : '#8a8278',
                         }}>
                           {item.type}
-                        </span>
-                        <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, fontWeight: 700, fontFamily: FNT, background: cc.bg, color: cc.text }}>
-                          {item.confidence}
                         </span>
                         <div style={{ flex: 1 }} />
                         {/* Approve/reject buttons */}

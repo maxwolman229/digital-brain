@@ -85,8 +85,7 @@ JSON schema:
       "category": "one of: Material | Process | Equipment | People | Measurement | Environment",
       "process_area": "use the primary process area above, or a more specific area if mentioned in the narrative",
       "scope": "specific conditions or constraints where this applies",
-      "rationale": "why this rule exists — the consequence of not following it",
-      "confidence": "one of: Low | Medium | High | Very High"
+      "rationale": "why this rule exists — the consequence of not following it"
     }
   ],
   "assertions": [
@@ -94,8 +93,7 @@ JSON schema:
       "title": "Short factual observation about how the process behaves",
       "category": "one of: Material | Process | Equipment | People | Measurement | Environment",
       "process_area": "use the primary process area above, or a more specific area if mentioned in the narrative",
-      "scope": "specific conditions under which this is true",
-      "confidence": "one of: Low | Medium | High | Very High"
+      "scope": "specific conditions under which this is true"
     }
   ]
 }

@@ -6,15 +6,6 @@ import { getDisplayName, getUserId } from '../lib/userContext.js'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function confidenceColor(c) {
-  return ({
-    'Very High': { bg: '#e6f5f1', text: '#2d6b5e' },
-    'High':      { bg: '#e8edf4', text: '#062044' },
-    'Medium':    { bg: '#f0eeec', text: '#8a8278' },
-    'Low':       { bg: '#fef3e2', text: '#F2652F' },
-  })[c] || { bg: '#f0eeec', text: '#8a8278' }
-}
-
 function getDifficulty(turn) {
   if (turn <= 2) return { level: 1, label: 'Basics' }
   if (turn <= 4) return { level: 2, label: 'Problems' }
@@ -372,7 +363,6 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
             processArea: item.processArea || processArea,
             scope: item.scope || '',
             rationale: item.rationale || '',
-            confidence: item.confidence || 'Medium',
             status: 'Proposed',
             tags: [],
             captureSource,
@@ -384,7 +374,6 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
             category: item.category || 'Process',
             processArea: item.processArea || processArea,
             scope: item.scope || '',
-            confidence: item.confidence || 'Medium',
             status: 'Proposed',
             tags: [],
             captureSource,
@@ -856,11 +845,6 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                   {item.category && !item.editing && (
                     <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>
                       {item.category}
-                    </span>
-                  )}
-                  {item.confidence && !item.editing && (
-                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, fontFamily: FNT, fontWeight: 600, flexShrink: 0, ...confidenceColor(item.confidence) }}>
-                      {item.confidence}
                     </span>
                   )}
                   {isEdited && !item.editing && (

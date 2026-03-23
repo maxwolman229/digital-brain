@@ -1,5 +1,4 @@
-export const STATUSES = ["Proposed", "Active", "Verified", "Established", "Reference", "Stale", "Contradicted", "Retired"];
-export const CONFIDENCES = ["Low", "Medium", "High", "Very High"];
+export const STATUSES = ["Proposed", "Active", "Verified", "Established", "Reference", "Stale", "Contradicted", "Pending Archive", "Retired"];
 export const ISHIKAWA_CATS = ["Material", "Process", "Equipment", "People", "Measurement", "Environment"];
 export const IMPACTS = ["Minor", "Moderate", "Significant", "Major"];
 export const EVENT_STATUSES = ["Open", "Investigating", "Closed"];
@@ -24,11 +23,8 @@ export const iS = {
 export const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-export const confidenceColor = (c) =>
-  ({ Low: { bg: "#fde8e5", text: "#c0392b" }, Medium: { bg: "#fef3e2", text: "#e67e22" }, High: { bg: "#e6f5f1", text: "#4FA89A" }, "Very High": { bg: "#e8edf4", text: "#062044" } }[c] || { bg: "#f0eeec", text: "#888" });
-
 export const statusColor = (s) =>
-  ({ Proposed: { bg: "#fef3e2", text: "#F2652F" }, Active: { bg: "#d4edda", text: "#28a745" }, Verified: { bg: "#a8d8b9", text: "#1e7e34" }, Established: { bg: "#155724", text: "#FFFFFF" }, Reference: { bg: "#e8edf4", text: "#4a6785" }, Stale: { bg: "#fef3e2", text: "#F2652F" }, Contradicted: { bg: "#fde8e5", text: "#c0392b" }, Retired: { bg: "#f0eeec", text: "#999" } }[s] || { bg: "#f0eeec", text: "#999" });
+  ({ Proposed: { bg: "#fef3e2", text: "#F2652F" }, Active: { bg: "#d4edda", text: "#28a745" }, Verified: { bg: "#a8d8b9", text: "#1e7e34" }, Established: { bg: "#155724", text: "#FFFFFF" }, Reference: { bg: "#e8edf4", text: "#4a6785" }, Stale: { bg: "#fef3e2", text: "#F2652F" }, Contradicted: { bg: "#fde8e5", text: "#c0392b" }, "Pending Archive": { bg: "#f0eeec", text: "#8a8278" }, Retired: { bg: "#f0eeec", text: "#999" } }[s] || { bg: "#f0eeec", text: "#999" });
 
 // Consistent color for any process area string via hash → palette
 const PA_PALETTE = ['#F2652F', '#062044', '#4FA89A', '#8a8278', '#c0392b', '#16a085', '#4466AA', '#e67e22']

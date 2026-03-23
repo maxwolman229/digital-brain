@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { FNT, FNTM, iS, CONFIDENCES } from '../lib/constants.js'
+import { FNT, FNTM, iS } from '../lib/constants.js'
 import { Modal, Field, TypeaheadInput, MentionDropdown } from './shared.jsx'
 import { createRule, createAssertion, fetchPlantMembers } from '../lib/db.js'
 import { useMention } from '../lib/useMention.js'
@@ -113,7 +113,6 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
             processArea: item.process_area || form.processArea,
             scope: item.scope || '',
             rationale: item.rationale || '',
-            confidence: item.confidence || 'Medium',
             status: 'Proposed',
             tags: ['narrative-input'],
             captureSource: 'Narrative input',
@@ -127,7 +126,6 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
             category: item.category || '',
             processArea: item.process_area || form.processArea,
             scope: item.scope || '',
-            confidence: item.confidence || 'Medium',
             status: 'Proposed',
             tags: ['narrative-input'],
             captureSource: 'Narrative input',
@@ -373,8 +371,8 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
         />
       </div>
 
-      {/* Category · Process Area · Confidence */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: isRule ? 10 : 0 }}>
+      {/* Category · Process Area */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: isRule ? 10 : 0 }}>
         <div>
           <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Category</label>
           <TypeaheadInput
@@ -391,15 +389,6 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
             onChange={v => onChange({ process_area: v })}
             options={processAreas}
             placeholder="Area..."
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Confidence</label>
-          <TypeaheadInput
-            value={item.confidence || ''}
-            onChange={v => onChange({ confidence: v })}
-            options={CONFIDENCES}
-            placeholder="Confidence..."
           />
         </div>
       </div>

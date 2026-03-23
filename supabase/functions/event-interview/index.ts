@@ -66,7 +66,6 @@ RESPONSE FORMAT — respond ONLY with valid JSON. No markdown fences, no prose:
       "category": "Material | Process | Equipment | People | Measurement | Environment",
       "processArea": "specific process area from the conversation",
       "rationale": "why this rule exists — what happened when it was violated",
-      "confidence": "Low | Medium | High | Very High",
       "scope": "specific conditions where this applies"
     }
   ],
