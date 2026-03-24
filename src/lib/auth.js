@@ -181,9 +181,10 @@ export async function createPlant(orgId, plantName, industry) {
 }
 
 export async function createProfile(userId, displayName, orgId, plantId, role = 'admin') {
+  const row = { user_id: userId, display_name: displayName.trim(), org_id: orgId, plant_id: plantId, role }
   const { data, error } = await supabase
     .from('profiles')
-    .insert({ user_id: userId, display_name: displayName.trim(), org_id: orgId, plant_id: plantId, role })
+    .upsert(row, { onConflict: 'user_id' })
     .select()
     .single()
 
