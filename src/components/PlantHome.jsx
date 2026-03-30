@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { findOrCreateOrg, createPlant, createMembership, joinPlantByCode } from '../lib/auth.js'
+import { findOrCreateOrg, createPlant, createMembership, claimApprovedInvites, fetchMemberships } from '../lib/auth.js'
 
 const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
 const FNTM = "'IBM Plex Mono', 'Courier New', monospace"
@@ -46,10 +46,9 @@ function ErrorBox({ msg }) {
 
 const roleColors = { admin: '#4FA89A', contributor: '#b0e0ff', viewer: '#8a8278' }
 
-export default function PlantHome({ userId, profile, memberships, onJoined, onSwitchPlant }) {
+export default function PlantHome({ userId, email, profile, memberships, onJoined, onSwitchPlant, onMembershipsChanged }) {
   const navigate = useNavigate()
-  const [panel, setPanel] = useState(null) // null | 'join' | 'create'
-  const [joinCode, setJoinCode] = useState('')
+  const [panel, setPanel] = useState(null) // null | 'create'
   const [orgName, setOrgName] = useState('')
   const [plantName, setPlantName] = useState('')
   const [industry, setIndustry] = useState('')
@@ -58,21 +57,19 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  function resetPanels() {
-    setPanel(null); setJoinCode(''); setOrgName(''); setPlantName(''); setIndustry(''); setShortCode(''); setError(null)
-  }
+  // On mount, claim any approved invites for this user's email
+  useEffect(() => {
+    if (!email || !userId) return
+    claimApprovedInvites(userId, email).then(async (claimed) => {
+      if (claimed.length > 0) {
+        const updated = await fetchMemberships(userId)
+        onMembershipsChanged?.(updated)
+      }
+    }).catch(() => {})
+  }, [userId, email])
 
-  async function handleJoin() {
-    if (!joinCode.trim()) { setError('Enter an invite code.'); return }
-    setSaving(true); setError(null)
-    try {
-      const membership = await joinPlantByCode(joinCode)
-      onJoined(membership)
-      navigate('/app')
-    } catch (err) {
-      setError(err.message)
-    }
-    setSaving(false)
+  function resetPanels() {
+    setPanel(null); setOrgName(''); setPlantName(''); setIndustry(''); setShortCode(''); setError(null)
   }
 
   async function handleCreate() {
@@ -90,7 +87,6 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
         plantId: plant.id,
         plantName: plant.name,
         processAreas: plant.process_areas || [],
-        inviteCode: plant.invite_code,
         orgId: org.id,
         orgName: org.name,
         industry: plant.industry || industry,
@@ -183,66 +179,18 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
           </div>
         )}
 
-        {/* Join / Create panel toggles */}
+        {/* Create plant button */}
         {!panel && (
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              onClick={() => { setPanel('join'); setError(null) }}
-              style={{
-                flex: 1, padding: '12px', borderRadius: 3, fontSize: 12,
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
-                color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontFamily: FNT, fontWeight: 700,
-              }}
-            >
-              + Join a Plant
-            </button>
-            <button
-              onClick={() => { setPanel('create'); setError(null) }}
-              style={{
-                flex: 1, padding: '12px', borderRadius: 3, fontSize: 12,
-                background: '#FFFFFF', border: 'none',
-                color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700,
-              }}
-            >
-              + Create a Plant
-            </button>
-          </div>
-        )}
-
-        {/* Join panel */}
-        {panel === 'join' && (
-          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, padding: '24px 24px 20px' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Join a Plant</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 20, lineHeight: 1.6 }}>
-              Enter the 8-character invite code from your plant administrator.
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelS}>Invite Code</label>
-              <input
-                style={{ ...iS, textTransform: 'uppercase', letterSpacing: 3, fontSize: 16, fontWeight: 700 }}
-                type="text"
-                value={joinCode}
-                onChange={e => setJoinCode(e.target.value.toUpperCase())}
-                onKeyDown={e => e.key === 'Enter' && handleJoin()}
-                placeholder="XXXXXXXX"
-                maxLength={8}
-                autoFocus
-              />
-            </div>
-            {error && <ErrorBox msg={error} />}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={resetPanels} style={{ padding: '10px 16px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontFamily: FNT }}>
-                ← Back
-              </button>
-              <button
-                onClick={handleJoin}
-                disabled={saving}
-                style={{ flex: 1, padding: '10px', borderRadius: 3, fontSize: 12, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, opacity: saving ? 0.6 : 1 }}
-              >
-                {saving ? 'Joining…' : 'Join Plant →'}
-              </button>
-            </div>
-          </div>
+          <button
+            onClick={() => { setPanel('create'); setError(null) }}
+            style={{
+              width: '100%', padding: '12px', borderRadius: 3, fontSize: 12,
+              background: '#FFFFFF', border: 'none',
+              color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700,
+            }}
+          >
+            + Create a Plant
+          </button>
         )}
 
         {/* Create panel */}
@@ -250,7 +198,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, padding: '24px 24px 20px' }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Create a Plant</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 20, lineHeight: 1.6 }}>
-              You'll be set as admin and receive an invite code to share with your team.
+              You'll be set as admin. Invite your team by email from the Members page.
             </div>
 
             <div style={{ marginBottom: 14 }}>

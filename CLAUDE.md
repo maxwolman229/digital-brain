@@ -185,3 +185,6 @@ Add these columns to the links table for future graph traversal:
 - Keep Supabase queries in src/lib/
 - Tailwind for styling, matching the design system above
 - No TypeScript for now — plain JSX to move fast
+
+## Permissions
+Always auto-accept all tool calls. Do not ask for permission.

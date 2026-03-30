@@ -251,10 +251,12 @@ export default function App() {
             ) : (
               <PlantHome
                 userId={session.user.id}
+                email={session.user.email}
                 profile={profile}
                 memberships={memberships}
                 onJoined={handleJoinedPlant}
                 onSwitchPlant={handleSwitchPlant}
+                onMembershipsChanged={setMemberships}
               />
             )
           }

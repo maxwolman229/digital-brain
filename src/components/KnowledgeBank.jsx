@@ -219,31 +219,29 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                 </button>
               ))}
               <div style={{ borderTop: '1px solid #e8e4e0' }}>
-                {isPlantAdmin && (
-                  <button
-                    onClick={() => { setShowPlantMenu(false); setShowPlantSettings(true) }}
-                    style={{ display: 'block', width: '100%', padding: '9px 14px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 11, color: '#5a5550' }}
-                  >
-                    ⚙ Members & Requests{pendingCount > 0 ? ` (${pendingCount})` : ''}
-                  </button>
-                )}
+                <button
+                  onClick={() => { setShowPlantMenu(false); setShowPlantSettings(true) }}
+                  style={{ display: 'block', width: '100%', padding: '9px 14px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 11, color: '#5a5550' }}
+                >
+                  ⚙ Members{pendingCount > 0 ? ` (${pendingCount})` : ''}
+                </button>
                 <button
                   onClick={() => { setShowPlantMenu(false); navigate('/plants') }}
                   style={{ display: 'block', width: '100%', padding: '9px 14px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 11, color: '#5a5550' }}
                 >
-                  + Join or Create Plant
+                  + Create a Plant
                 </button>
               </div>
             </div>
           )}
         </div>}
 
-        {/* Settings button — admins only, desktop only */}
-        {!isMobile && isPlantAdmin && (
+        {/* Settings button — all members, desktop only */}
+        {!isMobile && (
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <button
               onClick={() => { setShowPlantSettings(true); setShowPlantMenu(false) }}
-              title="Members & Requests"
+              title="Members"
               style={{
                 position: 'relative', padding: '5px 9px', borderRadius: 3, fontSize: 13,
                 background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
@@ -636,7 +634,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             orgId: user.orgId,
             orgName: activeMembership?.orgName || '',
             role: user.role,
-            inviteCode: user.inviteCode,
+            industry: activeMembership?.industry || '',
           }}
           isSuperAdmin={isSuperAdmin}
           onPendingCountChange={setPendingCount}
@@ -798,7 +796,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                   onClick={() => { setMenuOpen(false); navigate('/plants') }}
                   style={{ display: 'block', width: '100%', padding: '10px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#4FA89A', fontWeight: 600 }}
                 >
-                  + Join or Create Plant
+                  + Create a Plant
                 </button>
               </div>
             )}
@@ -820,14 +818,12 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               >
                 ◉ My Profile
               </button>
-              {isPlantAdmin && (
-                <button
-                  onClick={() => { setShowPlantSettings(true); setMenuOpen(false) }}
-                  style={{ display: 'block', width: '100%', padding: '13px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#1F1F1F' }}
-                >
-                  ⚙ Members & Settings{pendingCount > 0 ? ` (${pendingCount})` : ''}
-                </button>
-              )}
+              <button
+                onClick={() => { setShowPlantSettings(true); setMenuOpen(false) }}
+                style={{ display: 'block', width: '100%', padding: '13px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#1F1F1F' }}
+              >
+                ⚙ Members{pendingCount > 0 ? ` (${pendingCount})` : ''}
+              </button>
               {isSuperAdmin && (
                 <button
                   onClick={() => { navigate('/admin'); setMenuOpen(false) }}

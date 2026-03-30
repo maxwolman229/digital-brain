@@ -290,7 +290,6 @@ async function _buildMemberships(membRows) {
       plantId: m.plant_id,
       plantName: plant.name || 'Unknown Plant',
       processAreas: plant.process_areas || [],
-      inviteCode: plant.invite_code || '',
       orgId: plant.org_id,
       orgName: org.name || '',
       industry: plant.industry || '',
@@ -301,50 +300,138 @@ async function _buildMemberships(membRows) {
   })
 }
 
-export async function joinPlantByCode(inviteCode) {
+// ─── Plant invites ───────────────────────────────────────────────────────────
+
+export async function sendPlantInvite(plantId, email) {
   const jwt = getStoredJwt()
   if (!jwt) throw new Error('Not authenticated')
-
   const payload = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
   const userId = payload.sub
 
-  const { data: plant, error: plantErr } = await supabase
-    .from('plants')
-    .select('id, name, org_id, process_areas, invite_code, industry')
-    .eq('invite_code', inviteCode.trim().toUpperCase())
-    .single()
-
-  if (plantErr || !plant) throw new Error('Invalid invite code. Please check and try again.')
-
-  const { data: membership, error: mErr } = await supabase
-    .from('plant_memberships')
-    .insert({ user_id: userId, plant_id: plant.id, role: 'contributor' })
+  const { data, error } = await supabase
+    .from('plant_invites')
+    .insert({ plant_id: plantId, email: email.trim().toLowerCase(), invited_by: userId })
     .select()
     .single()
 
-  if (mErr) {
-    if (mErr.code === '23505') throw new Error('You are already a member of this plant.')
-    throw new Error(mErr.message)
+  if (error) {
+    if (error.code === '23505') throw new Error('This email has already been invited to this plant.')
+    throw new Error(error.message)
+  }
+  return data
+}
+
+export async function fetchPlantInvites(plantId) {
+  const { data, error } = await supabase
+    .from('plant_invites')
+    .select('id, email, status, invited_by, reviewed_by, created_at, updated_at')
+    .eq('plant_id', plantId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  // Resolve inviter names
+  const inviterIds = [...new Set((data || []).map(i => i.invited_by).filter(Boolean))]
+  let nameMap = {}
+  if (inviterIds.length) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, display_name')
+      .in('user_id', inviterIds)
+    profiles?.forEach(p => { nameMap[p.user_id] = p.display_name })
   }
 
-  let orgName = ''
-  if (plant.org_id) {
-    const { data: org } = await supabase.from('organisations').select('name').eq('id', plant.org_id).single()
-    orgName = org?.name || ''
+  return (data || []).map(i => ({
+    id: i.id,
+    email: i.email,
+    status: i.status,
+    invitedByName: nameMap[i.invited_by] || 'Unknown',
+    createdAt: i.created_at,
+  }))
+}
+
+export async function approveInvite(inviteId) {
+  const jwt = getStoredJwt()
+  if (!jwt) throw new Error('Not authenticated')
+  const payload = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+  const adminUserId = payload.sub
+
+  // Fetch the invite
+  const { data: invite, error: fetchErr } = await supabase
+    .from('plant_invites')
+    .select('id, email, plant_id, status')
+    .eq('id', inviteId)
+    .single()
+
+  if (fetchErr || !invite) throw new Error('Invite not found.')
+  if (invite.status !== 'pending') throw new Error('Invite is no longer pending.')
+
+  // Update invite status
+  const { error: updateErr } = await supabase
+    .from('plant_invites')
+    .update({ status: 'approved', reviewed_by: adminUserId, updated_at: new Date().toISOString() })
+    .eq('id', inviteId)
+
+  if (updateErr) throw new Error(updateErr.message)
+
+  // Check if the invited user already has an account and create membership
+  let targetUserId = null
+  try {
+    const { data: rpcResult } = await supabase.rpc('get_user_id_by_email', { lookup_email: invite.email })
+    targetUserId = rpcResult
+  } catch {
+    // RPC not yet deployed — user will get membership via claimApprovedInvites on login
   }
 
-  return {
-    membershipId: membership.id,
-    plantId: plant.id,
-    plantName: plant.name,
-    processAreas: plant.process_areas || [],
-    inviteCode: plant.invite_code,
-    orgId: plant.org_id,
-    orgName,
-    industry: plant.industry || '',
-    role: 'contributor',
-    joinedAt: membership.joined_at,
+  if (targetUserId) {
+    const { error: mErr } = await supabase
+      .from('plant_memberships')
+      .insert({ user_id: targetUserId, plant_id: invite.plant_id, role: 'contributor', invited_by: adminUserId })
+      .select()
+      .single()
+    if (mErr && mErr.code !== '23505') throw new Error(mErr.message)
   }
+
+  return { approved: true, userExists: !!targetUserId }
+}
+
+export async function rejectInvite(inviteId) {
+  const jwt = getStoredJwt()
+  if (!jwt) throw new Error('Not authenticated')
+  const payload = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+  const adminUserId = payload.sub
+
+  const { error } = await supabase
+    .from('plant_invites')
+    .update({ status: 'rejected', reviewed_by: adminUserId, updated_at: new Date().toISOString() })
+    .eq('id', inviteId)
+
+  if (error) throw new Error(error.message)
+}
+
+// Called after signup to check if this user's email has any approved invites
+// and auto-create memberships for them.
+export async function claimApprovedInvites(userId, email) {
+  const { data: invites } = await supabase
+    .from('plant_invites')
+    .select('id, plant_id, invited_by')
+    .eq('email', email.toLowerCase())
+    .eq('status', 'approved')
+
+  if (!invites?.length) return []
+
+  const claimed = []
+  for (const inv of invites) {
+    const { error } = await supabase
+      .from('plant_memberships')
+      .insert({ user_id: userId, plant_id: inv.plant_id, role: 'contributor', invited_by: inv.invited_by })
+      .select()
+      .single()
+    if (!error || error.code === '23505') {
+      claimed.push(inv.plant_id)
+    }
+  }
+  return claimed
 }
 
 export async function fetchPlantMembers(plantId) {

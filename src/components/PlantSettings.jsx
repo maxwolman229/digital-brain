@@ -1,33 +1,17 @@
-import { useState, useEffect, useRef } from 'react'
-import { fetchPlantMembers, updateMemberRole, removeMember } from '../lib/auth.js'
-import { getStoredJwt } from '../lib/supabase.js'
+import { useState, useEffect } from 'react'
+import {
+  fetchPlantMembers, updateMemberRole, removeMember,
+  sendPlantInvite, fetchPlantInvites, approveInvite, rejectInvite,
+} from '../lib/auth.js'
 import { deletePlant } from '../lib/db.js'
 
 const FNT  = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
-const FNTM = "'IBM Plex Mono', 'Courier New', monospace"
-
-const BEVCAN_PLANT_ID = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-const SUPABASE_URL    = import.meta.env.VITE_SUPABASE_URL
 
 const ROLES = ['admin', 'contributor', 'viewer']
+const roleColor = { admin: '#4FA89A', contributor: '#5a8cc0', viewer: '#8a8278' }
 
-// ── Edge function helper ───────────────────────────────────────────────────────
-async function callAdmin(action, params = {}) {
-  const jwt = getStoredJwt()
-  const resp = await fetch(`${SUPABASE_URL}/functions/v1/bevcan-admin`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${jwt}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ action, ...params }),
-  })
-  const json = await resp.json()
-  if (!resp.ok) throw new Error(json.error || 'Admin request failed')
-  return json
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-// ── Small helpers ──────────────────────────────────────────────────────────────
 const initials = name => {
   if (!name) return '?'
   const parts = name.trim().split(/\s+/)
@@ -41,26 +25,25 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-// ── Tab button ─────────────────────────────────────────────────────────────────
+const statusBadge = {
+  pending:  { bg: '#FFF3E0', color: '#E65100', label: 'Pending' },
+  approved: { bg: '#E8F5E9', color: '#2E7D32', label: 'Approved' },
+  rejected: { bg: '#FFEBEE', color: '#C62828', label: 'Rejected' },
+}
+
+// ── Tab button ────────────────────────────────────────────────────────────────
+
 function TabBtn({ id, active, onClick, children }) {
   return (
     <button
       onClick={() => onClick(id)}
       style={{
-        padding: '10px 16px',
-        background: 'none',
-        border: 'none',
+        padding: '10px 16px', background: 'none', border: 'none',
         borderBottom: `2px solid ${active ? '#4FA89A' : 'transparent'}`,
-        color: active ? '#062044' : '#8a8278',
-        fontSize: 11,
-        fontWeight: active ? 700 : 500,
-        letterSpacing: 1,
-        textTransform: 'uppercase',
-        cursor: 'pointer',
-        fontFamily: FNT,
-        marginBottom: -1,
-        transition: 'color 0.15s',
-        whiteSpace: 'nowrap',
+        color: active ? '#062044' : '#8a8278', fontSize: 11,
+        fontWeight: active ? 700 : 500, letterSpacing: 1,
+        textTransform: 'uppercase', cursor: 'pointer', fontFamily: FNT,
+        marginBottom: -1, transition: 'color 0.15s', whiteSpace: 'nowrap',
       }}
     >
       {children}
@@ -68,186 +51,106 @@ function TabBtn({ id, active, onClick, children }) {
   )
 }
 
-// ── PENDING TAB ────────────────────────────────────────────────────────────────
-function PendingTab({ onCountChange }) {
-  const [apps, setApps]       = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(null)
-  const [busy, setBusy]       = useState({}) // appId → 'approve'|'reject'
+// ── INVITE FORM (visible to all members) ──────────────────────────────────────
 
-  useEffect(() => { load() }, [])
+function InviteForm({ plantId, onSent }) {
+  const [email, setEmail] = useState('')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
 
-  async function load() {
-    setLoading(true)
-    setError(null)
+  async function handleSend() {
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError('Enter a valid email address.')
+      return
+    }
+    setSending(true); setError(null); setSuccess(null)
     try {
-      const { applications } = await callAdmin('list')
-      const pending = (applications || []).filter(a => a.status === 'pending')
-      setApps(pending)
-      onCountChange?.(pending.length)
+      await sendPlantInvite(plantId, trimmed)
+      setSuccess(`Invite sent to ${trimmed}`)
+      setEmail('')
+      onSent?.()
+      setTimeout(() => setSuccess(null), 3000)
     } catch (err) {
       setError(err.message)
     }
-    setLoading(false)
+    setSending(false)
   }
-
-  async function approve(app) {
-    if (!window.confirm(`Approve ${app.full_name || app.nickname}?`)) return
-    setBusy(b => ({ ...b, [app.id]: 'approve' }))
-    try {
-      await callAdmin('approve', { application_id: app.id })
-      setApps(prev => prev.filter(a => a.id !== app.id))
-      onCountChange?.(c => Math.max(0, c - 1))
-    } catch (err) {
-      setError(err.message)
-    }
-    setBusy(b => { const n = { ...b }; delete n[app.id]; return n })
-  }
-
-  async function reject(app) {
-    if (!window.confirm(`Reject ${app.full_name || app.nickname}?`)) return
-    setBusy(b => ({ ...b, [app.id]: 'reject' }))
-    try {
-      await callAdmin('reject', { application_id: app.id })
-      setApps(prev => prev.filter(a => a.id !== app.id))
-      onCountChange?.(c => Math.max(0, c - 1))
-    } catch (err) {
-      setError(err.message)
-    }
-    setBusy(b => { const n = { ...b }; delete n[app.id]; return n })
-  }
-
-  if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: '#b0a898', fontFamily: FNT }}>Loading applications…</div>
 
   return (
-    <div>
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginBottom: 8 }}>
+        Invite someone by email address. An admin will need to approve them.
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="email"
+          value={email}
+          onChange={e => { setEmail(e.target.value); setError(null) }}
+          onKeyDown={e => e.key === 'Enter' && handleSend()}
+          placeholder="colleague@company.com"
+          style={{
+            flex: 1, padding: '9px 12px', fontSize: 13, fontFamily: FNT,
+            border: '1px solid #D8CEC3', borderRadius: 3, outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+        <button
+          onClick={handleSend}
+          disabled={sending}
+          style={{
+            padding: '9px 16px', borderRadius: 3, fontSize: 11, fontWeight: 700,
+            background: '#062044', border: 'none', color: '#fff',
+            cursor: sending ? 'default' : 'pointer', fontFamily: FNT,
+            opacity: sending ? 0.6 : 1, flexShrink: 0,
+          }}
+        >
+          {sending ? 'Sending…' : 'Send Invite'}
+        </button>
+      </div>
       {error && (
-        <div style={{ padding: '8px 12px', marginBottom: 16, background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', borderRadius: 3, fontSize: 12, color: '#e74c3c', fontFamily: FNT }}>
-          {error}
-        </div>
+        <div style={{ marginTop: 6, fontSize: 11, color: '#e74c3c', fontFamily: FNT }}>{error}</div>
       )}
-
-      {apps.length === 0 ? (
-        <div style={{ padding: '32px 0', textAlign: 'center' }}>
-          <div style={{ fontSize: 24, marginBottom: 8 }}>✓</div>
-          <div style={{ fontSize: 13, color: '#b0a898', fontFamily: FNT }}>No pending applications</div>
-        </div>
-      ) : (
-        apps.map(app => (
-          <div key={app.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0eeec' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>
-                {initials(app.full_name || app.nickname)}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#062044' }}>
-                  {app.full_name}
-                  {app.nickname && app.nickname !== app.full_name && (
-                    <span style={{ fontSize: 11, fontWeight: 400, color: '#8a8278', marginLeft: 6 }}>"{app.nickname}"</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 11, color: '#5a5550', marginTop: 2, fontFamily: FNT }}>
-                  {[app.current_position, app.current_company].filter(Boolean).join(' at ')}
-                </div>
-                {app.year_joined_industry && (
-                  <div style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT }}>
-                    In industry since {app.year_joined_industry}
-                  </div>
-                )}
-                <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginTop: 4 }}>
-                  Applied {fmtDate(app.applied_at)}
-                  {app.email && <span> · {app.email}</span>}
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 10, marginLeft: 48 }}>
-              <button
-                onClick={() => approve(app)}
-                disabled={!!busy[app.id]}
-                style={{
-                  padding: '6px 14px', borderRadius: 3, fontSize: 11,
-                  background: busy[app.id] === 'approve' ? '#3a8a7e' : '#4FA89A',
-                  border: 'none', color: '#fff', cursor: busy[app.id] ? 'default' : 'pointer',
-                  fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4, transition: 'background 0.15s',
-                }}
-              >
-                {busy[app.id] === 'approve' ? '…' : 'Approve'}
-              </button>
-              <button
-                onClick={() => reject(app)}
-                disabled={!!busy[app.id]}
-                style={{
-                  padding: '6px 14px', borderRadius: 3, fontSize: 11,
-                  background: 'transparent', border: '1px solid #D8CEC3',
-                  color: busy[app.id] === 'reject' ? '#b0a898' : '#8a8278',
-                  cursor: busy[app.id] ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 600,
-                }}
-              >
-                {busy[app.id] === 'reject' ? '…' : 'Reject'}
-              </button>
-            </div>
-          </div>
-        ))
+      {success && (
+        <div style={{ marginTop: 6, fontSize: 11, color: '#4FA89A', fontFamily: FNT }}>{success}</div>
       )}
     </div>
   )
 }
 
-// ── MEMBERS TAB ────────────────────────────────────────────────────────────────
-function MembersTab({ plantId, isBevCan }) {
+// ── MEMBERS LIST (visible to all members) ─────────────────────────────────────
+
+function MembersList({ plantId, isAdmin }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => { load() }, [plantId])
 
   async function load() {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
-      if (isBevCan) {
-        const { members: m } = await callAdmin('list_members')
-        setMembers(m || [])
-      } else {
-        const m = await fetchPlantMembers(plantId)
-        setMembers(m)
-      }
-    } catch (err) {
-      setError(err.message)
-    }
+      const m = await fetchPlantMembers(plantId)
+      setMembers(m)
+    } catch (err) { setError(err.message) }
     setLoading(false)
   }
 
   async function handleRoleChange(membershipId, role) {
     try {
-      if (isBevCan) {
-        await callAdmin('change_role', { membership_id: membershipId, role })
-      } else {
-        await updateMemberRole(membershipId, role)
-      }
-      setMembers(prev => prev.map(m =>
-        (m.membershipId || m.id) === membershipId ? { ...m, role } : m
-      ))
-    } catch (err) {
-      setError(err.message)
-    }
+      await updateMemberRole(membershipId, role)
+      setMembers(prev => prev.map(m => m.membershipId === membershipId ? { ...m, role } : m))
+    } catch (err) { setError(err.message) }
   }
 
   async function handleRemove(membershipId, name) {
     if (!window.confirm(`Remove ${name} from this plant?`)) return
     try {
-      if (isBevCan) {
-        await callAdmin('remove_member', { membership_id: membershipId })
-      } else {
-        await removeMember(membershipId)
-      }
-      setMembers(prev => prev.filter(m => (m.membershipId || m.id) !== membershipId))
-    } catch (err) {
-      setError(err.message)
-    }
+      await removeMember(membershipId)
+      setMembers(prev => prev.filter(m => m.membershipId !== membershipId))
+    } catch (err) { setError(err.message) }
   }
-
-  const roleColor = { admin: '#4FA89A', contributor: '#5a8cc0', viewer: '#8a8278' }
 
   if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: '#b0a898', fontFamily: FNT }}>Loading members…</div>
 
@@ -261,34 +164,24 @@ function MembersTab({ plantId, isBevCan }) {
       <div style={{ fontSize: 11, color: '#b0a898', marginBottom: 12, fontFamily: FNT }}>
         {members.length} member{members.length !== 1 ? 's' : ''}
       </div>
-      {members.length === 0 ? (
-        <div style={{ fontSize: 12, color: '#b0a898', fontFamily: FNT }}>No members found.</div>
-      ) : (
-        members.map(m => {
-          const mid  = m.membershipId || m.id
-          const name = m.displayName || m.nickname || 'Unknown'
-          const extra = isBevCan
-            ? [m.currentPosition, m.currentCompany].filter(Boolean).join(' at ')
-            : m.invitedBy ? `Invited by ${m.invitedBy}` : ''
-          return (
-            <div key={mid} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #f0eeec' }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-                {initials(name)}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#062044', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {name}
-                  {isBevCan && m.ruleCount > 0 && (
-                    <span style={{ fontSize: 10, color: '#4FA89A', marginLeft: 8, fontWeight: 400 }}>
-                      {m.ruleCount} rule{m.ruleCount !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-                {extra && <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>{extra}</div>}
-              </div>
+      {members.map(m => (
+        <div key={m.membershipId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #f0eeec' }}>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+            {initials(m.displayName)}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#062044', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {m.displayName}
+            </div>
+            <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>
+              Joined {fmtDate(m.joinedAt)}
+            </div>
+          </div>
+          {isAdmin ? (
+            <>
               <select
                 value={m.role}
-                onChange={e => handleRoleChange(mid, e.target.value)}
+                onChange={e => handleRoleChange(m.membershipId, e.target.value)}
                 style={{
                   padding: '4px 8px', borderRadius: 3, fontSize: 11, fontFamily: FNT,
                   border: '1px solid #D8CEC3', background: '#f4f1ed',
@@ -298,77 +191,162 @@ function MembersTab({ plantId, isBevCan }) {
                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
               <button
-                onClick={() => handleRemove(mid, name)}
+                onClick={() => handleRemove(m.membershipId, m.displayName)}
                 style={{ padding: '4px 8px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid #D8CEC3', color: '#b0a898', cursor: 'pointer', fontFamily: FNT, flexShrink: 0 }}
                 title="Remove member"
               >
                 ✕
               </button>
+            </>
+          ) : (
+            <span style={{ fontSize: 11, fontWeight: 700, color: roleColor[m.role] || '#8a8278', fontFamily: FNT, textTransform: 'capitalize' }}>
+              {m.role}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── PENDING INVITES (admin only) ──────────────────────────────────────────────
+
+function PendingInvites({ plantId, onCountChange }) {
+  const [invites, setInvites] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [busy, setBusy] = useState({})
+
+  useEffect(() => { load() }, [plantId])
+
+  async function load() {
+    setLoading(true); setError(null)
+    try {
+      const all = await fetchPlantInvites(plantId)
+      setInvites(all)
+      onCountChange?.(all.filter(i => i.status === 'pending').length)
+    } catch (err) { setError(err.message) }
+    setLoading(false)
+  }
+
+  async function handleApprove(inv) {
+    setBusy(b => ({ ...b, [inv.id]: 'approve' }))
+    try {
+      await approveInvite(inv.id)
+      setInvites(prev => prev.map(i => i.id === inv.id ? { ...i, status: 'approved' } : i))
+      onCountChange?.(c => typeof c === 'function' ? c : Math.max(0, invites.filter(i => i.status === 'pending' && i.id !== inv.id).length))
+    } catch (err) { setError(err.message) }
+    setBusy(b => { const n = { ...b }; delete n[inv.id]; return n })
+  }
+
+  async function handleReject(inv) {
+    setBusy(b => ({ ...b, [inv.id]: 'reject' }))
+    try {
+      await rejectInvite(inv.id)
+      setInvites(prev => prev.map(i => i.id === inv.id ? { ...i, status: 'rejected' } : i))
+      onCountChange?.(invites.filter(i => i.status === 'pending' && i.id !== inv.id).length)
+    } catch (err) { setError(err.message) }
+    setBusy(b => { const n = { ...b }; delete n[inv.id]; return n })
+  }
+
+  if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: '#b0a898', fontFamily: FNT }}>Loading invites…</div>
+
+  const pending = invites.filter(i => i.status === 'pending')
+  const history = invites.filter(i => i.status !== 'pending')
+
+  return (
+    <div>
+      {error && (
+        <div style={{ padding: '8px 12px', marginBottom: 12, background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', borderRadius: 3, fontSize: 12, color: '#e74c3c', fontFamily: FNT }}>
+          {error}
+        </div>
+      )}
+
+      {/* Pending */}
+      {pending.length === 0 ? (
+        <div style={{ padding: '24px 0', textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: '#b0a898', fontFamily: FNT }}>No pending invites</div>
+        </div>
+      ) : (
+        pending.map(inv => (
+          <div key={inv.id} style={{ padding: '12px 0', borderBottom: '1px solid #f0eeec' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#062044', fontFamily: FNT }}>{inv.email}</div>
+                <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginTop: 2 }}>
+                  Invited by {inv.invitedByName} · {fmtDate(inv.createdAt)}
+                </div>
+              </div>
+              <button
+                onClick={() => handleApprove(inv)}
+                disabled={!!busy[inv.id]}
+                style={{
+                  padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 700,
+                  background: busy[inv.id] === 'approve' ? '#3a8a7e' : '#4FA89A',
+                  border: 'none', color: '#fff',
+                  cursor: busy[inv.id] ? 'default' : 'pointer', fontFamily: FNT,
+                }}
+              >
+                {busy[inv.id] === 'approve' ? '…' : 'Approve'}
+              </button>
+              <button
+                onClick={() => handleReject(inv)}
+                disabled={!!busy[inv.id]}
+                style={{
+                  padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 600,
+                  background: 'transparent', border: '1px solid #D8CEC3',
+                  color: busy[inv.id] === 'reject' ? '#b0a898' : '#8a8278',
+                  cursor: busy[inv.id] ? 'default' : 'pointer', fontFamily: FNT,
+                }}
+              >
+                {busy[inv.id] === 'reject' ? '…' : 'Reject'}
+              </button>
             </div>
-          )
-        })
+          </div>
+        ))
+      )}
+
+      {/* History */}
+      {history.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: FNT, marginBottom: 8 }}>
+            Invite History
+          </div>
+          {history.map(inv => {
+            const badge = statusBadge[inv.status] || statusBadge.pending
+            return (
+              <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f8f6f4' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT }}>{inv.email}</div>
+                  <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>{fmtDate(inv.createdAt)}</div>
+                </div>
+                <span style={{
+                  padding: '3px 8px', borderRadius: 3, fontSize: 10, fontWeight: 700,
+                  background: badge.bg, color: badge.color, fontFamily: FNT,
+                }}>
+                  {badge.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )
 }
 
-// ── INVITE TAB ─────────────────────────────────────────────────────────────────
-function InviteTab({ inviteCode }) {
-  const [copied, setCopied] = useState(false)
+// ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 
-  function copyCode() {
-    navigator.clipboard.writeText(inviteCode || '').then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }
-
-  if (!inviteCode) {
-    return <div style={{ fontSize: 13, color: '#b0a898', fontFamily: FNT, padding: '12px 0' }}>No invite code set for this plant.</div>
-  }
-
-  return (
-    <div>
-      <div style={{ marginBottom: 8, fontSize: 11, color: '#8a8278', fontFamily: FNT }}>
-        Share this code so team members can join the plant.
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
-        <div style={{
-          flex: 1, padding: '14px 18px', background: '#f4f1ed',
-          border: '1px solid #D8CEC3', borderRadius: 3,
-          fontFamily: FNT, fontSize: 26, fontWeight: 700,
-          letterSpacing: 8, color: '#062044',
-        }}>
-          {inviteCode}
-        </div>
-        <button
-          onClick={copyCode}
-          style={{
-            padding: '14px 18px', borderRadius: 3, fontSize: 11,
-            background: copied ? '#4FA89A' : '#062044', border: 'none',
-            color: '#fff', cursor: 'pointer', fontFamily: FNT,
-            fontWeight: 700, flexShrink: 0, transition: 'background 0.15s',
-          }}
-        >
-          {copied ? '✓ Copied' : 'Copy'}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ── MAIN COMPONENT ─────────────────────────────────────────────────────────────
 export default function PlantSettings({ membership, isSuperAdmin, onClose, onPendingCountChange, onDeleted }) {
-  const isBevCan  = membership.plantId === BEVCAN_PLANT_ID
-  const isAdmin   = membership.role === 'admin' || isSuperAdmin
-  const showPending = isBevCan && isAdmin
+  const isAdmin = membership.role === 'admin' || isSuperAdmin
 
-  const [tab, setTab]               = useState(showPending ? 'pending' : 'members')
-  const [pendingCount, setPending]  = useState(0)
+  const [tab, setTab] = useState('members')
+  const [pendingCount, setPending] = useState(0)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
-  const [deleting, setDeleting]     = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  const [inviteRefresh, setInviteRefresh] = useState(0)
 
   function handleCountChange(val) {
     const next = typeof val === 'function' ? val(pendingCount) : val
@@ -378,8 +356,7 @@ export default function PlantSettings({ membership, isSuperAdmin, onClose, onPen
 
   async function handleDeletePlant() {
     if (deleteConfirmText !== membership.plantName) return
-    setDeleting(true)
-    setDeleteError(null)
+    setDeleting(true); setDeleteError(null)
     try {
       await deletePlant(membership.plantId)
       onClose()
@@ -401,51 +378,48 @@ export default function PlantSettings({ membership, isSuperAdmin, onClose, onPen
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: '#062044', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: FNT }}>{membership.plantName}</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: FNT, marginTop: 2, textTransform: 'capitalize', letterSpacing: 0.4 }}>
-              {membership.orgName ? `${membership.orgName} · ` : ''}{membership.role}
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: FNT, marginTop: 2, letterSpacing: 0.4 }}>
+              {membership.orgName ? `${membership.orgName} · ` : ''}{membership.industry ? `${membership.industry} · ` : ''}{membership.role}
             </div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '2px 6px', fontFamily: FNT }}>✕</button>
         </div>
 
         {/* Tabs */}
-        {isAdmin && (
-          <div style={{ display: 'flex', borderBottom: '1px solid #e8e4e0', paddingLeft: 20, paddingRight: 20, background: '#fff', flexShrink: 0 }}>
-            {showPending && (
-              <TabBtn id="pending" active={tab === 'pending'} onClick={setTab}>
-                Pending {pendingCount > 0 && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 16, height: 16, background: '#e74c3c', color: '#fff', borderRadius: 8, fontSize: 9, fontWeight: 700, marginLeft: 5, padding: '0 4px' }}>
-                    {pendingCount}
-                  </span>
-                )}
-              </TabBtn>
-            )}
-            <TabBtn id="members" active={tab === 'members'} onClick={setTab}>Members</TabBtn>
-            <TabBtn id="invite"  active={tab === 'invite'}  onClick={setTab}>Invite</TabBtn>
-          </div>
-        )}
+        <div style={{ display: 'flex', borderBottom: '1px solid #e8e4e0', paddingLeft: 20, paddingRight: 20, background: '#fff', flexShrink: 0 }}>
+          <TabBtn id="members" active={tab === 'members'} onClick={setTab}>Members</TabBtn>
+          {isAdmin && (
+            <TabBtn id="pending" active={tab === 'pending'} onClick={setTab}>
+              Pending {pendingCount > 0 && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 16, height: 16, background: '#e74c3c', color: '#fff', borderRadius: 8, fontSize: 9, fontWeight: 700, marginLeft: 5, padding: '0 4px' }}>
+                  {pendingCount}
+                </span>
+              )}
+            </TabBtn>
+          )}
+        </div>
 
         {/* Content */}
         <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
-          {tab === 'pending' && (
-            <PendingTab onCountChange={handleCountChange} />
-          )}
+
           {tab === 'members' && (
-            <MembersTab plantId={membership.plantId} isBevCan={isBevCan} />
-          )}
-          {tab === 'invite' && (
-            <InviteTab inviteCode={membership.inviteCode} />
+            <div>
+              {/* Invite form — all members */}
+              <InviteForm
+                plantId={membership.plantId}
+                onSent={() => setInviteRefresh(r => r + 1)}
+              />
+              {/* Member list */}
+              <MembersList plantId={membership.plantId} isAdmin={isAdmin} />
+            </div>
           )}
 
-          {/* Non-admin view */}
-          {!isAdmin && (
-            <div>
-              {membership.inviteCode && <InviteTab inviteCode={membership.inviteCode} />}
-              <div style={{ fontSize: 13, color: '#5a5550', lineHeight: 1.7, marginTop: 20 }}>
-                You are a <strong style={{ color: '#062044' }}>{membership.role}</strong> of this plant.
-                Contact an admin to change your role.
-              </div>
-            </div>
+          {tab === 'pending' && isAdmin && (
+            <PendingInvites
+              key={inviteRefresh}
+              plantId={membership.plantId}
+              onCountChange={handleCountChange}
+            />
           )}
 
           {/* Danger Zone — super admins only */}
