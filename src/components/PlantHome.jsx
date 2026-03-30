@@ -53,12 +53,13 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
   const [orgName, setOrgName] = useState('')
   const [plantName, setPlantName] = useState('')
   const [industry, setIndustry] = useState('')
+  const [shortCode, setShortCode] = useState('')
   const [showIndustrySuggestions, setShowIndustrySuggestions] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
   function resetPanels() {
-    setPanel(null); setJoinCode(''); setOrgName(''); setPlantName(''); setIndustry(''); setError(null)
+    setPanel(null); setJoinCode(''); setOrgName(''); setPlantName(''); setIndustry(''); setShortCode(''); setError(null)
   }
 
   async function handleJoin() {
@@ -77,10 +78,12 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
   async function handleCreate() {
     if (!orgName.trim()) { setError('Organisation name is required.'); return }
     if (!plantName.trim()) { setError('Plant name is required.'); return }
+    const code = shortCode.trim().toUpperCase()
+    if (!code || !/^[A-Z]{2,4}$/.test(code)) { setError('Plant code must be 2–4 letters (e.g. EAF, BEV).'); return }
     setSaving(true); setError(null)
     try {
       const org = await findOrCreateOrg(orgName)
-      const plant = await createPlant(org.id, plantName, industry)
+      const plant = await createPlant(org.id, plantName, industry, code)
       await createMembership(userId, plant.id, 'admin')
       const membership = {
         membershipId: null,
@@ -91,6 +94,7 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
         orgId: org.id,
         orgName: org.name,
         industry: plant.industry || industry,
+        shortCode: plant.short_code || code,
         role: 'admin',
         joinedAt: new Date().toISOString(),
       }
@@ -260,6 +264,21 @@ export default function PlantHome({ userId, profile, memberships, onJoined, onSw
             <div style={{ marginBottom: 14 }}>
               <label style={labelS}>Plant Name</label>
               <input style={iS} type="text" value={plantName} onChange={e => setPlantName(e.target.value)} placeholder="e.g. Contrecoeur Meltshop" />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelS}>Plant Code (2–4 letters)</label>
+              <input
+                style={{ ...iS, textTransform: 'uppercase', letterSpacing: 3, fontSize: 15, fontWeight: 700, fontFamily: FNTM, maxWidth: 140 }}
+                type="text"
+                value={shortCode}
+                onChange={e => setShortCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4))}
+                placeholder="EAF"
+                maxLength={4}
+              />
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 4, fontFamily: FNT }}>
+                Used in IDs like R-EAF-001. Must be unique across all plants.
+              </div>
             </div>
 
             <div style={{ marginBottom: 14, position: 'relative' }}>

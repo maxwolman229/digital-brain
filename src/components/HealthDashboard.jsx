@@ -202,7 +202,7 @@ export default function HealthDashboard({ onNavigate }) {
                             style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F', cursor: 'pointer' }}
                             onClick={() => { const item = findItem(c.itemA.id); if (item) setSel(item) }}
                           >
-                            <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemA.type} · {c.itemA.id}</div>
+                            <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemA.type} · {c.itemA.displayId}</div>
                             <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.itemA.title}</div>
                             {c.itemA.processArea && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 3, fontFamily: FNT }}>{c.itemA.processArea}</div>}
                           </div>
@@ -211,7 +211,7 @@ export default function HealthDashboard({ onNavigate }) {
                             style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F', cursor: 'pointer' }}
                             onClick={() => { const item = findItem(c.itemB.id); if (item) setSel(item) }}
                           >
-                            <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemB.type} · {c.itemB.id}</div>
+                            <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemB.type} · {c.itemB.displayId}</div>
                             <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.itemB.title}</div>
                             {c.itemB.processArea && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 3, fontFamily: FNT }}>{c.itemB.processArea}</div>}
                           </div>
@@ -233,7 +233,7 @@ export default function HealthDashboard({ onNavigate }) {
                             onClick={() => setSel(item)}
                           >
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
-                              <span style={{ fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, textDecoration: 'underline' }}>{item.id}</span>
+                              <span style={{ fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, textDecoration: 'underline' }}>{item.displayId}</span>
                               <Badge label={item.status} colorFn={statusColor} />
                               <span style={{ fontSize: 10, color: '#F2652F', fontFamily: FNT, fontWeight: 600 }}>{st.daysSince}d without activity</span>
                             </div>
@@ -300,7 +300,7 @@ export default function HealthDashboard({ onNavigate }) {
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}
               >
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#D8CEC3', fontFamily: FNT, width: 24, textAlign: 'right', flexShrink: 0 }}>{idx + 1}</span>
-                <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, width: 40, flexShrink: 0 }}>{item.id}</span>
+                <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, width: 40, flexShrink: 0 }}>{item.displayId}</span>
                 <Badge label={item.status} colorFn={statusColor} />
                 <div style={{ flex: 1, fontSize: 12, color: '#1F1F1F', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}</div>
                 {(verifications[item.id] || []).length > 0 && (
@@ -338,7 +338,7 @@ export default function HealthDashboard({ onNavigate }) {
                     style={{ padding: '10px 14px', background: '#fef3e2', border: '1px solid #e67e2220', borderRadius: 3, marginBottom: 4, cursor: 'pointer' }}
                   >
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 10, color: '#e67e22', fontFamily: FNT, fontWeight: 600 }}>{item.id}</span>
+                      <span style={{ fontSize: 10, color: '#e67e22', fontFamily: FNT, fontWeight: 600 }}>{item.displayId}</span>
                       <Badge label="Pending Archive" colorFn={statusColor} />
                       {item.processArea && <Tag label={item.processArea} />}
                     </div>
@@ -359,7 +359,7 @@ export default function HealthDashboard({ onNavigate }) {
                 onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
               >
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{item.id}</span>
+                  <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{item.displayId}</span>
                   <Badge label="Retired" colorFn={statusColor} />
                   {item.processArea && <Tag label={item.processArea} />}
                 </div>
@@ -373,7 +373,7 @@ export default function HealthDashboard({ onNavigate }) {
       </div>
 
       {/* ── Detail Modal ── */}
-      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `${sel.id}${sel.versions?.length ? ' · v' + sel.versions.length : ''}` : ''} width={640}>
+      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `${sel.displayId}${sel.versions?.length ? ' · v' + sel.versions.length : ''}` : ''} width={640}>
         {sel && (
           <div>
             {/* Pending Archive actions for the author */}

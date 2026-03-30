@@ -96,19 +96,22 @@ function QueryItemDetail({ item, onCiteClick }) {
   )
 }
 
-// Parse Claude's response and make [R-001], [A-002], [E-003] clickable
-function AnswerText({ text, onCiteClick }) {
-  const parts = text.split(/(\[(?:R|A|E)-\d+\])/)
+// Parse Claude's response and make [R-EAF-001], [A-BEV-002] etc. clickable
+function AnswerText({ text, onCiteClick, sources }) {
+  const parts = text.split(/(\[(?:R|A|E)-[A-Z]{2,4}-\d{3,}\])/)
   return (
     <>
       {parts.map((part, i) => {
-        const m = part.match(/^\[(R|A|E)-(\d+)\]$/)
+        const m = part.match(/^\[(R|A|E)-[A-Z]{2,4}-(\d{3,})\]$/)
         if (m) {
-          const id = `${m[1]}-${m[2]}`
+          const displayId = part.slice(1, -1) // e.g. "R-EAF-001"
+          const typePrefix = m[1] // R, A, or E
+          // Find the source to get the actual DB id for navigation
+          const source = sources?.find(s => (s.displayId || s.id) === displayId)
           return (
             <span
               key={i}
-              onClick={() => onCiteClick(id, m[1])}
+              onClick={() => onCiteClick(source?.id || displayId, typePrefix)}
               style={{ color: '#4FA89A', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#4FA89A40' }}
             >{part}</span>
           )
@@ -127,14 +130,14 @@ function SourceChips({ sources, onCiteClick }) {
       {sources.map(s => (
         <button
           key={s.id}
-          onClick={() => onCiteClick(s.id, s.id[0])}
+          onClick={() => onCiteClick(s.id, (s.displayId || s.id)[0])}
           style={{
             padding: '3px 10px', borderRadius: 3, fontSize: 10, cursor: 'pointer',
             background: '#f0eeec', border: '1px solid #D8CEC3', fontFamily: FNT,
             display: 'flex', alignItems: 'center', gap: 5,
           }}
         >
-          <span style={{ color: paColor(s.processArea), fontWeight: 700 }}>{s.id}</span>
+          <span style={{ color: paColor(s.processArea), fontWeight: 700 }}>{s.displayId || s.id}</span>
           <span style={{ color: '#8a8278' }}>{s.title.length > 40 ? s.title.slice(0, 40) + '…' : s.title}</span>
           {s.status && <Badge label={s.status} colorFn={statusColor} />}
         </button>
@@ -317,7 +320,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
               }}>
                 {msg.role === 'assistant' ? (
                   <>
-                    <AnswerText text={msg.text} onCiteClick={handleCiteClick} />
+                    <AnswerText text={msg.text} onCiteClick={handleCiteClick} sources={msg.sources} />
                     {!msg.isError && (
                       <SourceChips sources={msg.sources} onCiteClick={handleCiteClick} />
                     )}
@@ -395,7 +398,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
       <Modal
         open={detailLoading || !!detailItem}
         onClose={() => { setDetailItem(null); setDetailLoading(false) }}
-        title={detailItem ? detailItem.id : '…'}
+        title={detailItem ? (detailItem.displayId || detailItem.id) : '…'}
         width={640}
       >
         {detailLoading && (
@@ -410,7 +413,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
       <Modal
         open={crossLoading || !!crossItem}
         onClose={() => { setCrossItem(null); setCrossLoading(false) }}
-        title={crossItem ? crossItem.id : '…'}
+        title={crossItem ? (crossItem.displayId || crossItem.id) : '…'}
         width={580}
       >
         {crossLoading && (

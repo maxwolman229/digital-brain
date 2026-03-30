@@ -326,7 +326,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
       </div>
 
       {/* ── Detail modal ── */}
-      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `Event ${sel.id}` : ''} width={760}>
+      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `Event ${sel.displayId}` : ''} width={760}>
         {sel && (() => {
           const me = getDisplayName()
           const canEdit = me && (sel.reportedBy === me || (sel.taggedPeople || []).includes(me))
@@ -474,7 +474,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
       <Modal
         open={!!knowledgeItemSel}
         onClose={() => setKnowledgeItemSel(null)}
-        title={knowledgeItemDetail ? `${knowledgeItemDetail.type === 'rule' ? 'Rule' : 'Assertion'} ${knowledgeItemDetail.id}` : '…'}
+        title={knowledgeItemDetail ? `${knowledgeItemDetail.type === 'rule' ? 'Rule' : 'Assertion'} ${knowledgeItemDetail.displayId}` : '…'}
         width={620}
       >
         {knowledgeItemLoading && (
@@ -936,7 +936,7 @@ function EventCard({ ev, selected, onClick, knowledgeCount }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{ev.id}</span>
+          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{ev.displayId}</span>
           <Badge label={ev.outcome} colorFn={outcomeColor} />
           <Badge label={ev.impact} colorFn={impactColor} />
           <Badge label={ev.status} colorFn={eventStatusColor} />

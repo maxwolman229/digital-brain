@@ -157,7 +157,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
         const sa = (i / Math.max(groups[pa].length, 1)) * Math.PI * 2
         const sr = 28 + groups[pa].length * 13
         nodes.push({
-          id: item.id, label: item.id, title: item.title || '',
+          id: item.id, label: item.displayId || item.id, title: item.title || '',
           type: item.type, processArea: item.processArea || 'Other',
           category: item.category, confidence: item.confidence, status: item.status,
           x: gx + Math.cos(sa) * sr + (Math.random() - 0.5) * 12,
@@ -824,7 +824,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
 
 function ItemDetailModal({ item, loading, onClose, onNavigate }) {
   return (
-    <Modal open={!!(item || loading)} title={item ? `${item.id}${item.versions?.length ? ' · v' + item.versions.length : ''}` : 'Loading…'} onClose={onClose} width={640}>
+    <Modal open={!!(item || loading)} title={item ? `${item.displayId || item.id}${item.versions?.length ? ' · v' + item.versions.length : ''}` : 'Loading…'} onClose={onClose} width={640}>
       {loading && (
         <div style={{ padding: '40px 0', textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 13 }}>Loading…</div>
       )}

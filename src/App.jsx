@@ -12,6 +12,7 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 import BevCanSignup from './components/BevCanSignup.jsx'
 import BevCanPending from './components/BevCanPending.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
+import ResetPassword from './components/ResetPassword.jsx'
 
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
   const [memberships, setMemberships] = useState([])
   const [activePlantId, setActivePlantId] = useState(null)
   const [pendingDisplayName, setPendingDisplayName] = useState('')
+  const [recoveryToken, setRecoveryToken] = useState(null)
 
   // Activate a plant: update userContext (synchronous module store), localStorage, and React state
   function activateContext(p, membs, plantId) {
@@ -46,6 +48,19 @@ export default function App() {
       setMemberships([])
       setActivePlantId(null)
     })
+
+    // Detect Supabase recovery token in URL hash (#access_token=...&type=recovery)
+    const hash = window.location.hash.substring(1)
+    if (hash) {
+      const params = new URLSearchParams(hash)
+      if (params.get('type') === 'recovery' && params.get('access_token')) {
+        setRecoveryToken(params.get('access_token'))
+        // Clean the hash from the URL
+        window.history.replaceState(null, '', window.location.pathname)
+        setLoading(false)
+        return
+      }
+    }
 
     async function restore() {
       const s = getRestoredSession()
@@ -132,6 +147,19 @@ export default function App() {
     inviteCode: activeMembership.inviteCode,
     plantName: activeMembership.plantName,
   } : null
+
+  // Password recovery flow — show reset form regardless of route
+  if (recoveryToken) {
+    return (
+      <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={<ResetPassword accessToken={recoveryToken} />} />
+        </Routes>
+      </BrowserRouter>
+      </ErrorBoundary>
+    )
+  }
 
   return (
     <ErrorBoundary>

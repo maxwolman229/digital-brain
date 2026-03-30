@@ -126,7 +126,7 @@ export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, o
       </div>
 
       {/* ── Detail Modal ── */}
-      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `${sel.id}${sel.versions?.length ? ' · v' + sel.versions.length : ''}` : ''} width={640}>
+      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `${sel.displayId}${sel.versions?.length ? ' · v' + sel.versions.length : ''}` : ''} width={640}>
         {sel && (
           <div>
             {/* Action row */}
@@ -182,7 +182,7 @@ export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, o
                     <button
                       onClick={() => openLinkedItem(l.linkedType, l.linkedId)}
                       style={{ background: 'none', border: 'none', padding: 0, color: '#c0392b', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontSize: 12, fontFamily: FNT }}
-                    >{l.linkedId}</button>
+                    >{l.linkedDisplayId}</button>
                     {' — '}{l.linkedTitle}
                   </div>
                 ))}
@@ -317,7 +317,7 @@ export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, o
       </Modal>
 
       {/* ── Cross-type linked item detail (stacked) ── */}
-      <Modal open={!!crossSel} onClose={() => setCrossSel(null)} title={crossSel ? crossSel.id : ''} width={580}>
+      <Modal open={!!crossSel} onClose={() => setCrossSel(null)} title={crossSel?.data?.displayId || crossSel?.id || ''} width={580}>
         {crossLoading && (
           <div style={{ padding: 40, textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
@@ -327,7 +327,7 @@ export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, o
       </Modal>
 
       {/* ── Edit Rule form ── */}
-      <Modal open={showEdit && !!sel} onClose={() => setShowEdit(false)} title={`Edit ${sel?.id}`} width={600}>
+      <Modal open={showEdit && !!sel} onClose={() => setShowEdit(false)} title={`Edit ${sel?.displayId}`} width={600}>
         {sel && (
           <EditRuleForm
             item={sel}
@@ -357,6 +357,7 @@ export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, o
           onClose={onAddFormClose}
           processAreas={processAreas}
           categories={categories}
+          plantId={plantId}
           onCreated={rule => {
             setRules(prev => [rule, ...prev])
             onAddFormClose()
@@ -510,7 +511,7 @@ function EditRuleForm({ item, onClose, onSavedFull, onArchived, processAreas = [
 
 // ── Add Rule form ──────────────────────────────────────────────────────────────
 
-function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [] }) {
+function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [], plantId }) {
   const [form, setForm] = useState({
     title: '', category: '', processArea: '', scope: '', rationale: '',
     status: 'Proposed', tagsInput: '', evidenceText: '',
@@ -676,7 +677,7 @@ function RuleCard({ item, selected, commentCount, verificationCount, onClick }) 
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{item.id}</span>
+          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{item.displayId}</span>
           {item.status && <Badge label={item.status} colorFn={statusColor} />}
           {item.isContradicted && (
             <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#fde8e5', color: '#c0392b', fontWeight: 700, fontFamily: FNT }}>⚠ Contradicted</span>

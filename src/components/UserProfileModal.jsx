@@ -172,8 +172,8 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
                               <span style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT }}>
                                 {new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                               </span>
-                              {item.id && (
-                                <span style={{ fontSize: 9, color: '#D8CEC3', fontFamily: FNTM }}>{item.id}</span>
+                              {(item.displayId || item.id) && (
+                                <span style={{ fontSize: 9, color: '#D8CEC3', fontFamily: FNTM }}>{item.displayId || item.id}</span>
                               )}
                             </div>
                           </div>

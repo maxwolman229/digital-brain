@@ -297,9 +297,9 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
                         <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>
                           {new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
-                        {item.id && (
+                        {(item.displayId || item.id) && (
                           <span style={{ fontSize: 10, color: '#D8CEC3', fontFamily: FNTM }}>
-                            {item.id}
+                            {item.displayId || item.id}
                           </span>
                         )}
                         {item.status && (() => {

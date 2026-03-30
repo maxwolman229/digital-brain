@@ -169,10 +169,12 @@ export async function findOrCreateOrg(name) {
   return data
 }
 
-export async function createPlant(orgId, plantName, industry) {
+export async function createPlant(orgId, plantName, industry, shortCode) {
+  const row = { org_id: orgId, name: plantName.trim(), industry: industry?.trim() || null }
+  if (shortCode?.trim()) row.short_code = shortCode.trim().toUpperCase()
   const { data, error } = await supabase
     .from('plants')
-    .insert({ org_id: orgId, name: plantName.trim(), industry: industry?.trim() || null })
+    .insert(row)
     .select()
     .single()
 
@@ -253,10 +255,19 @@ export async function fetchMemberships(userId) {
 
 async function _buildMemberships(membRows) {
   const plantIds = membRows.map(m => m.plant_id)
-  const { data: plants } = await supabase
+  let { data: plants, error: plantsErr } = await supabase
     .from('plants')
-    .select('id, name, org_id, process_areas, invite_code, industry')
+    .select('id, name, org_id, process_areas, invite_code, industry, short_code')
     .in('id', plantIds)
+
+  // If short_code column doesn't exist yet (migration not run), retry without it
+  if (plantsErr) {
+    const retry = await supabase
+      .from('plants')
+      .select('id, name, org_id, process_areas, invite_code, industry')
+      .in('id', plantIds)
+    plants = retry.data
+  }
 
   const plantMap = {}
   plants?.forEach(p => { plantMap[p.id] = p })
@@ -283,6 +294,7 @@ async function _buildMemberships(membRows) {
       orgId: plant.org_id,
       orgName: org.name || '',
       industry: plant.industry || '',
+      shortCode: plant.short_code || '',
       role: m.role,
       joinedAt: m.joined_at,
     }

@@ -155,11 +155,11 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
     const createdAssertionIds = []
 
     for (const r of extractParsed.rules) {
-      const saved = await addRuleFromExtraction({ ...r, processArea: sel.processArea, createdAt: now, captureSource: `Extracted from Question ${sel.id}` })
+      const saved = await addRuleFromExtraction({ ...r, processArea: sel.processArea, createdAt: now, captureSource: `Extracted from Question ${sel.displayId || sel.id}` })
       if (saved) createdRuleIds.push(saved.id)
     }
     for (const a of extractParsed.assertions) {
-      const saved = await addAssertionFromExtraction({ ...a, processArea: sel.processArea, createdAt: now, captureSource: `Extracted from Question ${sel.id}` })
+      const saved = await addAssertionFromExtraction({ ...a, processArea: sel.processArea, createdAt: now, captureSource: `Extracted from Question ${sel.displayId || sel.id}` })
       if (saved) createdAssertionIds.push(saved.id)
     }
 
@@ -293,7 +293,7 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
       <Modal
         open={!!sel}
         onClose={() => { setSel(null); setExtractParsed(null); setExtractError(null) }}
-        title={sel ? `${sel.id} — ${sel.status === 'open' ? 'Answer this Question' : 'Question Detail'}` : ''}
+        title={sel ? `${sel.displayId || sel.id} — ${sel.status === 'open' ? 'Answer this Question' : 'Question Detail'}` : ''}
         width={680}
       >
         {sel && (
@@ -553,7 +553,7 @@ function QuestionCard({ q, onClick }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{q.id}</span>
+          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{q.displayId || q.id}</span>
           <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 2, background: isOpen ? '#fef3e2' : '#e6f5f1', color: isOpen ? '#F2652F' : '#4FA89A', fontWeight: 700, fontFamily: FNT }}>
             {isOpen ? 'OPEN' : 'ANSWERED'}
           </span>

@@ -161,7 +161,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
               }}
             >
               <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>
-                {link.linkedId}
+                {link.linkedDisplayId || link.linkedId}
               </span>
               <span style={{ fontSize: 11, color: '#1F1F1F', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {link.linkedTitle}
@@ -217,7 +217,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
                   <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 2, flexShrink: 0, background: s.type === 'rule' ? '#e8edf4' : '#f0eeec', color: s.type === 'rule' ? '#062044' : '#8a8278', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase' }}>
                     {s.type}
                   </span>
-                  <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>{s.id}</span>
+                  <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>{s.displayId || s.id}</span>
                   <span style={{ fontSize: 11, color: '#1F1F1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</span>
                   <button
                     onClick={() => { setSelected(s); setSuggestions([]) }}
@@ -265,7 +265,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
                   }}>
                     {r.type}
                   </span>
-                  <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>{r.id}</span>
+                  <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>{r.displayId || r.id}</span>
                   <span style={{ fontSize: 11, color: '#1F1F1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
                   {r.processArea && (
                     <span style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, flexShrink: 0 }}>{r.processArea}</span>
@@ -278,7 +278,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
           {/* Selected target indicator */}
           {selected && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 8px', background: '#e6f5f1', borderRadius: 3, marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 700 }}>{selected.id}</span>
+              <span style={{ fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 700 }}>{selected.displayId || selected.id}</span>
               <span style={{ fontSize: 11, color: '#1F1F1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.title}</span>
               <button
                 onClick={() => { setSelected(null); setSearch('') }}
@@ -319,7 +319,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
                 {relLabel(relType)}
               </span>
               {' '}→{' '}
-              <span style={{ color: '#4FA89A', fontWeight: 600 }}>{selected.id}</span>
+              <span style={{ color: '#4FA89A', fontWeight: 600 }}>{selected.displayId || selected.id}</span>
               {' '}{selected.title}
             </div>
           )}

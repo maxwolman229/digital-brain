@@ -121,7 +121,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
       </div>
 
       {/* ── Detail Modal ── */}
-      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `${sel.id}${sel.versions?.length ? ' · v' + sel.versions.length : ''}` : ''} width={640}>
+      <Modal open={!!sel} onClose={() => setSel(null)} title={sel ? `${sel.displayId}${sel.versions?.length ? ' · v' + sel.versions.length : ''}` : ''} width={640}>
         {sel && (
           <div>
             {/* Action row */}
@@ -305,7 +305,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
       </Modal>
 
       {/* ── Cross-type linked item detail (stacked) ── */}
-      <Modal open={!!crossSel} onClose={() => setCrossSel(null)} title={crossSel ? crossSel.id : ''} width={580}>
+      <Modal open={!!crossSel} onClose={() => setCrossSel(null)} title={crossSel?.data?.displayId || crossSel?.id || ''} width={580}>
         {crossLoading && (
           <div style={{ padding: 40, textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
@@ -315,7 +315,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
       </Modal>
 
       {/* ── Edit Assertion form ── */}
-      <Modal open={showEdit && !!sel} onClose={() => setShowEdit(false)} title={`Edit ${sel?.id}`} width={600}>
+      <Modal open={showEdit && !!sel} onClose={() => setShowEdit(false)} title={`Edit ${sel?.displayId}`} width={600}>
         {sel && (
           <EditAssertionForm
             item={sel}
@@ -345,6 +345,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
           onClose={onAddFormClose}
           processAreas={processAreas}
           categories={categories}
+          plantId={plantId}
           onCreated={assertion => {
             setAssertions(prev => [assertion, ...prev])
             onAddFormClose()
@@ -493,7 +494,7 @@ function EditAssertionForm({ item, onClose, onSavedFull, onArchived, processArea
 
 // ── Add Assertion form ─────────────────────────────────────────────────────────
 
-function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = [] }) {
+function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = [], plantId }) {
   const [form, setForm] = useState({
     title: '', category: '', processArea: '', scope: '',
     tagsInput: '', evidenceText: '',
@@ -654,7 +655,7 @@ function AssertionCard({ item, selected, commentCount, verificationCount, onClic
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{item.id}</span>
+          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{item.displayId}</span>
           {item.status && <Badge label={item.status} colorFn={statusColor} />}
           {item.isContradicted && (
             <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#fde8e5', color: '#c0392b', fontWeight: 700, fontFamily: FNT }}>⚠ Contradicted</span>

@@ -30,6 +30,7 @@ const CORS = {
 
 interface KnowledgeItem {
   id: string
+  displayId: string
   type: 'rule' | 'assertion' | 'event'
   title: string
   status: string
@@ -44,8 +45,10 @@ interface KnowledgeItem {
 // ─── Normalise a DB row → KnowledgeItem ───────────────────────────────────────
 
 function normalise(row: Record<string, unknown>): KnowledgeItem {
+  const id = row.id as string
   return {
-    id: row.id as string,
+    id,
+    displayId: (row.display_id as string) || id,
     type: row.item_type as 'rule' | 'assertion' | 'event',
     title: row.title as string,
     status: row.status as string,
@@ -71,7 +74,7 @@ function normaliseAssertion(a: Record<string, unknown>): KnowledgeItem {
 function buildContext(items: KnowledgeItem[]): string {
   if (items.length === 0) return '(No knowledge items retrieved)'
   return items.map(item => {
-    const lines: string[] = [`[${item.id}] ${item.type.toUpperCase()} — ${item.title}`]
+    const lines: string[] = [`[${item.displayId}] ${item.type.toUpperCase()} — ${item.title}`]
     if (item.status) lines.push(`Status: ${item.status}`)
     if (item.processArea) lines.push(`Process area: ${item.processArea}`)
     if (item.category) lines.push(`Category: ${item.category}`)
@@ -93,14 +96,14 @@ async function fetchFallbackItems(
   const [rulesRes, assertRes] = await Promise.all([
     supabase
       .from('rules')
-      .select('id, title, status, process_area, category, rationale, scope, tags')
+      .select('id, display_id, title, status, process_area, category, rationale, scope, tags')
       .eq('plant_id', plant_id)
       .not('status', 'in', '("Retired","Superseded")')
       .order('created_at', { ascending: false })
       .limit(12),
     supabase
       .from('assertions')
-      .select('id, title, status, process_area, category, scope, tags')
+      .select('id, display_id, title, status, process_area, category, scope, tags')
       .eq('plant_id', plant_id)
       .not('status', 'in', '("Retired","Superseded")')
       .order('created_at', { ascending: false })
@@ -226,7 +229,7 @@ ${knowledgeContext}
 
 RULES FOR YOUR RESPONSE:
 1. Answer directly and specifically based ONLY on the knowledge items above.
-2. Cite every rule or assertion you use with its ID in square brackets, e.g. [R-003] or [A-007].
+2. Cite every rule or assertion you use with its ID in square brackets, e.g. [R-EAF-003] or [A-BEV-007]. Use the exact IDs shown in the knowledge items above.
 3. If multiple items are relevant, cite all of them.
 4. If an item has status "Proposed", note that it is not yet verified.
 5. If nothing in the knowledge items matches the question, say exactly: "No rules in the knowledge bank cover this situation." Then suggest filing an open question.
@@ -260,10 +263,10 @@ RULES FOR YOUR RESPONSE:
   const answer = data.content[0].text as string
   console.log(`[claude] Got answer (${answer.length} chars)`)
 
-  const citedIds = [...answer.matchAll(/\[(R|A|E)-\d+\]/g)].map(m => m[0].slice(1, -1))
+  const citedIds = [...answer.matchAll(/\[(?:R|A|E)-[A-Z]{2,4}-\d{3,}\]/g)].map(m => m[0].slice(1, -1))
   const sources = items
-    .filter(i => citedIds.includes(i.id))
-    .map(({ id, type, title, status, processArea }) => ({ id, type, title, status, processArea }))
+    .filter(i => citedIds.includes(i.displayId))
+    .map(({ id, displayId, type, title, status, processArea }) => ({ id, displayId, type, title, status, processArea }))
 
   return new Response(JSON.stringify({ answer, sources, totalRetrieved: items.length, mode }), {
     headers: { ...cors, 'Content-Type': 'application/json' },
