@@ -366,7 +366,7 @@ export async function approveInvite(inviteId) {
   if (fetchErr || !invite) throw new Error('Invite not found.')
   if (invite.status !== 'pending') throw new Error('Invite is no longer pending.')
 
-  // Update invite status
+  // Update invite status to approved
   const { error: updateErr } = await supabase
     .from('plant_invites')
     .update({ status: 'approved', reviewed_by: adminUserId, updated_at: new Date().toISOString() })
@@ -374,25 +374,28 @@ export async function approveInvite(inviteId) {
 
   if (updateErr) throw new Error(updateErr.message)
 
-  // Check if the invited user already has an account and create membership
-  let targetUserId = null
+  // Call the invite edge function to create the auth account + generate invite link
   try {
-    const { data: rpcResult } = await supabase.rpc('get_user_id_by_email', { lookup_email: invite.email })
-    targetUserId = rpcResult
-  } catch {
-    // RPC not yet deployed — user will get membership via claimApprovedInvites on login
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/invite`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwt}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'send_invite', invite_id: inviteId }),
+    })
+    const result = await resp.json()
+    if (!resp.ok) console.warn('[approveInvite] edge function error:', result.error)
+    return {
+      approved: true,
+      userExists: result.membership_created || false,
+      actionLink: result.action_link || null,
+    }
+  } catch (err) {
+    console.warn('[approveInvite] edge function call failed:', err.message)
+    return { approved: true, userExists: false, actionLink: null }
   }
-
-  if (targetUserId) {
-    const { error: mErr } = await supabase
-      .from('plant_memberships')
-      .insert({ user_id: targetUserId, plant_id: invite.plant_id, role: 'contributor', invited_by: adminUserId })
-      .select()
-      .single()
-    if (mErr && mErr.code !== '23505') throw new Error(mErr.message)
-  }
-
-  return { approved: true, userExists: !!targetUserId }
 }
 
 export async function rejectInvite(inviteId) {

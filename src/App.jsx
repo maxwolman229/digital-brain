@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { loadProfile, signOut, getRestoredSession, fetchMemberships } from './lib/auth.js'
 import { setUserContext, clearUserContext, getStoredActivePlant } from './lib/userContext.js'
-import { setAuthExpiredHandler } from './lib/supabase.js'
+import { setAuthExpiredHandler, storeJwt, storeRefreshToken } from './lib/supabase.js'
 import LandingPage from './components/LandingPage.jsx'
 import Auth from './components/Auth.jsx'
 import Onboarding from './components/Onboarding.jsx'
@@ -49,13 +49,27 @@ export default function App() {
       setActivePlantId(null)
     })
 
-    // Detect Supabase recovery token in URL hash (#access_token=...&type=recovery)
+    // Detect Supabase tokens in URL hash (#access_token=...&type=recovery|invite)
     const hash = window.location.hash.substring(1)
     if (hash) {
       const params = new URLSearchParams(hash)
-      if (params.get('type') === 'recovery' && params.get('access_token')) {
-        setRecoveryToken(params.get('access_token'))
-        // Clean the hash from the URL
+      const tokenType = params.get('type')
+      const accessToken = params.get('access_token')
+      const refreshToken = params.get('refresh_token')
+
+      if (tokenType === 'recovery' && accessToken) {
+        setRecoveryToken(accessToken)
+        window.history.replaceState(null, '', window.location.pathname)
+        setLoading(false)
+        return
+      }
+
+      // Invite link: user clicked the magic link from an admin invite.
+      // They have a valid session but no password — route to "set password" then onboarding.
+      if (tokenType === 'invite' && accessToken) {
+        setRecoveryToken(accessToken) // reuse recovery flow for password setting
+        storeJwt(accessToken)
+        if (refreshToken) storeRefreshToken(refreshToken)
         window.history.replaceState(null, '', window.location.pathname)
         setLoading(false)
         return
