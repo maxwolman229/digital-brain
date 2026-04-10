@@ -120,7 +120,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
 
   // Build nodes + edges whenever data or filters change
   useEffect(() => {
-    const all = [...rules, ...assertions]
+    const all = [...rules, ...assertions].filter(i => i.status !== 'Retired')
     const fit = all.filter(i => {
       const mp = gpf.length === 0 || gpf.includes(i.processArea) ||
         gpf.some(p => (i.scope || '').includes(p))

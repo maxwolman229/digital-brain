@@ -95,6 +95,14 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
   const [sessionStats, setSessionStats] = useState({})
   const [saveError, setSaveError] = useState(null)
 
+  // Speech input
+  const [inputMode, setInputMode] = useState('type') // 'type' | 'speak'
+  const [listening, setListening] = useState(false)
+  const [transcript, setTranscript] = useState('')
+  const [showTranscript, setShowTranscript] = useState(false)
+  const recognitionRef = useRef(null)
+  const silenceTimerRef = useRef(null)
+
   const scrollRef = useRef(null)
   const answerRef = useRef(null)
   const startTimeRef = useRef(null)
@@ -235,6 +243,8 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
     const newHistory = [...apiHistory, userMsg]
     setDisplayTurns(prev => [...prev, { question: currentQuestion, answer: trimmed, skipped: false }])
     setAnswer('')
+    setTranscript('')
+    setShowTranscript(false)
 
     const newStreak = streak + 1
     const earned = computeXp(newStreak)
@@ -425,6 +435,94 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
     prevExtractedLen.current = 0
     prevLevel.current = 1
   }
+
+  // ── Speech recognition ───────────────────────────────────────────────────────
+
+  const hasSpeechApi = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+
+  function startListening() {
+    if (!hasSpeechApi) return
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    const rec = new SR()
+    rec.lang = 'en-US'
+    rec.interimResults = true
+    rec.continuous = true
+    recognitionRef.current = rec
+
+    let finalText = ''
+
+    rec.onresult = (e) => {
+      let interim = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript
+        if (e.results[i].isFinal) {
+          finalText += t + ' '
+        } else {
+          interim = t
+        }
+      }
+      const combined = (finalText + interim).trim()
+      setTranscript(combined)
+      setAnswer(combined)
+
+      // Reset silence timer on every result
+      clearTimeout(silenceTimerRef.current)
+      silenceTimerRef.current = setTimeout(() => {
+        stopListening(true)
+      }, 2500)
+    }
+
+    rec.onerror = (e) => {
+      console.warn('[speech] error:', e.error)
+      if (e.error !== 'no-speech') stopListening(false)
+    }
+
+    rec.onend = () => {
+      // If we didn't explicitly stop, recognition ended by itself (timeout)
+      if (listening) stopListening(true)
+    }
+
+    rec.start()
+    setListening(true)
+    setTranscript('')
+    setShowTranscript(false)
+  }
+
+  function stopListening(autoSubmit = false) {
+    clearTimeout(silenceTimerRef.current)
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop() } catch {}
+      recognitionRef.current = null
+    }
+    setListening(false)
+
+    if (autoSubmit && answer.trim()) {
+      // Show transcript briefly before submitting
+      setShowTranscript(true)
+      setTimeout(() => {
+        setShowTranscript(false)
+        submitAnswer()
+      }, 1200)
+    }
+  }
+
+  function toggleListening() {
+    if (listening) {
+      stopListening(true)
+    } else {
+      startListening()
+    }
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(silenceTimerRef.current)
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop() } catch {}
+      }
+    }
+  }, [])
 
   // ── Setup phase ──────────────────────────────────────────────────────────────
 
@@ -621,52 +719,154 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
               </div>
 
               <div style={{ marginLeft: 17 }}>
-                <textarea
-                  ref={answerRef}
-                  value={answer}
-                  onChange={e => setAnswer(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitAnswer()
-                  }}
-                  placeholder="Share what you know… (⌘↵ to continue)"
-                  rows={5}
-                  style={{
-                    ...iS, fontSize: 13, resize: 'vertical', lineHeight: 1.6,
-                    width: '100%', boxSizing: 'border-box', minHeight: 100,
-                  }}
-                />
-                <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                  <button
-                    onClick={submitAnswer}
-                    disabled={!answer.trim()}
-                    style={{
-                      padding: '9px 20px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
-                      border: 'none', cursor: answer.trim() ? 'pointer' : 'default',
-                      background: answer.trim() ? '#062044' : '#e8e4e0',
-                      color: answer.trim() ? '#fff' : '#b0a898',
-                    }}
-                  >
-                    Continue →
-                  </button>
-                  <button
-                    onClick={skipQuestion}
-                    style={{
-                      padding: '9px 14px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 600,
-                      background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
-                    }}
-                  >
-                    Skip →
-                  </button>
-                  <button
-                    onClick={finishEarly}
-                    style={{
-                      padding: '9px 14px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 600,
-                      background: 'transparent', border: 'none', color: '#b0a898', cursor: 'pointer',
-                    }}
-                  >
-                    I'm done talking
-                  </button>
-                </div>
+
+                {/* Type / Speak toggle */}
+                {hasSpeechApi && (
+                  <div style={{ display: 'flex', marginBottom: 10 }}>
+                    <div style={{
+                      display: 'inline-flex', borderRadius: 3, overflow: 'hidden',
+                      border: '1px solid #D8CEC3',
+                    }}>
+                      {['type', 'speak'].map(mode => (
+                        <button
+                          key={mode}
+                          onClick={() => {
+                            if (listening) stopListening(false)
+                            setInputMode(mode)
+                          }}
+                          style={{
+                            padding: '5px 16px', fontSize: 11, fontFamily: FNT, fontWeight: 700,
+                            border: 'none', cursor: 'pointer', letterSpacing: 0.4,
+                            textTransform: 'capitalize',
+                            background: inputMode === mode ? '#062044' : 'transparent',
+                            color: inputMode === mode ? '#fff' : '#8a8278',
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                        >
+                          {mode === 'type' ? '⌨ Type' : '🎤 Speak'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {inputMode === 'type' ? (
+                  <>
+                    <textarea
+                      ref={answerRef}
+                      value={answer}
+                      onChange={e => setAnswer(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitAnswer()
+                      }}
+                      placeholder="Share what you know… (⌘↵ to continue)"
+                      rows={5}
+                      style={{
+                        ...iS, fontSize: 13, resize: 'vertical', lineHeight: 1.6,
+                        width: '100%', boxSizing: 'border-box', minHeight: 100,
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
+                      <button
+                        onClick={submitAnswer}
+                        disabled={!answer.trim()}
+                        style={{
+                          padding: '9px 20px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
+                          border: 'none', cursor: answer.trim() ? 'pointer' : 'default',
+                          background: answer.trim() ? '#062044' : '#e8e4e0',
+                          color: answer.trim() ? '#fff' : '#b0a898',
+                        }}
+                      >
+                        Continue →
+                      </button>
+                      <button
+                        onClick={skipQuestion}
+                        style={{
+                          padding: '9px 14px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 600,
+                          background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+                        }}
+                      >
+                        Skip →
+                      </button>
+                      <button
+                        onClick={finishEarly}
+                        style={{
+                          padding: '9px 14px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 600,
+                          background: 'transparent', border: 'none', color: '#b0a898', cursor: 'pointer',
+                        }}
+                      >
+                        I'm done talking
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  /* ── Speak mode ── */
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0' }}>
+
+                    {/* Transcript display */}
+                    {(transcript || showTranscript) && (
+                      <div style={{
+                        width: '100%', marginBottom: 16, padding: '12px 14px',
+                        background: showTranscript ? '#e6f5f1' : '#f8f6f4',
+                        border: `1px solid ${showTranscript ? '#4FA89A' : '#e8e4e0'}`,
+                        borderRadius: 3, minHeight: 48,
+                        transition: 'background 0.3s, border-color 0.3s',
+                      }}>
+                        <div style={{ fontSize: 9, color: showTranscript ? '#4FA89A' : '#b0a898', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+                          {showTranscript ? 'Submitting…' : 'Listening…'}
+                        </div>
+                        <div style={{ fontSize: 14, color: '#1F1F1F', fontFamily: FNT, lineHeight: 1.6 }}>
+                          {transcript || answer}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mic button */}
+                    <button
+                      onClick={toggleListening}
+                      disabled={showTranscript}
+                      style={{
+                        width: 80, height: 80, borderRadius: '50%',
+                        border: 'none', cursor: showTranscript ? 'default' : 'pointer',
+                        background: listening ? '#e74c3c' : '#062044',
+                        color: '#fff', fontSize: 32, lineHeight: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: listening ? '0 0 0 12px rgba(231,76,60,0.15)' : '0 2px 8px rgba(6,32,68,0.2)',
+                        animation: listening ? 'mic-pulse 1.5s ease-in-out infinite' : 'none',
+                        transition: 'background 0.2s, box-shadow 0.3s',
+                      }}
+                    >
+                      {listening ? '⏹' : '🎤'}
+                    </button>
+                    <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginTop: 10 }}>
+                      {listening ? 'Tap to stop' : 'Tap to start speaking'}
+                    </div>
+
+                    <style>{`@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 8px rgba(231,76,60,0.15)}50%{box-shadow:0 0 0 18px rgba(231,76,60,0.08)}}`}</style>
+
+                    {/* Skip / finish buttons */}
+                    <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                      <button
+                        onClick={skipQuestion}
+                        style={{
+                          padding: '8px 14px', borderRadius: 3, fontSize: 11, fontFamily: FNT, fontWeight: 600,
+                          background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+                        }}
+                      >
+                        Skip →
+                      </button>
+                      <button
+                        onClick={finishEarly}
+                        style={{
+                          padding: '8px 14px', borderRadius: 3, fontSize: 11, fontFamily: FNT, fontWeight: 600,
+                          background: 'transparent', border: 'none', color: '#b0a898', cursor: 'pointer',
+                        }}
+                      >
+                        I'm done talking
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : null}

@@ -73,8 +73,6 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Generate invite link ─────────────────────────────────────────────────
-    // This creates the auth user and returns a magic link.
-    // The user clicks it → lands on the app → sets password.
     const origin = req.headers.get('origin') || 'https://md1.app'
     const redirectTo = `${origin}/auth`
 
@@ -97,10 +95,74 @@ Deno.serve(async (req: Request) => {
       ? `${supabaseUrl}/auth/v1/verify?token=${token}&type=invite&redirect_to=${encodeURIComponent(redirectTo)}`
       : null
 
-    console.log(`[invite] Created invite for ${invite.email}, user_id=${linkData?.user?.id}`)
+    // Get plant name for the email
+    const { data: plant } = await admin
+      .from('plants')
+      .select('name')
+      .eq('id', invite.plant_id)
+      .single()
+    const plantName = plant?.name || 'a Knowledge Bank'
+
+    // ── Send invite email via Resend ─────────────────────────────────────────
+    const resendKey = Deno.env.get('RESEND_API_KEY')
+    let emailSent = false
+
+    if (resendKey && actionLink) {
+      try {
+        const emailResp = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'M/D/1 <noreply@md1.app>',
+            to: [invite.email],
+            subject: `You've been invited to ${plantName} on M/D/1`,
+            html: `
+              <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
+                <div style="text-align: center; margin-bottom: 32px;">
+                  <div style="display: inline-block; font-size: 28px; font-weight: 700; letter-spacing: 4px; color: #062044; border: 2px solid #062044; padding: 5px 14px 7px;">M/D/1</div>
+                </div>
+                <h2 style="font-size: 18px; font-weight: 700; color: #062044; margin-bottom: 8px;">You're invited to ${plantName}</h2>
+                <p style="font-size: 14px; color: #5a5550; line-height: 1.6; margin-bottom: 24px;">
+                  A colleague has invited you to join their Knowledge Bank on M/D/1. Click the button below to create your account and set a password.
+                </p>
+                <div style="text-align: center; margin-bottom: 24px;">
+                  <a href="${actionLink}" style="display: inline-block; padding: 12px 32px; background: #062044; color: #ffffff; text-decoration: none; border-radius: 3px; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">
+                    Accept Invite
+                  </a>
+                </div>
+                <p style="font-size: 11px; color: #b0a898; line-height: 1.5;">
+                  If the button doesn't work, copy and paste this link into your browser:<br/>
+                  <a href="${actionLink}" style="color: #4FA89A; word-break: break-all;">${actionLink}</a>
+                </p>
+                <hr style="border: none; border-top: 1px solid #e8e4e0; margin: 24px 0;" />
+                <p style="font-size: 10px; color: #b0a898; text-align: center;">
+                  M/D/1 — The operational brain that never retires.
+                </p>
+              </div>
+            `,
+          }),
+        })
+        const emailResult = await emailResp.json()
+        emailSent = emailResp.ok
+        if (!emailResp.ok) {
+          console.error('[invite] Resend error:', JSON.stringify(emailResult))
+        } else {
+          console.log(`[invite] Email sent to ${invite.email} via Resend (id: ${emailResult.id})`)
+        }
+      } catch (emailErr) {
+        console.error('[invite] Resend fetch error:', emailErr)
+      }
+    } else if (!resendKey) {
+      console.warn('[invite] RESEND_API_KEY not set — email not sent')
+    }
+
+    console.log(`[invite] Created invite for ${invite.email}, user_id=${linkData?.user?.id}, emailSent=${emailSent}`)
 
     return json({
-      sent: true,
+      sent: emailSent,
       user_id: linkData?.user?.id,
       action_link: actionLink,
     })
