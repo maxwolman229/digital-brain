@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { FNT, FNTM, statusColor, paColor } from '../lib/constants.js'
+import { THEME } from '../lib/theme.js'
 import { Badge, PillFilter, Modal } from './shared.jsx'
 import { useIsMobile } from '../lib/hooks.js'
 import { fetchRules, fetchAssertions, fetchAllLinksForGraph, fetchItemById } from '../lib/db.js'
@@ -8,17 +9,20 @@ import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
 
 // ─── Force-directed graph canvas ───────────────────────────────────────────────
+// NOTE: canvas 2D context cannot resolve CSS custom properties, so any colour
+// assigned to ctx.fillStyle / ctx.strokeStyle MUST be a literal hex (or rgba)
+// string. We pull these from THEME so white-label builds still cascade.
 
 function edgeCol(relType) {
   return ({
-    supports:     'var(--md1-accent)',
+    supports:     THEME.accent,
     contradicts:  '#c0392b',
-    relates_to:   'var(--md1-muted-light)',
+    relates_to:   THEME.mutedLight,
     derived_from: '#4466AA',
     supersedes:   '#F2652F',
     caused_by:    '#c0392b',
     mitigates:    '#16a085',
-  })[relType] || 'var(--md1-muted-light)'
+  })[relType] || THEME.mutedLight
 }
 
 // Draw a rounded rectangle path (reusable)
@@ -472,7 +476,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
           const totalH = lines.length * lineH
           const startY = n.y - totalH / 2 + lineH / 2
           ctx.globalAlpha = labelAlpha * (dim ? 0.2 : 0.8)
-          ctx.fillStyle = 'var(--md1-text)'
+          ctx.fillStyle = THEME.text
           lines.forEach((line, i) => ctx.fillText(line, n.x, startY + i * lineH))
           ctx.globalAlpha = 1
         }

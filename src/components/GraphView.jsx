@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 import { paColor, statusColor, FNT } from '../lib/constants.js'
+import { THEME } from '../lib/theme.js'
 import { Badge } from './shared.jsx'
 
 export default function GraphView({ rules, assertions, gpf, gcf, onSelect, focusNodeId }) {
@@ -112,7 +113,7 @@ export default function GraphView({ rules, assertions, gpf, gcf, onSelect, focus
         const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
         const dx = b.x - a.x, dy = b.y - a.y, nx = -dy * 0.08, ny = dx * 0.08
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(mx + nx, my + ny, b.x, b.y)
-        ctx.strokeStyle = (hl || fl) ? "var(--md1-accent)88" : focId && !fl ? "var(--md1-border)18" : "var(--md1-border)80"; ctx.lineWidth = (hl || fl) ? 2.5 : 1; ctx.stroke()
+        ctx.strokeStyle = (hl || fl) ? THEME.accent + "88" : focId && !fl ? THEME.border + "18" : THEME.border + "80"; ctx.lineWidth = (hl || fl) ? 2.5 : 1; ctx.stroke()
         const at = 0.5, dt = 0.01
         const px = (1 - at) * (1 - at) * a.x + 2 * (1 - at) * at * (mx + nx) + at * at * b.x
         const py = (1 - at) * (1 - at) * a.y + 2 * (1 - at) * at * (my + ny) + at * at * b.y
@@ -121,7 +122,7 @@ export default function GraphView({ rules, assertions, gpf, gcf, onSelect, focus
         const ang = Math.atan2(py2 - py, px2 - px)
         ctx.save(); ctx.translate(px, py); ctx.rotate(ang)
         ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -4); ctx.lineTo(-4, 4); ctx.closePath()
-        ctx.fillStyle = (hl || fl) ? "var(--md1-accent)70" : "var(--md1-border)60"; ctx.fill(); ctx.restore()
+        ctx.fillStyle = (hl || fl) ? THEME.accent + "70" : THEME.border + "60"; ctx.fill(); ctx.restore()
       })
       ns.forEach(n => {
         const isH = hov && hov.id === n.id
