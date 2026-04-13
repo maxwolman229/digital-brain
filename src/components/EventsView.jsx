@@ -9,7 +9,7 @@ import EventCaptureView from './EventCaptureView.jsx'
 
 const CAT_COLORS = {
   Material: '#F2652F',
-  Process: '#4FA89A',
+  Process: 'var(--md1-accent)',
   Equipment: '#888',
   People: '#c0392b',
   Measurement: '#5a5550',
@@ -277,7 +277,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
 
       {/* ── Filter row ── */}
-      <div style={{ padding: '12px 28px 0', borderBottom: '1px solid #e8e4e0', background: '#FAFAF9' }}>
+      <div style={{ padding: '12px 28px 0', borderBottom: '1px solid #e8e4e0', background: 'var(--md1-section-bg)' }}>
         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', paddingBottom: 12, alignItems: 'flex-start' }}>
           <FilterGroup label="Outcome" options={EVENT_OUTCOMES} selected={fOutcome} onToggle={v => setFOutcome(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])} colorFn={outcomeColor} />
           <FilterGroup label="Impact" options={IMPACTS} selected={fImpact} onToggle={v => setFImpact(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])} colorFn={impactColor} />
@@ -286,7 +286,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
           {hasFilters && (
             <button
               onClick={() => { setFOutcome([]); setFImpact([]); setFEvStatus([]); setFProc([]) }}
-              style={{ alignSelf: 'flex-end', marginBottom: 2, background: 'none', border: 'none', color: '#4FA89A', fontSize: 11, cursor: 'pointer', fontFamily: FNT }}
+              style={{ alignSelf: 'flex-end', marginBottom: 2, background: 'none', border: 'none', color: 'var(--md1-accent)', fontSize: 11, cursor: 'pointer', fontFamily: FNT }}
             >
               ✕ Clear
             </button>
@@ -297,17 +297,17 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
       {/* ── List ── */}
       <div style={{ flex: 1, padding: '20px 28px', overflowY: 'auto' }}>
         {loading && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading events…</div>
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>Loading events…</div>
         )}
 
         {!loading && (
           <>
-            <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginBottom: 12, letterSpacing: 0.8 }}>
+            <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, marginBottom: 12, letterSpacing: 0.8 }}>
               {filtered.length} EVENTS · SORTED BY DATE
             </div>
 
             {filtered.length === 0 && (
-              <div style={{ padding: 40, textAlign: 'center', color: '#D8CEC3', fontFamily: FNT, fontSize: 13 }}>
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--md1-border)', fontFamily: FNT, fontSize: 13 }}>
                 No events match your filters.
               </div>
             )}
@@ -338,16 +338,16 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
               <Badge label={sel.impact} colorFn={impactColor} />
               <Badge label={sel.status} colorFn={eventStatusColor} />
               <Tag label={sel.processArea} />
-              <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginLeft: 'auto' }}>
+              <span style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, marginLeft: 'auto' }}>
                 {formatDate(sel.date)} · <span
                   onClick={() => sel.reportedBy && onViewProfile?.(sel.reportedBy)}
-                  style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
+                  style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? 'var(--md1-accent)' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
                 >{sel.reportedBy}</span>
               </span>
               {canEdit && (
                 <button
                   onClick={() => openEditForm(sel)}
-                  style={{ padding: '3px 10px', borderRadius: 2, fontSize: 10, fontFamily: FNT, fontWeight: 700, background: 'none', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', letterSpacing: 0.4 }}
+                  style={{ padding: '3px 10px', borderRadius: 2, fontSize: 10, fontFamily: FNT, fontWeight: 700, background: 'none', border: '1px solid var(--md1-border)', color: '#5a5550', cursor: 'pointer', letterSpacing: 0.4 }}
                 >
                   Edit
                 </button>
@@ -362,20 +362,20 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
               )}
             </div>
 
-            <h3 style={{ fontSize: 16, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 12, fontFamily: FNT }}>
+            <h3 style={{ fontSize: 16, color: 'var(--md1-primary)', fontWeight: 700, lineHeight: 1.4, marginBottom: 12, fontFamily: FNT }}>
               {sel.title}
             </h3>
 
-            <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, marginBottom: 16, padding: '10px 14px', background: '#f8f6f4', borderRadius: 3, border: `1px solid ${sel.outcome === 'Positive' ? '#4FA89A20' : '#D8CEC380'}` }}>
+            <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, marginBottom: 16, padding: '10px 14px', background: '#f8f6f4', borderRadius: 3, border: `1px solid ${sel.outcome === 'Positive' ? 'var(--md1-accent)20' : 'var(--md1-border)80'}` }}>
               {sel.description}
             </div>
 
             {/* Tagged people */}
             {(sel.taggedPeople || []).length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
-                <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>Tagged:</span>
+                <span style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT }}>Tagged:</span>
                 {sel.taggedPeople.map((p, i) => (
-                  <span key={i} style={{ padding: '3px 10px', borderRadius: 3, background: '#e8edf4', color: '#062044', fontSize: 10, fontFamily: FNT, fontWeight: 600 }}>{p}</span>
+                  <span key={i} style={{ padding: '3px 10px', borderRadius: 3, background: '#e8edf4', color: 'var(--md1-primary)', fontSize: 10, fontFamily: FNT, fontWeight: 600 }}>{p}</span>
                 ))}
               </div>
             )}
@@ -392,7 +392,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
                   <div key={cat} style={{ padding: '10px 12px', background: '#f8f6f4', borderRadius: 3, border: `1px solid ${CAT_COLORS[cat]}25` }}>
                     <div style={{ fontSize: 10, color: CAT_COLORS[cat], fontWeight: 700, fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>{cat}</div>
                     {items.map((item, i) => (
-                      <div key={i} style={{ fontSize: 11, color: '#1F1F1F', lineHeight: 1.4, marginBottom: 3, paddingLeft: 8, borderLeft: `2px solid ${CAT_COLORS[cat]}40` }}>{item}</div>
+                      <div key={i} style={{ fontSize: 11, color: 'var(--md1-text)', lineHeight: 1.4, marginBottom: 3, paddingLeft: 8, borderLeft: `2px solid ${CAT_COLORS[cat]}40` }}>{item}</div>
                     ))}
                   </div>
                 )
@@ -402,7 +402,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             {/* Resolution */}
             {sel.resolution && (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT, fontWeight: 700 }}>
+                <div style={{ fontSize: 10, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT, fontWeight: 700 }}>
                   {sel.outcome === 'Positive' ? 'Outcome & Takeaways' : 'Resolution'}
                 </div>
                 <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{sel.resolution}</div>
@@ -456,7 +456,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={() => { setShowCloseModal(false); setCloseResolution('') }}
-            style={{ padding: '8px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}
+            style={{ padding: '8px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer', fontFamily: FNT }}
           >
             Cancel
           </button>
@@ -478,7 +478,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
         width={620}
       >
         {knowledgeItemLoading && (
-          <div style={{ padding: '32px 0', textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
         {!knowledgeItemLoading && knowledgeItemDetail && (
           <KnowledgeItemDetail item={knowledgeItemDetail} />
@@ -494,30 +494,30 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
           <button
             onClick={() => { setShowModeModal(false); setShowForm(true) }}
             style={{
-              padding: '20px 16px', borderRadius: 4, border: '2px solid #D8CEC3',
+              padding: '20px 16px', borderRadius: 4, border: '2px solid var(--md1-border)',
               background: '#fff', cursor: 'pointer', textAlign: 'left',
               fontFamily: FNT, transition: 'border-color 0.15s',
             }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = '#062044'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = '#D8CEC3'}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--md1-primary)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--md1-border)'}
           >
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#062044', marginBottom: 4 }}>Fill out form</div>
-            <div style={{ fontSize: 11, color: '#8a8278', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--md1-primary)', marginBottom: 4 }}>Fill out form</div>
+            <div style={{ fontSize: 11, color: 'var(--md1-muted)', lineHeight: 1.5 }}>
               Complete the structured event report yourself, including Ishikawa root cause analysis.
             </div>
           </button>
           <button
             onClick={() => { setShowModeModal(false); setShowInterview(true) }}
             style={{
-              padding: '20px 16px', borderRadius: 4, border: '2px solid #D8CEC3',
+              padding: '20px 16px', borderRadius: 4, border: '2px solid var(--md1-border)',
               background: '#fff', cursor: 'pointer', textAlign: 'left',
               fontFamily: FNT, transition: 'border-color 0.15s',
             }}
             onMouseEnter={e => e.currentTarget.style.borderColor = '#F2652F'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = '#D8CEC3'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--md1-border)'}
           >
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#062044', marginBottom: 4 }}>Walk me through it</div>
-            <div style={{ fontSize: 11, color: '#8a8278', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--md1-primary)', marginBottom: 4 }}>Walk me through it</div>
+            <div style={{ fontSize: 11, color: 'var(--md1-muted)', lineHeight: 1.5 }}>
               Answer a few guided questions. The AI structures the report and extracts any rules or lessons automatically.
             </div>
           </button>
@@ -526,7 +526,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
 
       {/* ── Guided interview overlay ── */}
       {showInterview && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 50, background: '#FAFAF9' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'var(--md1-section-bg)' }}>
           <EventCaptureView
             processAreas={processAreas}
             industry={industry}
@@ -540,7 +540,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
       {/* ── Report / Edit Event form modal ── */}
       <Modal open={showForm} onClose={closeForm} title={editingEventId ? 'Edit Event' : 'Report Event'} width={760}>
         {!editingEventId && (
-          <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.6, marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: 'var(--md1-muted)', lineHeight: 1.6, marginBottom: 16 }}>
             Document an operational event — positive or negative — with structured Ishikawa analysis. Each Ishikawa category captures contributing factors.
           </div>
         )}
@@ -558,9 +558,9 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
               style={{
                 flex: 1, padding: 10, borderRadius: 3, fontSize: 13, fontWeight: 700, fontFamily: FNT,
                 letterSpacing: 0.4, cursor: 'pointer', transition: 'all 0.15s',
-                border: form.outcome === o ? `2px solid ${o === 'Positive' ? '#4FA89A' : '#F2652F'}` : '2px solid #D8CEC3',
+                border: form.outcome === o ? `2px solid ${o === 'Positive' ? 'var(--md1-accent)' : '#F2652F'}` : '2px solid var(--md1-border)',
                 background: form.outcome === o ? (o === 'Positive' ? '#e6f5f1' : '#fde8e5') : '#FFFFFF',
-                color: form.outcome === o ? (o === 'Positive' ? '#4FA89A' : '#F2652F') : '#b0a898',
+                color: form.outcome === o ? (o === 'Positive' ? 'var(--md1-accent)' : '#F2652F') : 'var(--md1-muted-light)',
               }}
             >
               {o === 'Positive' ? '✓ Positive Outcome' : '✗ Negative Outcome'}
@@ -596,11 +596,11 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
         <Field label="Tag People" hint="Tag team members to review, comment, or contribute to this event">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
             {form.taggedPeople.map((p, i) => (
-              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 3, background: '#e8edf4', color: '#062044', fontSize: 10, fontFamily: FNT, fontWeight: 600 }}>
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 3, background: '#e8edf4', color: 'var(--md1-primary)', fontSize: 10, fontFamily: FNT, fontWeight: 600 }}>
                 {p}
                 <button
                   onClick={() => setForm(f => ({ ...f, taggedPeople: f.taggedPeople.filter((_, j) => j !== i) }))}
-                  style={{ background: 'none', border: 'none', color: '#8a8278', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}
+                  style={{ background: 'none', border: 'none', color: 'var(--md1-muted)', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}
                 >✕</button>
               </span>
             ))}
@@ -619,7 +619,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
                 }
               }}
             />
-            <div style={{ position: 'absolute', right: 8, top: 7, fontSize: 9, color: '#b0a898', fontFamily: FNT }}>Enter to add</div>
+            <div style={{ position: 'absolute', right: 8, top: 7, fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT }}>Enter to add</div>
           </div>
         </Field>
 
@@ -640,7 +640,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
                     placeholder={`${cat} factor...`}
                   />
                   {form.ishikawa[cat].length > 1 && (
-                    <button onClick={() => removeIshikawaRow(cat, i)} style={{ background: 'none', border: 'none', color: '#b0a898', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>✕</button>
+                    <button onClick={() => removeIshikawaRow(cat, i)} style={{ background: 'none', border: 'none', color: 'var(--md1-muted-light)', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>✕</button>
                   )}
                 </div>
               ))}
@@ -677,7 +677,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
           disabled={!form.title.trim()}
           style={{
             width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, marginTop: 8, letterSpacing: 0.4,
-            background: form.title.trim() ? (form.outcome === 'Positive' ? '#4FA89A' : '#c0392b') : '#f0eeec',
+            background: form.title.trim() ? (form.outcome === 'Positive' ? 'var(--md1-accent)' : '#c0392b') : '#f0eeec',
             border: 'none',
             color: form.title.trim() ? '#FFFFFF' : '#888',
             cursor: form.title.trim() ? 'pointer' : 'not-allowed',
@@ -708,7 +708,7 @@ function ConnectedKnowledgeSection({
     <div style={{ marginBottom: 20 }}>
       {/* Section header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: FNT, fontWeight: 700 }}>
+        <div style={{ fontSize: 10, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: FNT, fontWeight: 700 }}>
           Connected Knowledge
         </div>
         {!addLinkOpen && (
@@ -716,7 +716,7 @@ function ConnectedKnowledgeSection({
             onClick={onAddLinkOpen}
             style={{
               padding: '3px 10px', borderRadius: 2, fontSize: 10, fontFamily: FNT, fontWeight: 700,
-              background: 'none', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+              background: 'none', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer',
               letterSpacing: 0.4,
             }}
           >
@@ -726,7 +726,7 @@ function ConnectedKnowledgeSection({
       </div>
 
       {loading && (
-        <div style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, padding: '8px 0' }}>Loading connected knowledge…</div>
+        <div style={{ fontSize: 11, color: 'var(--md1-muted-light)', fontFamily: FNT, padding: '8px 0' }}>Loading connected knowledge…</div>
       )}
 
       {!loading && (
@@ -734,12 +734,12 @@ function ConnectedKnowledgeSection({
           {/* Generated from this event */}
           {hasDerived && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ fontSize: 9, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
                 Generated from this event
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 {connectedKnowledge.derived.map(item => (
-                  <KnowledgeChip key={item.id} item={item} accent="#4FA89A" onClick={() => onItemClick(item.type, item.id)} />
+                  <KnowledgeChip key={item.id} item={item} accent="var(--md1-accent)" onClick={() => onItemClick(item.type, item.id)} />
                 ))}
               </div>
             </div>
@@ -748,12 +748,12 @@ function ConnectedKnowledgeSection({
           {/* Explicitly linked */}
           {hasExplicit && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ fontSize: 9, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
                 Linked knowledge
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 {connectedKnowledge.explicit.map(item => (
-                  <KnowledgeChip key={item.id} item={item} accent="#8a8278" onClick={() => onItemClick(item.type, item.id)} />
+                  <KnowledgeChip key={item.id} item={item} accent="var(--md1-muted)" onClick={() => onItemClick(item.type, item.id)} />
                 ))}
               </div>
             </div>
@@ -762,19 +762,19 @@ function ConnectedKnowledgeSection({
           {/* Related knowledge (search-based) */}
           {hasRelated && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700, marginBottom: 6 }}>
                 Related knowledge
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 {connectedKnowledge.related.map(item => (
-                  <KnowledgeChip key={item.id} item={item} accent="#b0a898" onClick={() => onItemClick(item.type, item.id)} />
+                  <KnowledgeChip key={item.id} item={item} accent="var(--md1-muted-light)" onClick={() => onItemClick(item.type, item.id)} />
                 ))}
               </div>
             </div>
           )}
 
           {isEmpty && !addLinkOpen && (
-            <div style={{ padding: '14px 16px', border: '1px dashed #D8CEC3', borderRadius: 3, fontSize: 11, color: '#b0a898', fontFamily: FNT, textAlign: 'center' }}>
+            <div style={{ padding: '14px 16px', border: '1px dashed var(--md1-border)', borderRadius: 3, fontSize: 11, color: 'var(--md1-muted-light)', fontFamily: FNT, textAlign: 'center' }}>
               No connected knowledge yet. Use "Walk me through it" when reporting events to generate rules automatically, or link existing knowledge manually.
             </div>
           )}
@@ -783,10 +783,10 @@ function ConnectedKnowledgeSection({
 
       {/* Add Link inline panel */}
       {addLinkOpen && (
-        <div style={{ padding: '12px 14px', background: '#f8f6f4', border: '1px solid #D8CEC3', borderRadius: 3, marginTop: 8 }}>
+        <div style={{ padding: '12px 14px', background: '#f8f6f4', border: '1px solid var(--md1-border)', borderRadius: 3, marginTop: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, fontWeight: 600 }}>Search for a rule or assertion to link</div>
-            <button onClick={onAddLinkClose} style={{ background: 'none', border: 'none', color: '#b0a898', cursor: 'pointer', fontSize: 13, lineHeight: 1 }}>✕</button>
+            <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, fontWeight: 600 }}>Search for a rule or assertion to link</div>
+            <button onClick={onAddLinkClose} style={{ background: 'none', border: 'none', color: 'var(--md1-muted-light)', cursor: 'pointer', fontSize: 13, lineHeight: 1 }}>✕</button>
           </div>
           <input
             autoFocus
@@ -812,16 +812,16 @@ function ConnectedKnowledgeSection({
                   <span style={{
                     fontSize: 8, padding: '2px 5px', borderRadius: 2, fontWeight: 700, textTransform: 'uppercase',
                     background: item.type === 'rule' ? '#e8edf4' : '#f0eeec',
-                    color: item.type === 'rule' ? '#062044' : '#8a8278', flexShrink: 0,
+                    color: item.type === 'rule' ? 'var(--md1-primary)' : 'var(--md1-muted)', flexShrink: 0,
                   }}>{item.type}</span>
-                  <span style={{ fontSize: 11, color: '#1F1F1F', flex: 1 }}>{item.title}</span>
-                  <span style={{ fontSize: 9, color: '#b0a898', flexShrink: 0 }}>{item.processArea}</span>
+                  <span style={{ fontSize: 11, color: 'var(--md1-text)', flex: 1 }}>{item.title}</span>
+                  <span style={{ fontSize: 9, color: 'var(--md1-muted-light)', flexShrink: 0 }}>{item.processArea}</span>
                 </button>
               ))}
             </div>
           )}
           {addLinkQuery.trim() && addLinkResults.length === 0 && (
-            <div style={{ marginTop: 6, fontSize: 11, color: '#b0a898', fontFamily: FNT }}>No matches found.</div>
+            <div style={{ marginTop: 6, fontSize: 11, color: 'var(--md1-muted-light)', fontFamily: FNT }}>No matches found.</div>
           )}
         </div>
       )}
@@ -852,11 +852,11 @@ function KnowledgeChip({ item, accent, onClick }) {
         fontSize: 8, padding: '2px 5px', borderRadius: 2, fontWeight: 700, textTransform: 'uppercase',
         letterSpacing: 0.4, fontFamily: FNT, flexShrink: 0,
         background: item.type === 'rule' ? '#e8edf4' : '#f0eeec',
-        color: item.type === 'rule' ? '#062044' : '#8a8278',
+        color: item.type === 'rule' ? 'var(--md1-primary)' : 'var(--md1-muted)',
       }}>{item.type}</span>
       <span style={{ fontSize: 9, color: sc.text, background: sc.bg, padding: '2px 6px', borderRadius: 2, fontFamily: FNT, flexShrink: 0 }}>{item.status}</span>
-      <span style={{ fontSize: 12, color: '#1F1F1F', flex: 1, lineHeight: 1.4, fontFamily: FNT }}>{item.title}</span>
-      <span style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, flexShrink: 0 }}>{item.processArea}</span>
+      <span style={{ fontSize: 12, color: 'var(--md1-text)', flex: 1, lineHeight: 1.4, fontFamily: FNT }}>{item.title}</span>
+      <span style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, flexShrink: 0 }}>{item.processArea}</span>
       <span style={{ fontSize: 10, color: accent, fontFamily: FNT, flexShrink: 0, opacity: hovered ? 1 : 0.4 }}>→</span>
     </div>
   )
@@ -871,36 +871,36 @@ function KnowledgeItemDetail({ item }) {
         <span style={{
           fontSize: 9, padding: '3px 8px', borderRadius: 2, fontWeight: 700, textTransform: 'uppercase',
           background: item.type === 'rule' ? '#e8edf4' : '#f0eeec',
-          color: item.type === 'rule' ? '#062044' : '#8a8278', fontFamily: FNT,
+          color: item.type === 'rule' ? 'var(--md1-primary)' : 'var(--md1-muted)', fontFamily: FNT,
         }}>{item.type}</span>
         <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 2, fontFamily: FNT, background: sc.bg, color: sc.text, fontWeight: 600 }}>{item.status}</span>
         <Tag label={item.category} />
         {item.processArea && <Tag label={item.processArea} />}
       </div>
 
-      <div style={{ fontSize: 15, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 14, fontFamily: FNT }}>
+      <div style={{ fontSize: 15, color: 'var(--md1-primary)', fontWeight: 700, lineHeight: 1.4, marginBottom: 14, fontFamily: FNT }}>
         {item.title}
       </div>
 
       {item.rationale && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Rationale</div>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Rationale</div>
           <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, padding: '10px 14px', background: '#f8f6f4', borderRadius: 3 }}>{item.rationale}</div>
         </div>
       )}
 
       {item.scope && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Scope</div>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Scope</div>
           <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.scope}</div>
         </div>
       )}
 
       {(item.versions || []).length > 0 && (
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e8e4e0' }}>
-          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 6 }}>Version history</div>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 6 }}>Version history</div>
           {item.versions.map((v, i) => (
-            <div key={i} style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, marginBottom: 3 }}>
+            <div key={i} style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 3 }}>
               v{v.version} · {v.author} · {v.change}
             </div>
           ))}
@@ -914,7 +914,7 @@ function KnowledgeItemDetail({ item }) {
 
 function EventCard({ ev, selected, onClick, knowledgeCount }) {
   const [hovered, setHovered] = useState(false)
-  const accentColor = ev.outcome === 'Positive' ? '#4FA89A' : '#c0392b'
+  const accentColor = ev.outcome === 'Positive' ? 'var(--md1-accent)' : '#c0392b'
 
   // Build badge text from count breakdown
   let badgeParts = []
@@ -936,15 +936,15 @@ function EventCard({ ev, selected, onClick, knowledgeCount }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{ev.displayId}</span>
+          <span style={{ fontSize: 11, color: 'var(--md1-muted-light)', fontFamily: FNT, fontWeight: 600 }}>{ev.displayId}</span>
           <Badge label={ev.outcome} colorFn={outcomeColor} />
           <Badge label={ev.impact} colorFn={impactColor} />
           <Badge label={ev.status} colorFn={eventStatusColor} />
         </div>
-        <span style={{ fontSize: 9, color: '#D8CEC3', fontFamily: FNT }}>{formatDate(ev.date)}</span>
+        <span style={{ fontSize: 9, color: 'var(--md1-border)', fontFamily: FNT }}>{formatDate(ev.date)}</span>
       </div>
 
-      <div style={{ fontSize: 14, color: '#1F1F1F', fontWeight: 500, lineHeight: 1.4, marginBottom: 8 }}>
+      <div style={{ fontSize: 14, color: 'var(--md1-text)', fontWeight: 500, lineHeight: 1.4, marginBottom: 8 }}>
         {ev.title}
       </div>
 
@@ -956,7 +956,7 @@ function EventCard({ ev, selected, onClick, knowledgeCount }) {
         {badgeText && (
           <span style={{
             fontSize: 9, padding: '3px 8px', borderRadius: 2, fontFamily: FNT, fontWeight: 700,
-            background: '#e6f5f1', color: '#2d6b5e', border: '1px solid #4FA89A30', flexShrink: 0,
+            background: '#e6f5f1', color: 'var(--md1-accent-deep)', border: '1px solid var(--md1-accent)30', flexShrink: 0,
           }}>
             {badgeText}
           </span>
@@ -969,16 +969,16 @@ function EventCard({ ev, selected, onClick, knowledgeCount }) {
 function FilterGroup({ label, options, selected, onToggle, colorFn }) {
   return (
     <div>
-      <div style={{ fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 5, fontFamily: FNT }}>{label}</div>
+      <div style={{ fontSize: 10, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 5, fontFamily: FNT }}>{label}</div>
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
         {options.map(o => {
           const active = selected.includes(o)
-          const c = colorFn ? colorFn(o) : { bg: '#f0eeec', text: '#1F1F1F' }
+          const c = colorFn ? colorFn(o) : { bg: '#f0eeec', text: 'var(--md1-text)' }
           return (
             <button
               key={o}
               onClick={() => onToggle(o)}
-              style={{ padding: '3px 10px', borderRadius: 3, fontSize: 11, fontWeight: active ? 700 : 400, background: active ? c.bg : 'transparent', color: active ? c.text : '#8a8278', border: active ? `1px solid ${c.text}44` : '1px solid #D8CEC3', cursor: 'pointer', fontFamily: FNT }}
+              style={{ padding: '3px 10px', borderRadius: 3, fontSize: 11, fontWeight: active ? 700 : 400, background: active ? c.bg : 'transparent', color: active ? c.text : 'var(--md1-muted)', border: active ? `1px solid ${c.text}44` : '1px solid var(--md1-border)', cursor: 'pointer', fontFamily: FNT }}
             >
               {o}
             </button>

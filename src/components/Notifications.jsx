@@ -61,11 +61,11 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
         aria-label="Notifications"
         style={{
           padding: '7px 10px', borderRadius: 3, background: 'transparent',
-          border: `1px solid ${light ? 'rgba(255,255,255,0.2)' : '#8a827840'}`, cursor: 'pointer',
+          border: `1px solid ${light ? 'rgba(255,255,255,0.2)' : 'var(--md1-muted)40'}`, cursor: 'pointer',
           position: 'relative', display: 'flex', alignItems: 'center',
         }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={light ? 'rgba(255,255,255,0.8)' : '#8a8278'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={light ? 'rgba(255,255,255,0.8)' : 'var(--md1-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
@@ -96,7 +96,7 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             position: 'sticky', top: 0, background: '#fff',
           }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#062044', fontFamily: FNT }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT }}>
               Notifications
               {unread > 0 && (
                 <span style={{ marginLeft: 6, fontSize: 10, color: '#F2652F' }}>{unread} unread</span>
@@ -105,7 +105,7 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
             {unread > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                style={{ fontSize: 9, color: '#8a8278', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT }}
+                style={{ fontSize: 9, color: 'var(--md1-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT }}
               >
                 Mark all read
               </button>
@@ -114,7 +114,7 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
 
           {/* Notification rows */}
           {items.length === 0 ? (
-            <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: '#b0a898', fontFamily: FNT }}>
+            <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--md1-muted-light)', fontFamily: FNT }}>
               No notifications
             </div>
           ) : items.map((n, i) => (
@@ -139,11 +139,11 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
                 background: n.read ? 'transparent' : '#F2652F',
               }} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: '#1F1F1F', lineHeight: 1.4 }}>{n.text}</div>
-                <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, marginTop: 3 }}>
+                <div style={{ fontSize: 11, color: 'var(--md1-text)', lineHeight: 1.4 }}>{n.text}</div>
+                <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, marginTop: 3 }}>
                   {new Date(n.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                   {n.target?.view && (
-                    <span style={{ marginLeft: 6, color: '#4FA89A', fontWeight: 600 }}>
+                    <span style={{ marginLeft: 6, color: 'var(--md1-accent)', fontWeight: 600 }}>
                       → {n.target.view}
                     </span>
                   )}

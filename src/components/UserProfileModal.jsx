@@ -29,10 +29,10 @@ const STAT_ITEMS = [
 ]
 
 const TYPE_LABELS = {
-  rule: { label: 'Rule', color: '#062044', bg: '#e8f0fb' },
-  assertion: { label: 'Assertion', color: '#4FA89A', bg: '#e6f4f2' },
+  rule: { label: 'Rule', color: 'var(--md1-primary)', bg: '#e8f0fb' },
+  assertion: { label: 'Assertion', color: 'var(--md1-accent)', bg: '#e6f4f2' },
   event: { label: 'Event', color: '#8a4a1a', bg: '#fdf0e6' },
-  question: { label: 'Question', color: '#5a5550', bg: '#f4f1ed' },
+  question: { label: 'Question', color: '#5a5550', bg: 'var(--md1-bg)' },
 }
 
 export default function UserProfileModal({ displayName, plantId, onClose, onNavigate }) {
@@ -85,12 +85,12 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
 
         {/* Header */}
         <div style={{
-          background: '#062044', padding: '20px 24px',
+          background: 'var(--md1-primary)', padding: '20px 24px',
           display: 'flex', gap: 16, alignItems: 'center', flexShrink: 0,
         }}>
           <div style={{
             width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-            background: '#4FA89A', color: '#fff',
+            background: 'var(--md1-accent)', color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 18, fontWeight: 700, fontFamily: FNT,
           }}>
@@ -113,13 +113,13 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
         {/* Body */}
         <div style={{ overflowY: 'auto', padding: '20px 24px' }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 32, color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>
+            <div style={{ textAlign: 'center', padding: 32, color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>
               Loading...
             </div>
           ) : stats && (
             <>
               {/* Stats row */}
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#8a8278', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--md1-muted)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
                 Contributions
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 24 }}>
@@ -128,8 +128,8 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
                     background: '#f8f6f4', border: '1px solid #e8e4e0', borderRadius: 4,
                     padding: '10px 12px', textAlign: 'center',
                   }}>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: '#062044', fontFamily: FNT, lineHeight: 1 }}>{stats[key] || 0}</div>
-                    <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, marginTop: 3 }}>{label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1 }}>{stats[key] || 0}</div>
+                    <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, marginTop: 3 }}>{label}</div>
                   </div>
                 ))}
               </div>
@@ -137,7 +137,7 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
               {/* Recent activity */}
               {activity.length > 0 && (
                 <>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#8a8278', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--md1-muted)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
                     Recent Activity
                   </div>
                   <div style={{ border: '1px solid #e8e4e0', borderRadius: 4, overflow: 'hidden' }}>
@@ -165,15 +165,15 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
                             {t.label}
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 11, color: '#1F1F1F', fontFamily: FNT, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontSize: 11, color: 'var(--md1-text)', fontFamily: FNT, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {item.title}
                             </div>
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 2 }}>
-                              <span style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT }}>
+                              <span style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT }}>
                                 {new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                               </span>
                               {(item.displayId || item.id) && (
-                                <span style={{ fontSize: 9, color: '#D8CEC3', fontFamily: FNTM }}>{item.displayId || item.id}</span>
+                                <span style={{ fontSize: 9, color: 'var(--md1-border)', fontFamily: FNTM }}>{item.displayId || item.id}</span>
                               )}
                             </div>
                           </div>
@@ -185,7 +185,7 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
               )}
 
               {stats.rules === 0 && stats.assertions === 0 && stats.events === 0 && stats.questions === 0 && (
-                <div style={{ textAlign: 'center', padding: '20px 0', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>
+                <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>
                   No contributions yet on this plant
                 </div>
               )}

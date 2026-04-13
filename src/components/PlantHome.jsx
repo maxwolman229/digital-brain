@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { findOrCreateOrg, createPlant, createMembership, claimApprovedInvites, fetchMemberships } from '../lib/auth.js'
 
-const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
-const FNTM = "'IBM Plex Mono', 'Courier New', monospace"
+const FNT = 'var(--md1-font-sans)'
+const FNTM = 'var(--md1-font-mono)'
 
 
 const iS = {
@@ -44,7 +44,7 @@ function ErrorBox({ msg }) {
   )
 }
 
-const roleColors = { admin: '#4FA89A', contributor: '#b0e0ff', viewer: '#8a8278' }
+const roleColors = { admin: 'var(--md1-accent)', contributor: '#b0e0ff', viewer: 'var(--md1-muted)' }
 
 export default function PlantHome({ userId, email, profile, memberships, onJoined, onSwitchPlant, onMembershipsChanged }) {
   const navigate = useNavigate()
@@ -109,7 +109,7 @@ export default function PlantHome({ userId, email, profile, memberships, onJoine
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#062044',
+      minHeight: '100vh', background: 'var(--md1-primary)',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       padding: '40px 24px 60px', fontFamily: FNT,
     }}>
@@ -168,7 +168,7 @@ export default function PlantHome({ userId, email, profile, memberships, onJoine
                   onClick={() => handleEnter(m.plantId)}
                   style={{
                     padding: '7px 16px', borderRadius: 3, fontSize: 11,
-                    background: '#FFFFFF', border: 'none', color: '#062044',
+                    background: '#FFFFFF', border: 'none', color: 'var(--md1-primary)',
                     fontFamily: FNT, fontWeight: 700, letterSpacing: 0.5, cursor: 'pointer',
                   }}
                 >
@@ -186,7 +186,7 @@ export default function PlantHome({ userId, email, profile, memberships, onJoine
             style={{
               width: '100%', padding: '12px', borderRadius: 3, fontSize: 12,
               background: '#FFFFFF', border: 'none',
-              color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700,
+              color: 'var(--md1-primary)', cursor: 'pointer', fontFamily: FNT, fontWeight: 700,
             }}
           >
             + Create a Plant
@@ -244,7 +244,7 @@ export default function PlantHome({ userId, email, profile, memberships, onJoine
               {showIndustrySuggestions && (
                 <div style={{
                   position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                  background: '#0d2d55', border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'var(--md1-primary-dim)', border: '1px solid rgba(255,255,255,0.15)',
                   borderRadius: 3, maxHeight: 160, overflowY: 'auto',
                 }}>
                   {INDUSTRY_OPTIONS
@@ -282,7 +282,7 @@ export default function PlantHome({ userId, email, profile, memberships, onJoine
               <button
                 onClick={handleCreate}
                 disabled={saving}
-                style={{ flex: 1, padding: '10px', borderRadius: 3, fontSize: 12, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, opacity: saving ? 0.6 : 1 }}
+                style={{ flex: 1, padding: '10px', borderRadius: 3, fontSize: 12, background: '#FFFFFF', border: 'none', color: 'var(--md1-primary)', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, opacity: saving ? 0.6 : 1 }}
               >
                 {saving ? 'Creating…' : 'Launch Knowledge Bank →'}
               </button>

@@ -5,10 +5,10 @@ import {
 } from '../lib/auth.js'
 import { deletePlant } from '../lib/db.js'
 
-const FNT  = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
+const FNT = 'var(--md1-font-sans)'
 
 const ROLES = ['admin', 'contributor', 'viewer']
-const roleColor = { admin: '#4FA89A', contributor: '#5a8cc0', viewer: '#8a8278' }
+const roleColor = { admin: 'var(--md1-accent)', contributor: '#5a8cc0', viewer: 'var(--md1-muted)' }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -39,8 +39,8 @@ function TabBtn({ id, active, onClick, children }) {
       onClick={() => onClick(id)}
       style={{
         padding: '10px 16px', background: 'none', border: 'none',
-        borderBottom: `2px solid ${active ? '#4FA89A' : 'transparent'}`,
-        color: active ? '#062044' : '#8a8278', fontSize: 11,
+        borderBottom: `2px solid ${active ? 'var(--md1-accent)' : 'transparent'}`,
+        color: active ? 'var(--md1-primary)' : 'var(--md1-muted)', fontSize: 11,
         fontWeight: active ? 700 : 500, letterSpacing: 1,
         textTransform: 'uppercase', cursor: 'pointer', fontFamily: FNT,
         marginBottom: -1, transition: 'color 0.15s', whiteSpace: 'nowrap',
@@ -80,7 +80,7 @@ function InviteForm({ plantId, onSent }) {
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginBottom: 8 }}>
+      <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 8 }}>
         Invite someone by email address. An admin will need to approve them.
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
@@ -92,7 +92,7 @@ function InviteForm({ plantId, onSent }) {
           placeholder="colleague@company.com"
           style={{
             flex: 1, padding: '9px 12px', fontSize: 13, fontFamily: FNT,
-            border: '1px solid #D8CEC3', borderRadius: 3, outline: 'none',
+            border: '1px solid var(--md1-border)', borderRadius: 3, outline: 'none',
             boxSizing: 'border-box',
           }}
         />
@@ -101,7 +101,7 @@ function InviteForm({ plantId, onSent }) {
           disabled={sending}
           style={{
             padding: '9px 16px', borderRadius: 3, fontSize: 11, fontWeight: 700,
-            background: '#062044', border: 'none', color: '#fff',
+            background: 'var(--md1-primary)', border: 'none', color: '#fff',
             cursor: sending ? 'default' : 'pointer', fontFamily: FNT,
             opacity: sending ? 0.6 : 1, flexShrink: 0,
           }}
@@ -113,7 +113,7 @@ function InviteForm({ plantId, onSent }) {
         <div style={{ marginTop: 6, fontSize: 11, color: '#e74c3c', fontFamily: FNT }}>{error}</div>
       )}
       {success && (
-        <div style={{ marginTop: 6, fontSize: 11, color: '#4FA89A', fontFamily: FNT }}>{success}</div>
+        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--md1-accent)', fontFamily: FNT }}>{success}</div>
       )}
     </div>
   )
@@ -152,7 +152,7 @@ function MembersList({ plantId, isAdmin }) {
     } catch (err) { setError(err.message) }
   }
 
-  if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: '#b0a898', fontFamily: FNT }}>Loading members…</div>
+  if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: 'var(--md1-muted-light)', fontFamily: FNT }}>Loading members…</div>
 
   return (
     <div>
@@ -161,19 +161,19 @@ function MembersList({ plantId, isAdmin }) {
           {error}
         </div>
       )}
-      <div style={{ fontSize: 11, color: '#b0a898', marginBottom: 12, fontFamily: FNT }}>
+      <div style={{ fontSize: 11, color: 'var(--md1-muted-light)', marginBottom: 12, fontFamily: FNT }}>
         {members.length} member{members.length !== 1 ? 's' : ''}
       </div>
       {members.map(m => (
         <div key={m.membershipId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #f0eeec' }}>
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--md1-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
             {initials(m.displayName)}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#062044', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--md1-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {m.displayName}
             </div>
-            <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>
+            <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT }}>
               Joined {fmtDate(m.joinedAt)}
             </div>
           </div>
@@ -184,22 +184,22 @@ function MembersList({ plantId, isAdmin }) {
                 onChange={e => handleRoleChange(m.membershipId, e.target.value)}
                 style={{
                   padding: '4px 8px', borderRadius: 3, fontSize: 11, fontFamily: FNT,
-                  border: '1px solid #D8CEC3', background: '#f4f1ed',
-                  color: roleColor[m.role] || '#1F1F1F', cursor: 'pointer', fontWeight: 700,
+                  border: '1px solid var(--md1-border)', background: 'var(--md1-bg)',
+                  color: roleColor[m.role] || 'var(--md1-text)', cursor: 'pointer', fontWeight: 700,
                 }}
               >
                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
               <button
                 onClick={() => handleRemove(m.membershipId, m.displayName)}
-                style={{ padding: '4px 8px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid #D8CEC3', color: '#b0a898', cursor: 'pointer', fontFamily: FNT, flexShrink: 0 }}
+                style={{ padding: '4px 8px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted-light)', cursor: 'pointer', fontFamily: FNT, flexShrink: 0 }}
                 title="Remove member"
               >
                 ✕
               </button>
             </>
           ) : (
-            <span style={{ fontSize: 11, fontWeight: 700, color: roleColor[m.role] || '#8a8278', fontFamily: FNT, textTransform: 'capitalize' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: roleColor[m.role] || 'var(--md1-muted)', fontFamily: FNT, textTransform: 'capitalize' }}>
               {m.role}
             </span>
           )}
@@ -264,7 +264,7 @@ function PendingInvites({ plantId, onCountChange }) {
     setBusy(b => { const n = { ...b }; delete n[inv.id]; return n })
   }
 
-  if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: '#b0a898', fontFamily: FNT }}>Loading invites…</div>
+  if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: 'var(--md1-muted-light)', fontFamily: FNT }}>Loading invites…</div>
 
   // Keep invites with an unsent link in the "actionable" section even after approval
   const actionable = invites.filter(i => i.status === 'pending' || inviteLinks[i.id])
@@ -281,15 +281,15 @@ function PendingInvites({ plantId, onCountChange }) {
       {/* Pending + just-approved with link */}
       {actionable.length === 0 ? (
         <div style={{ padding: '24px 0', textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#b0a898', fontFamily: FNT }}>No pending invites</div>
+          <div style={{ fontSize: 13, color: 'var(--md1-muted-light)', fontFamily: FNT }}>No pending invites</div>
         </div>
       ) : (
         actionable.map(inv => (
           <div key={inv.id} style={{ padding: '12px 0', borderBottom: '1px solid #f0eeec' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#062044', fontFamily: FNT }}>{inv.email}</div>
-                <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginTop: 2 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--md1-primary)', fontFamily: FNT }}>{inv.email}</div>
+                <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, marginTop: 2 }}>
                   Invited by {inv.invitedByName} · {fmtDate(inv.createdAt)}
                 </div>
               </div>
@@ -299,7 +299,7 @@ function PendingInvites({ plantId, onCountChange }) {
                     onClick={() => handleCopyLink(inv.id)}
                     style={{
                       padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 700,
-                      background: copiedId === inv.id ? '#4FA89A' : '#062044',
+                      background: copiedId === inv.id ? 'var(--md1-accent)' : 'var(--md1-primary)',
                       border: 'none', color: '#fff',
                       cursor: 'pointer', fontFamily: FNT, whiteSpace: 'nowrap',
                     }}
@@ -310,8 +310,8 @@ function PendingInvites({ plantId, onCountChange }) {
                     onClick={() => setInviteLinks(prev => { const n = { ...prev }; delete n[inv.id]; return n })}
                     style={{
                       padding: '6px 8px', borderRadius: 3, fontSize: 11,
-                      background: 'transparent', border: '1px solid #D8CEC3',
-                      color: '#b0a898', cursor: 'pointer', fontFamily: FNT,
+                      background: 'transparent', border: '1px solid var(--md1-border)',
+                      color: 'var(--md1-muted-light)', cursor: 'pointer', fontFamily: FNT,
                     }}
                     title="Dismiss"
                   >
@@ -325,7 +325,7 @@ function PendingInvites({ plantId, onCountChange }) {
                     disabled={!!busy[inv.id]}
                     style={{
                       padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 700,
-                      background: busy[inv.id] === 'approve' ? '#3a8a7e' : '#4FA89A',
+                      background: busy[inv.id] === 'approve' ? '#3a8a7e' : 'var(--md1-accent)',
                       border: 'none', color: '#fff',
                       cursor: busy[inv.id] ? 'default' : 'pointer', fontFamily: FNT,
                     }}
@@ -337,8 +337,8 @@ function PendingInvites({ plantId, onCountChange }) {
                     disabled={!!busy[inv.id]}
                     style={{
                       padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 600,
-                      background: 'transparent', border: '1px solid #D8CEC3',
-                      color: busy[inv.id] === 'reject' ? '#b0a898' : '#8a8278',
+                      background: 'transparent', border: '1px solid var(--md1-border)',
+                      color: busy[inv.id] === 'reject' ? 'var(--md1-muted-light)' : 'var(--md1-muted)',
                       cursor: busy[inv.id] ? 'default' : 'pointer', fontFamily: FNT,
                     }}
                   >
@@ -354,7 +354,7 @@ function PendingInvites({ plantId, onCountChange }) {
       {/* History */}
       {history.length > 0 && (
         <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: FNT, marginBottom: 8 }}>
+          <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: FNT, marginBottom: 8 }}>
             Invite History
           </div>
           {history.map(inv => {
@@ -363,7 +363,7 @@ function PendingInvites({ plantId, onCountChange }) {
               <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f8f6f4' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT }}>{inv.email}</div>
-                  <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>{fmtDate(inv.createdAt)}</div>
+                  <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT }}>{fmtDate(inv.createdAt)}</div>
                 </div>
                 <span style={{
                   padding: '3px 8px', borderRadius: 3, fontSize: 10, fontWeight: 700,
@@ -420,7 +420,7 @@ export default function PlantSettings({ membership, isSuperAdmin, onClose, onPen
       <div style={{ width: 540, maxWidth: '92vw', background: '#fff', borderRadius: 6, boxShadow: '0 16px 48px rgba(0,0,0,0.22)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
 
         {/* Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: '#062044', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'var(--md1-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: FNT }}>{membership.plantName}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: FNT, marginTop: 2, letterSpacing: 0.4 }}>
@@ -475,8 +475,8 @@ export default function PlantSettings({ membership, isSuperAdmin, onClose, onPen
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', border: '1px solid #f5c6c6', borderRadius: 3, background: '#fffafa' }}>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#1F1F1F', fontFamily: FNT }}>Delete this plant</div>
-                  <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginTop: 2 }}>Permanently deletes all rules, assertions, events, and questions.</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--md1-text)', fontFamily: FNT }}>Delete this plant</div>
+                  <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginTop: 2 }}>Permanently deletes all rules, assertions, events, and questions.</div>
                 </div>
                 <button
                   onClick={() => setShowDeleteModal(true)}
@@ -501,15 +501,15 @@ export default function PlantSettings({ membership, isSuperAdmin, onClose, onPen
             <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT, lineHeight: 1.7, marginBottom: 18 }}>
               This will permanently delete the plant and all its data — rules, assertions, events, questions, comments, and links. <strong>This cannot be undone.</strong>
             </div>
-            <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginBottom: 6 }}>
-              Type <strong style={{ color: '#1F1F1F' }}>{membership.plantName}</strong> to confirm:
+            <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 6 }}>
+              Type <strong style={{ color: 'var(--md1-text)' }}>{membership.plantName}</strong> to confirm:
             </div>
             <input
               value={deleteConfirmText}
               onChange={e => setDeleteConfirmText(e.target.value)}
               placeholder={membership.plantName}
               autoFocus
-              style={{ width: '100%', padding: '9px 12px', fontSize: 13, fontFamily: FNT, border: '1px solid #D8CEC3', borderRadius: 3, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }}
+              style={{ width: '100%', padding: '9px 12px', fontSize: 13, fontFamily: FNT, border: '1px solid var(--md1-border)', borderRadius: 3, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }}
             />
             {deleteError && (
               <div style={{ padding: '8px 12px', marginBottom: 12, background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', borderRadius: 3, fontSize: 11, color: '#c0392b', fontFamily: FNT }}>
@@ -520,7 +520,7 @@ export default function PlantSettings({ membership, isSuperAdmin, onClose, onPen
               <button
                 onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); setDeleteError(null) }}
                 disabled={deleting}
-                style={{ padding: '8px 16px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}
+                style={{ padding: '8px 16px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer', fontFamily: FNT }}
               >
                 Cancel
               </button>

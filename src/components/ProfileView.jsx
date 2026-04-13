@@ -21,10 +21,10 @@ const xpFor = (stats) => (
 )
 
 const TYPE_LABELS = {
-  rule: { label: 'Rule', color: '#062044', bg: '#e8f0fb' },
-  assertion: { label: 'Assertion', color: '#4FA89A', bg: '#e6f4f2' },
+  rule: { label: 'Rule', color: 'var(--md1-primary)', bg: '#e8f0fb' },
+  assertion: { label: 'Assertion', color: 'var(--md1-accent)', bg: '#e6f4f2' },
   event: { label: 'Event', color: '#8a4a1a', bg: '#fdf0e6' },
-  question: { label: 'Question', color: '#5a5550', bg: '#f4f1ed' },
+  question: { label: 'Question', color: '#5a5550', bg: 'var(--md1-bg)' },
 }
 
 function StatCard({ value, label, sub }) {
@@ -33,9 +33,9 @@ function StatCard({ value, label, sub }) {
       background: '#fff', border: '1px solid #e8e4e0', borderRadius: 4,
       padding: '14px 18px', textAlign: 'center',
     }}>
-      <div style={{ fontSize: 24, fontWeight: 900, color: '#062044', fontFamily: FNT, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: '#1F1F1F', fontFamily: FNT, marginTop: 4 }}>{label}</div>
-      {sub && <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, marginTop: 2 }}>{sub}</div>}
+      <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--md1-text)', fontFamily: FNT, marginTop: 4 }}>{label}</div>
+      {sub && <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, marginTop: 2 }}>{sub}</div>}
     </div>
   )
 }
@@ -79,8 +79,8 @@ function EditProfileModal({ displayName, userId, onSave, onClose }) {
 
   const iS = {
     width: '100%', padding: '9px 12px', fontSize: 13, fontFamily: FNT,
-    border: '1px solid #D8CEC3', borderRadius: 3, outline: 'none', boxSizing: 'border-box',
-    color: '#1F1F1F', background: '#fff',
+    border: '1px solid var(--md1-border)', borderRadius: 3, outline: 'none', boxSizing: 'border-box',
+    color: 'var(--md1-text)', background: '#fff',
   }
 
   return (
@@ -89,25 +89,25 @@ function EditProfileModal({ displayName, userId, onSave, onClose }) {
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div style={{ width: 440, maxWidth: '90vw', background: '#fff', borderRadius: 6, boxShadow: '0 16px 48px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', background: '#062044', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '16px 20px', background: 'var(--md1-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: FNT }}>Edit Profile</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>✕</button>
         </div>
         <form onSubmit={handleSave} style={{ padding: 24 }}>
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Display Name *</div>
+            <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Display Name *</div>
             <input value={name} onChange={e => setName(e.target.value)} required autoFocus style={iS} />
           </div>
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Current Position</div>
+            <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Current Position</div>
             <input value={position} onChange={e => setPosition(e.target.value)} placeholder="e.g. Line Supervisor, Process Engineer" style={iS} />
           </div>
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Years in Industry</div>
+            <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Years in Industry</div>
             <input value={years} onChange={e => setYears(e.target.value)} placeholder="e.g. 12" style={{ ...iS, width: 120 }} />
           </div>
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Bio</div>
+            <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 5 }}>Bio</div>
             <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder="A few words about your experience or focus area" style={{ ...iS, resize: 'vertical', lineHeight: 1.6 }} />
           </div>
           {error && (
@@ -116,8 +116,8 @@ function EditProfileModal({ displayName, userId, onSave, onClose }) {
             </div>
           )}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '8px 16px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}>Cancel</button>
-            <button type="submit" disabled={saving || !name.trim()} style={{ padding: '8px 20px', borderRadius: 3, fontSize: 12, fontWeight: 700, background: '#062044', border: 'none', color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: FNT }}>
+            <button type="button" onClick={onClose} style={{ padding: '8px 16px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer', fontFamily: FNT }}>Cancel</button>
+            <button type="submit" disabled={saving || !name.trim()} style={{ padding: '8px 20px', borderRadius: 3, fontSize: 12, fontWeight: 700, background: 'var(--md1-primary)', border: 'none', color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: FNT }}>
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -156,18 +156,18 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
   const xp = stats ? xpFor(stats) : 0
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', background: '#f4f1ed', padding: 32 }}>
+    <div style={{ flex: 1, overflowY: 'auto', background: 'var(--md1-bg)', padding: 32 }}>
       <div style={{ maxWidth: 740, margin: '0 auto' }}>
 
         {/* ── Profile header card ── */}
         <div style={{
-          background: '#062044', borderRadius: 6, padding: '28px 32px',
+          background: 'var(--md1-primary)', borderRadius: 6, padding: '28px 32px',
           display: 'flex', gap: 24, alignItems: 'flex-start', marginBottom: 24,
         }}>
           {/* Avatar */}
           <div style={{
             width: 64, height: 64, borderRadius: '50%', flexShrink: 0,
-            background: '#4FA89A', color: '#fff',
+            background: 'var(--md1-accent)', color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 22, fontWeight: 700, fontFamily: FNT,
           }}>
@@ -184,7 +184,7 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
                 <span style={{
                   fontSize: 10, fontWeight: 700, fontFamily: FNT, textTransform: 'uppercase',
                   letterSpacing: 0.8, padding: '3px 8px', borderRadius: 2,
-                  background: 'rgba(79,168,154,0.25)', color: '#7dd5cc',
+                  background: 'rgba(var(--md1-accent-rgb),0.25)', color: '#7dd5cc',
                 }}>
                   {user.role}
                 </span>
@@ -225,12 +225,12 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
         {(extra.position || extra.years || extra.bio) && (
           <div style={{ background: '#fff', border: '1px solid #e8e4e0', borderRadius: 4, padding: '14px 18px', marginBottom: 24 }}>
             {extra.position && (
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#062044', fontFamily: FNT, marginBottom: extra.years || extra.bio ? 4 : 0 }}>
-                {extra.position}{extra.years ? <span style={{ fontWeight: 400, color: '#8a8278' }}> · {extra.years} yr{extra.years !== '1' ? 's' : ''} experience</span> : ''}
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--md1-primary)', fontFamily: FNT, marginBottom: extra.years || extra.bio ? 4 : 0 }}>
+                {extra.position}{extra.years ? <span style={{ fontWeight: 400, color: 'var(--md1-muted)' }}> · {extra.years} yr{extra.years !== '1' ? 's' : ''} experience</span> : ''}
               </div>
             )}
             {!extra.position && extra.years && (
-              <div style={{ fontSize: 12, color: '#8a8278', fontFamily: FNT, marginBottom: extra.bio ? 4 : 0 }}>{extra.years} year{extra.years !== '1' ? 's' : ''} in industry</div>
+              <div style={{ fontSize: 12, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: extra.bio ? 4 : 0 }}>{extra.years} year{extra.years !== '1' ? 's' : ''} in industry</div>
             )}
             {extra.bio && (
               <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT, lineHeight: 1.6 }}>{extra.bio}</div>
@@ -240,12 +240,12 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
 
         {/* ── Stats grid ── */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>
             Loading...
           </div>
         ) : stats && (
           <>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#8a8278', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--md1-muted)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
               CONTRIBUTIONS — {activeMembership?.plantName || 'This Plant'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 28 }}>
@@ -258,12 +258,12 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
             </div>
 
             {/* ── Recent activity ── */}
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#8a8278', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--md1-muted)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>
               RECENT ACTIVITY
             </div>
             <div style={{ background: '#fff', border: '1px solid #e8e4e0', borderRadius: 4, overflow: 'hidden' }}>
               {activity.length === 0 ? (
-                <div style={{ padding: '20px 18px', textAlign: 'center', fontSize: 12, color: '#b0a898', fontFamily: FNT }}>
+                <div style={{ padding: '20px 18px', textAlign: 'center', fontSize: 12, color: 'var(--md1-muted-light)', fontFamily: FNT }}>
                   No activity yet on this plant
                 </div>
               ) : activity.map((item, i) => {
@@ -290,15 +290,15 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
                       {t.label}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: '#1F1F1F', fontFamily: FNT, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 12, color: 'var(--md1-text)', fontFamily: FNT, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.title}
                       </div>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
-                        <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>
+                        <span style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT }}>
                           {new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
                         {(item.displayId || item.id) && (
-                          <span style={{ fontSize: 10, color: '#D8CEC3', fontFamily: FNTM }}>
+                          <span style={{ fontSize: 10, color: 'var(--md1-border)', fontFamily: FNTM }}>
                             {item.displayId || item.id}
                           </span>
                         )}
@@ -324,7 +324,7 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
             {/* ── Plant memberships ── */}
             {memberships?.length > 1 && (
               <>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#8a8278', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 28, marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--md1-muted)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 28, marginBottom: 10 }}>
                   PLANT MEMBERSHIPS
                 </div>
                 <div style={{ background: '#fff', border: '1px solid #e8e4e0', borderRadius: 4, overflow: 'hidden' }}>
@@ -336,15 +336,15 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
                       background: m.plantId === plantId ? '#f0f4fb' : 'transparent',
                     }}>
                       <div>
-                        <div style={{ fontSize: 12, fontWeight: m.plantId === plantId ? 700 : 500, color: '#062044', fontFamily: FNT }}>
+                        <div style={{ fontSize: 12, fontWeight: m.plantId === plantId ? 700 : 500, color: 'var(--md1-primary)', fontFamily: FNT }}>
                           {m.plantId === plantId ? '◆ ' : ''}{m.plantName}
                         </div>
-                        <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, marginTop: 1 }}>{m.orgName}</div>
+                        <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, marginTop: 1 }}>{m.orgName}</div>
                       </div>
                       <span style={{
                         fontSize: 9, fontWeight: 700, fontFamily: FNT,
                         padding: '2px 7px', borderRadius: 2,
-                        background: '#e8f0fb', color: '#062044',
+                        background: '#e8f0fb', color: 'var(--md1-primary)',
                         textTransform: 'capitalize', letterSpacing: 0.5,
                       }}>
                         {m.role}

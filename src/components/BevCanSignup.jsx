@@ -22,7 +22,7 @@ async function registerApplicant(fields) {
 
 const BEVCAN_PLANT_ID = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
 
-const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
+const FNT = 'var(--md1-font-sans)'
 
 const iS = {
   width: '100%', padding: '10px 14px', fontSize: 13, fontFamily: FNT,
@@ -60,7 +60,7 @@ function BrandHeader() {
         <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', fontWeight: 300 }}>×</span>
         <div style={{ position: 'relative' }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', letterSpacing: 1 }}>BevCan 1.0</div>
-          <span style={{ position: 'absolute', top: -8, right: -28, background: '#4FA89A', color: '#fff', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, padding: '2px 4px', borderRadius: 2 }}>BETA</span>
+          <span style={{ position: 'absolute', top: -8, right: -28, background: 'var(--md1-accent)', color: '#fff', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, padding: '2px 4px', borderRadius: 2 }}>BETA</span>
         </div>
       </div>
       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, maxWidth: 340, margin: '0 auto' }}>
@@ -150,14 +150,14 @@ function ApplyFields({ form, patchForm, pastInput, setPastInput }) {
       <label style={{
         display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
         padding: '12px 14px', borderRadius: 3, marginBottom: 20,
-        background: form.confirmed ? 'rgba(79,168,154,0.08)' : 'rgba(255,255,255,0.04)',
-        border: `1px solid ${form.confirmed ? 'rgba(79,168,154,0.35)' : 'rgba(255,255,255,0.1)'}`,
+        background: form.confirmed ? 'rgba(var(--md1-accent-rgb),0.08)' : 'rgba(255,255,255,0.04)',
+        border: `1px solid ${form.confirmed ? 'rgba(var(--md1-accent-rgb),0.35)' : 'rgba(255,255,255,0.1)'}`,
       }}>
         <input
           type="checkbox"
           checked={form.confirmed}
           onChange={e => patchForm('confirmed', e.target.checked)}
-          style={{ marginTop: 3, accentColor: '#4FA89A', width: 14, height: 14, flexShrink: 0 }}
+          style={{ marginTop: 3, accentColor: 'var(--md1-accent)', width: 14, height: 14, flexShrink: 0 }}
         />
         <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
           By joining BevCan 1.0, I agree to share only general industry knowledge and best
@@ -312,7 +312,7 @@ export default function BevCanSignup({ session, profile, memberships = [], onSig
   }
 
   const wrapperStyle = {
-    minHeight: '100vh', background: '#062044',
+    minHeight: '100vh', background: 'var(--md1-primary)',
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
     fontFamily: FNT, padding: '40px 24px',
   }
@@ -359,7 +359,7 @@ export default function BevCanSignup({ session, profile, memberships = [], onSig
             <ErrBox msg={applyErr} />
             <button type="submit" disabled={applyLoading} style={{
               width: '100%', padding: '13px 0', borderRadius: 3,
-              background: applyLoading ? 'rgba(79,168,154,0.3)' : '#4FA89A',
+              background: applyLoading ? 'rgba(var(--md1-accent-rgb),0.3)' : 'var(--md1-accent)',
               border: 'none', color: '#FFFFFF',
               fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
               cursor: applyLoading ? 'default' : 'pointer', fontFamily: FNT,
@@ -391,7 +391,7 @@ export default function BevCanSignup({ session, profile, memberships = [], onSig
           {[['login', 'Log In'], ['apply', 'Apply for Access']].map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{
               flex: 1, padding: '9px 0', background: 'none', border: 'none',
-              borderBottom: `2px solid ${tab === id ? '#4FA89A' : 'transparent'}`,
+              borderBottom: `2px solid ${tab === id ? 'var(--md1-accent)' : 'transparent'}`,
               color: tab === id ? '#fff' : 'rgba(255,255,255,0.4)',
               fontSize: 12, fontWeight: tab === id ? 700 : 400, letterSpacing: 1.2,
               textTransform: 'uppercase', cursor: 'pointer', fontFamily: FNT, marginBottom: -1,
@@ -415,7 +415,7 @@ export default function BevCanSignup({ session, profile, memberships = [], onSig
               <button type="submit" disabled={loginLoading} style={{
                 width: '100%', padding: '12px 0', borderRadius: 3,
                 background: loginLoading ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
-                border: 'none', color: loginLoading ? 'rgba(255,255,255,0.4)' : '#062044',
+                border: 'none', color: loginLoading ? 'rgba(255,255,255,0.4)' : 'var(--md1-primary)',
                 fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
                 cursor: loginLoading ? 'default' : 'pointer', fontFamily: FNT,
               }}>
@@ -448,7 +448,7 @@ export default function BevCanSignup({ session, profile, memberships = [], onSig
             <ErrBox msg={applyErr} />
             <button type="submit" disabled={applyLoading} style={{
               width: '100%', padding: '13px 0', borderRadius: 3,
-              background: applyLoading ? 'rgba(79,168,154,0.3)' : '#4FA89A',
+              background: applyLoading ? 'rgba(var(--md1-accent-rgb),0.3)' : 'var(--md1-accent)',
               border: 'none', color: '#FFFFFF',
               fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
               cursor: applyLoading ? 'default' : 'pointer', fontFamily: FNT,

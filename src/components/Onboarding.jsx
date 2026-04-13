@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createProfileSimple, loadProfile } from '../lib/auth.js'
 
-const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
+const FNT = 'var(--md1-font-sans)'
 
 const inputStyle = {
   width: '100%',
@@ -49,7 +49,7 @@ export default function Onboarding({ userId, displayName: initialName, onComplet
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#062044',
+      background: 'var(--md1-primary)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -116,7 +116,7 @@ export default function Onboarding({ userId, displayName: initialName, onComplet
             disabled={saving}
             style={{
               width: '100%', padding: '12px 0', borderRadius: 3,
-              background: '#FFFFFF', border: 'none', color: '#062044',
+              background: '#FFFFFF', border: 'none', color: 'var(--md1-primary)',
               fontSize: 13, fontWeight: 700, letterSpacing: 1,
               textTransform: 'uppercase', cursor: 'pointer', fontFamily: FNT,
               opacity: saving ? 0.6 : 1,

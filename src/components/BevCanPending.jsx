@@ -1,11 +1,11 @@
-const FNT  = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
-const FNTM = "'IBM Plex Mono', 'Courier New', monospace"
+const FNT = 'var(--md1-font-sans)'
+const FNTM = 'var(--md1-font-mono)'
 
 export default function BevCanPending() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#062044',
+      minHeight: '100vh', background: 'var(--md1-primary)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       fontFamily: FNT, padding: '40px 24px',
     }}>
@@ -33,9 +33,9 @@ export default function BevCanPending() {
           {/* Check icon */}
           <div style={{
             width: 52, height: 52, borderRadius: '50%',
-            background: 'rgba(79,168,154,0.15)', border: '1px solid rgba(79,168,154,0.3)',
+            background: 'rgba(var(--md1-accent-rgb),0.15)', border: '1px solid rgba(var(--md1-accent-rgb),0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 20px', fontSize: 22, color: '#4FA89A',
+            margin: '0 auto 20px', fontSize: 22, color: 'var(--md1-accent)',
           }}>
             ✓
           </div>

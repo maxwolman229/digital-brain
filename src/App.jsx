@@ -144,7 +144,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#062044', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--md1-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: 4, color: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.15)', padding: '8px 18px 10px', fontFamily: "'IBM Plex Sans', sans-serif" }}>
           M/D/1
         </div>

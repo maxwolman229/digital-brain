@@ -30,7 +30,7 @@ function QueryItemDetail({ item, onCiteClick }) {
       </div>
 
       {/* Title */}
-      <h3 style={{ fontSize: 16, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 18, fontFamily: FNT }}>
+      <h3 style={{ fontSize: 16, color: 'var(--md1-primary)', fontWeight: 700, lineHeight: 1.4, marginBottom: 18, fontFamily: FNT }}>
         {item.title}
       </h3>
 
@@ -40,7 +40,7 @@ function QueryItemDetail({ item, onCiteClick }) {
       {/* Scope */}
       {item.scope && (
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Scope</div>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Scope</div>
           <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.scope}</div>
         </div>
       )}
@@ -48,22 +48,22 @@ function QueryItemDetail({ item, onCiteClick }) {
       {/* Rationale */}
       {item.rationale && (
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Rationale</div>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Rationale</div>
           <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.rationale}</div>
         </div>
       )}
 
       {/* Evidence */}
       <div style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Evidence</div>
+        <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Evidence</div>
         {(item.evidence || []).length === 0 ? (
-          <div style={{ fontSize: 12, color: '#D8CEC3' }}>None recorded</div>
+          <div style={{ fontSize: 12, color: 'var(--md1-border)' }}>None recorded</div>
         ) : (item.evidence || []).map((ev, i) => (
-          <div key={i} style={{ padding: '8px 10px', background: '#f8f6f4', borderRadius: 4, marginBottom: 4, border: '1px solid #D8CEC3' }}>
-            <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginBottom: 3 }}>
+          <div key={i} style={{ padding: '8px 10px', background: '#f8f6f4', borderRadius: 4, marginBottom: 4, border: '1px solid var(--md1-border)' }}>
+            <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, marginBottom: 3 }}>
               {(ev.type || '').replace(/_/g, ' ').toUpperCase()} · {ev.date}
             </div>
-            <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.4 }}>{ev.text}</div>
+            <div style={{ fontSize: 12, color: 'var(--md1-muted)', lineHeight: 1.4 }}>{ev.text}</div>
           </div>
         ))}
       </div>
@@ -76,7 +76,7 @@ function QueryItemDetail({ item, onCiteClick }) {
       {/* Tags */}
       {(item.tags || []).length > 0 && (
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Tags</div>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Tags</div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {item.tags.map(t => <Tag key={t} label={t} />)}
           </div>
@@ -84,7 +84,7 @@ function QueryItemDetail({ item, onCiteClick }) {
       )}
 
       {/* Footer */}
-      <div style={{ padding: '10px 0', borderTop: '1px solid #D8CEC3', marginTop: 4, fontSize: 10, color: '#D8CEC3', fontFamily: FNT, lineHeight: 1.8 }}>
+      <div style={{ padding: '10px 0', borderTop: '1px solid var(--md1-border)', marginTop: 4, fontSize: 10, color: 'var(--md1-border)', fontFamily: FNT, lineHeight: 1.8 }}>
         <div>Created by: {item.createdBy}</div>
         <div>Created: {formatDate(item.createdAt)}</div>
         {(item.versions || []).length > 0 && <div>Versions: {item.versions.length}</div>}
@@ -112,7 +112,7 @@ function AnswerText({ text, onCiteClick, sources }) {
             <span
               key={i}
               onClick={() => onCiteClick(source?.id || displayId, typePrefix)}
-              style={{ color: '#4FA89A', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#4FA89A40' }}
+              style={{ color: 'var(--md1-accent)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'var(--md1-accent)40' }}
             >{part}</span>
           )
         }
@@ -133,12 +133,12 @@ function SourceChips({ sources, onCiteClick }) {
           onClick={() => onCiteClick(s.id, (s.displayId || s.id)[0])}
           style={{
             padding: '3px 10px', borderRadius: 3, fontSize: 10, cursor: 'pointer',
-            background: '#f0eeec', border: '1px solid #D8CEC3', fontFamily: FNT,
+            background: '#f0eeec', border: '1px solid var(--md1-border)', fontFamily: FNT,
             display: 'flex', alignItems: 'center', gap: 5,
           }}
         >
           <span style={{ color: paColor(s.processArea), fontWeight: 700 }}>{s.displayId || s.id}</span>
-          <span style={{ color: '#8a8278' }}>{s.title.length > 40 ? s.title.slice(0, 40) + '…' : s.title}</span>
+          <span style={{ color: 'var(--md1-muted)' }}>{s.title.length > 40 ? s.title.slice(0, 40) + '…' : s.title}</span>
           {s.status && <Badge label={s.status} colorFn={statusColor} />}
         </button>
       ))}
@@ -265,8 +265,8 @@ export default function QueryView({ onNavigate, industry, plantId }) {
           {/* Empty state */}
           {messages.length === 0 && (
             <div style={{ textAlign: 'center', paddingTop: 60 }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#1F1F1F', fontFamily: FNT, marginBottom: 6 }}>Query</div>
-              <div style={{ fontSize: 13, color: '#8a8278', fontFamily: FNT, lineHeight: 1.7, marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--md1-text)', fontFamily: FNT, marginBottom: 6 }}>Query</div>
+              <div style={{ fontSize: 13, color: 'var(--md1-muted)', fontFamily: FNT, lineHeight: 1.7, marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
                 Describe what you're about to do. The system will brief you on everything the knowledge bank says about your situation.
               </div>
 
@@ -283,9 +283,9 @@ export default function QueryView({ onNavigate, industry, plantId }) {
                       fontWeight: 500, lineHeight: 1.4, textAlign: 'left', maxWidth: 280,
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.background = '#062044'
+                      e.currentTarget.style.background = 'var(--md1-primary)'
                       e.currentTarget.style.color = '#fff'
-                      e.currentTarget.style.borderColor = '#062044'
+                      e.currentTarget.style.borderColor = 'var(--md1-primary)'
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = '#FFFFFF'
@@ -296,7 +296,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
                 ))}
               </div>
 
-              <div style={{ fontSize: 11, color: '#D8CEC3', fontFamily: FNT }}>
+              <div style={{ fontSize: 11, color: 'var(--md1-border)', fontFamily: FNT }}>
                 Answers strictly from the validated knowledge bank · Rule IDs are clickable
               </div>
             </div>
@@ -309,8 +309,8 @@ export default function QueryView({ onNavigate, industry, plantId }) {
                 maxWidth: '85%',
                 padding: '14px 18px',
                 borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-                background: msg.role === 'user' ? '#062044' : msg.isError ? '#fef9f0' : '#FFFFFF',
-                color: msg.role === 'user' ? '#FFFFFF' : '#1F1F1F',
+                background: msg.role === 'user' ? 'var(--md1-primary)' : msg.isError ? '#fef9f0' : '#FFFFFF',
+                color: msg.role === 'user' ? '#FFFFFF' : 'var(--md1-text)',
                 border: msg.role === 'user' ? 'none' : `1px solid ${msg.isError ? '#F2652F40' : '#e8e4e0'}`,
                 fontSize: 13,
                 fontFamily: FNT,
@@ -329,15 +329,15 @@ export default function QueryView({ onNavigate, industry, plantId }) {
               </div>
 
               {/* Timestamp + metadata */}
-              <div style={{ fontSize: 9, color: '#D8CEC3', fontFamily: FNT, marginTop: 4, paddingLeft: 4, paddingRight: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 9, color: 'var(--md1-border)', fontFamily: FNT, marginTop: 4, paddingLeft: 4, paddingRight: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
                 {msg.role === 'user' ? 'You' : 'MD1 Knowledge'} · {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 {msg.role === 'assistant' && msg.retrieved > 0 && (
-                  <span style={{ color: '#b0a898' }}>{msg.retrieved} items retrieved</span>
+                  <span style={{ color: 'var(--md1-muted-light)' }}>{msg.retrieved} items retrieved</span>
                 )}
                 {msg.role === 'assistant' && !loading && !msg.isError && (
                   <button
                     onClick={() => openAsk(msg.query || '')}
-                    style={{ background: 'none', border: '1px solid #D8CEC3', borderRadius: 3, padding: '2px 8px', fontSize: 9, color: '#8a8278', cursor: 'pointer', fontFamily: FNT, fontWeight: 600 }}
+                    style={{ background: 'none', border: '1px solid var(--md1-border)', borderRadius: 3, padding: '2px 8px', fontSize: 9, color: 'var(--md1-muted)', cursor: 'pointer', fontFamily: FNT, fontWeight: 600 }}
                   >? Ask the Team</button>
                 )}
               </div>
@@ -347,10 +347,10 @@ export default function QueryView({ onNavigate, industry, plantId }) {
           {/* Typing indicator */}
           {loading && (
             <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ padding: '14px 18px', borderRadius: '12px 12px 12px 2px', background: '#FFFFFF', border: '1px solid #e8e4e0', fontSize: 13, fontFamily: FNT, color: '#b0a898', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ padding: '14px 18px', borderRadius: '12px 12px 12px 2px', background: '#FFFFFF', border: '1px solid #e8e4e0', fontSize: 13, fontFamily: FNT, color: 'var(--md1-muted-light)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {[0, 0.2, 0.4].map(delay => (
-                    <div key={delay} style={{ width: 6, height: 6, borderRadius: '50%', background: '#062044', animation: 'chatdot 1.2s infinite', animationDelay: `${delay}s` }} />
+                    <div key={delay} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--md1-primary)', animation: 'chatdot 1.2s infinite', animationDelay: `${delay}s` }} />
                   ))}
                 </div>
                 <span>Searching knowledge bank…</span>
@@ -372,14 +372,14 @@ export default function QueryView({ onNavigate, industry, plantId }) {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}
             placeholder="e.g. What are the limits when running with non-standard materials?"
-            style={{ ...iS, flex: 1, height: 44, fontSize: 13, padding: '0 14px', borderRadius: 8, border: '1.5px solid #D8CEC3', fontFamily: FNT }}
+            style={{ ...iS, flex: 1, height: 44, fontSize: 13, padding: '0 14px', borderRadius: 8, border: '1.5px solid var(--md1-border)', fontFamily: FNT }}
           />
           <button
             onClick={() => send()}
             disabled={!input.trim() || loading}
             style={{
               padding: '10px 20px', borderRadius: 8, fontSize: 13,
-              background: input.trim() && !loading ? '#062044' : '#D8CEC3',
+              background: input.trim() && !loading ? 'var(--md1-primary)' : 'var(--md1-border)',
               border: 'none', color: '#FFFFFF',
               cursor: input.trim() && !loading ? 'pointer' : 'default',
               fontFamily: FNT, fontWeight: 700, letterSpacing: 0.5,
@@ -387,7 +387,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
             }}
           >{loading ? '…' : 'Query'}</button>
         </div>
-        <div style={{ maxWidth: 720, margin: '6px auto 0', fontSize: 9, color: '#D8CEC3', fontFamily: FNT }}>
+        <div style={{ maxWidth: 720, margin: '6px auto 0', fontSize: 9, color: 'var(--md1-border)', fontFamily: FNT }}>
           Answers strictly from the validated knowledge bank · Rule IDs are clickable
         </div>
       </div>
@@ -402,7 +402,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
         width={640}
       >
         {detailLoading && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
         {detailItem && (
           <QueryItemDetail item={detailItem} onCiteClick={handleCrossCiteClick} />
@@ -417,7 +417,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
         width={580}
       >
         {crossLoading && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
         {crossItem && (
           <QueryItemDetail item={crossItem} onCiteClick={() => {}} />
@@ -434,24 +434,24 @@ export default function QueryView({ onNavigate, industry, plantId }) {
         {askDone ? (
           <div style={{ padding: '24px 0', textAlign: 'center' }}>
             <div style={{ fontSize: 28, marginBottom: 12 }}>✓</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#062044', fontFamily: FNT, marginBottom: 8 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT, marginBottom: 8 }}>
               Question posted to Open Questions
             </div>
-            <div style={{ fontSize: 12, color: '#8a8278', fontFamily: FNT, lineHeight: 1.6, marginBottom: 24 }}>
+            <div style={{ fontSize: 12, color: 'var(--md1-muted)', fontFamily: FNT, lineHeight: 1.6, marginBottom: 24 }}>
               Your team will be able to see and answer it in the Questions tab.
             </div>
             <button
               onClick={() => { setAskOpen(false); setAskDone(false) }}
-              style={{ padding: '10px 24px', borderRadius: 3, fontSize: 12, background: '#062044', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
+              style={{ padding: '10px 24px', borderRadius: 3, fontSize: 12, background: 'var(--md1-primary)', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
             >Close</button>
           </div>
         ) : (
           <div>
-            <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT, lineHeight: 1.6, marginBottom: 16, padding: '8px 12px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #4FA89A' }}>
+            <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT, lineHeight: 1.6, marginBottom: 16, padding: '8px 12px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid var(--md1-accent)' }}>
               The knowledge bank couldn't fully answer this. Post it as an open question for your team.
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 6 }}>Question</label>
+              <label style={{ display: 'block', fontSize: 10, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 6 }}>Question</label>
               <textarea
                 value={askText}
                 onChange={e => setAskText(e.target.value)}
@@ -463,16 +463,16 @@ export default function QueryView({ onNavigate, industry, plantId }) {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setAskOpen(false)}
-                style={{ padding: '10px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', fontFamily: FNT, fontWeight: 600 }}
+                style={{ padding: '10px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: '#5a5550', cursor: 'pointer', fontFamily: FNT, fontWeight: 600 }}
               >Cancel</button>
               <button
                 onClick={handleAskSubmit}
                 disabled={askSubmitting || !askText.trim()}
                 style={{
                   padding: '10px 20px', borderRadius: 3, fontSize: 12, fontWeight: 700,
-                  background: (!askSubmitting && askText.trim()) ? '#062044' : '#f0eeec',
+                  background: (!askSubmitting && askText.trim()) ? 'var(--md1-primary)' : '#f0eeec',
                   border: 'none',
-                  color: (!askSubmitting && askText.trim()) ? '#fff' : '#8a8278',
+                  color: (!askSubmitting && askText.trim()) ? '#fff' : 'var(--md1-muted)',
                   cursor: (!askSubmitting && askText.trim()) ? 'pointer' : 'not-allowed',
                   fontFamily: FNT, letterSpacing: 0.4,
                 }}

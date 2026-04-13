@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { signIn, signUp } from '../lib/auth.js'
 
-const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
+const FNT = 'var(--md1-font-sans)'
 
 const inputStyle = {
   width: '100%',
@@ -114,7 +114,7 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#062044',
+      background: 'var(--md1-primary)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -161,7 +161,7 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
                 onClick={() => switchMode(m)}
                 style={{
                   flex: 1, padding: '8px 0', background: 'none', border: 'none',
-                  borderBottom: `2px solid ${mode === m ? '#4FA89A' : 'transparent'}`,
+                  borderBottom: `2px solid ${mode === m ? 'var(--md1-accent)' : 'transparent'}`,
                   color: mode === m ? '#fff' : 'rgba(255,255,255,0.4)',
                   fontSize: 12, fontWeight: mode === m ? 700 : 400,
                   letterSpacing: 1.2, textTransform: 'uppercase', cursor: 'pointer',
@@ -246,7 +246,7 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
                 width: '100%', padding: '12px 0', borderRadius: 3,
                 background: loading ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
                 border: 'none',
-                color: loading ? 'rgba(255,255,255,0.4)' : '#062044',
+                color: loading ? 'rgba(255,255,255,0.4)' : 'var(--md1-primary)',
                 fontSize: 13, fontWeight: 700, letterSpacing: 1.2,
                 textTransform: 'uppercase', cursor: loading ? 'default' : 'pointer',
                 fontFamily: FNT, transition: 'all 0.15s',
@@ -269,8 +269,8 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
               style={{
                 width: '100%', padding: '11px 0', borderRadius: 3,
                 background: 'transparent',
-                border: '1px solid rgba(79,168,154,0.5)',
-                color: '#4FA89A',
+                border: '1px solid rgba(var(--md1-accent-rgb),0.5)',
+                color: 'var(--md1-accent)',
                 fontSize: 12, fontWeight: 700, letterSpacing: 0.8,
                 cursor: 'pointer', fontFamily: FNT,
               }}
@@ -305,8 +305,8 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
                 style={{
                   width: '100%', padding: '11px 0', borderRadius: 3,
                   background: 'transparent',
-                  border: '1px solid rgba(79,168,154,0.5)',
-                  color: demoLoading ? 'rgba(79,168,154,0.4)' : '#4FA89A',
+                  border: '1px solid rgba(var(--md1-accent-rgb),0.5)',
+                  color: demoLoading ? 'rgba(var(--md1-accent-rgb),0.4)' : 'var(--md1-accent)',
                   fontSize: 12, fontWeight: 700, letterSpacing: 0.8,
                   cursor: demoLoading ? 'default' : 'pointer', fontFamily: FNT,
                 }}

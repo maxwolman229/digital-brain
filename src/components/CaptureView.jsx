@@ -33,7 +33,7 @@ function TypeBadge({ type }) {
       fontSize: 9, padding: '2px 7px', borderRadius: 2, fontWeight: 700, fontFamily: FNT,
       textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0,
       background: isRule ? '#e8edf4' : '#f0eeec',
-      color: isRule ? '#062044' : '#8a8278',
+      color: isRule ? 'var(--md1-primary)' : 'var(--md1-muted)',
     }}>
       {type}
     </span>
@@ -45,7 +45,7 @@ function Dots() {
     <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '6px 0' }}>
       {[0, 1, 2].map(i => (
         <div key={i} style={{
-          width: 7, height: 7, borderRadius: '50%', background: '#4FA89A',
+          width: 7, height: 7, borderRadius: '50%', background: 'var(--md1-accent)',
           animation: `dot-pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
         }} />
       ))}
@@ -531,20 +531,20 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: 32 }}>
         <div style={{ width: '100%', maxWidth: 480 }}>
           <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: FNT, fontWeight: 700, marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: FNT, fontWeight: 700, marginBottom: 8 }}>
               Knowledge Capture
             </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#062044', fontFamily: FNT, marginBottom: 8 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT, marginBottom: 8 }}>
               Guided Interview
             </div>
-            <div style={{ fontSize: 13, color: '#8a8278', fontFamily: FNT, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: 'var(--md1-muted)', fontFamily: FNT, lineHeight: 1.6 }}>
               The system asks one question at a time, listens to your answers, and structures everything it hears into rules and assertions. You just talk.
             </div>
           </div>
 
           <form onSubmit={startInterview}>
             <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 8 }}>
+              <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 8 }}>
                 What should we chat about?
               </div>
               <input
@@ -555,7 +555,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                 autoFocus
                 style={{ ...iS, fontSize: 14 }}
               />
-              <div style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, marginTop: 6 }}>
+              <div style={{ fontSize: 11, color: 'var(--md1-muted-light)', fontFamily: FNT, marginTop: 6 }}>
                 The topic seeds the first question. You can go anywhere from there.
               </div>
             </div>
@@ -573,8 +573,8 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                 width: '100%', padding: '12px 0', borderRadius: 3, fontSize: 13,
                 fontFamily: FNT, fontWeight: 700, border: 'none',
                 cursor: !topic.trim() ? 'default' : 'pointer',
-                background: !topic.trim() ? '#D8CEC3' : '#062044',
-                color: !topic.trim() ? '#8a8278' : '#fff',
+                background: !topic.trim() ? 'var(--md1-border)' : 'var(--md1-primary)',
+                color: !topic.trim() ? 'var(--md1-muted)' : '#fff',
                 letterSpacing: 0.5,
               }}
             >
@@ -594,7 +594,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
       {/* Progress bar strip */}
       <div style={{ height: 3, background: '#e8e4e0', flexShrink: 0 }}>
         <div style={{
-          height: '100%', background: '#4FA89A',
+          height: '100%', background: 'var(--md1-accent)',
           width: `${progress}%`, transition: 'width 0.6s cubic-bezier(.4,0,.2,1)',
         }} />
       </div>
@@ -602,24 +602,24 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
       {/* Header */}
       <div style={{
         flexShrink: 0, padding: '9px 20px', borderBottom: '1px solid #e8e4e0',
-        display: 'flex', alignItems: 'center', gap: 10, background: '#FAFAF9',
+        display: 'flex', alignItems: 'center', gap: 10, background: 'var(--md1-section-bg)',
       }}>
         {/* Level badge */}
         <div style={{
           fontSize: 10, padding: '3px 9px', borderRadius: 2, fontFamily: FNT, fontWeight: 700,
-          background: levelFlash ? '#4FA89A' : '#062044',
+          background: levelFlash ? 'var(--md1-accent)' : 'var(--md1-primary)',
           color: '#fff', letterSpacing: 0.4, flexShrink: 0,
           transition: 'background 0.4s ease',
         }}>
           L{difficulty.level} · {difficulty.label}
         </div>
 
-        <span style={{ color: '#D8CEC3', fontSize: 11 }}>·</span>
+        <span style={{ color: 'var(--md1-border)', fontSize: 11 }}>·</span>
 
         {/* Answered / skipped count */}
-        <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, whiteSpace: 'nowrap' }}>
           {answeredCount} answered
-          {skippedCount > 0 && <span style={{ color: '#b0a898' }}> · {skippedCount} skipped</span>}
+          {skippedCount > 0 && <span style={{ color: 'var(--md1-muted-light)' }}> · {skippedCount} skipped</span>}
         </div>
 
         <div style={{ flex: 1 }} />
@@ -640,8 +640,8 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
           <div style={{
             fontSize: 10, padding: '3px 9px', borderRadius: 2, fontFamily: FNT, fontWeight: 700,
             background: countFlash ? '#e6f5f1' : '#f0eeec',
-            color: countFlash ? '#2d6b5e' : '#4FA89A',
-            border: `1px solid ${countFlash ? '#4FA89A' : 'transparent'}`,
+            color: countFlash ? 'var(--md1-accent-deep)' : 'var(--md1-accent)',
+            border: `1px solid ${countFlash ? 'var(--md1-accent)' : 'transparent'}`,
             transition: 'background 0.3s, color 0.3s, border-color 0.3s',
             letterSpacing: 0.3, flexShrink: 0,
           }}>
@@ -656,7 +656,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
           onClick={finishEarly}
           style={{
             padding: '4px 11px', borderRadius: 3, fontSize: 10, fontFamily: FNT, fontWeight: 700,
-            background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+            background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer',
             flexShrink: 0,
           }}
         >
@@ -671,8 +671,8 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
           {/* Past turns */}
           {displayTurns.map((turn, i) => (
             <div key={i} style={{ marginBottom: 24 }}>
-              <div style={{ borderLeft: '3px solid #D8CEC3', paddingLeft: 14, marginBottom: 8 }}>
-                <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700, marginBottom: 3 }}>
+              <div style={{ borderLeft: '3px solid var(--md1-border)', paddingLeft: 14, marginBottom: 8 }}>
+                <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700, marginBottom: 3 }}>
                   Q{i + 1}
                 </div>
                 <div style={{ fontSize: 13, color: '#5a5550', fontFamily: FNT, lineHeight: 1.5 }}>
@@ -680,7 +680,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                 </div>
               </div>
               {turn.skipped ? (
-                <div style={{ marginLeft: 17, fontSize: 11, color: '#D8CEC3', fontFamily: FNT, fontStyle: 'italic' }}>
+                <div style={{ marginLeft: 17, fontSize: 11, color: 'var(--md1-border)', fontFamily: FNT, fontStyle: 'italic' }}>
                   — skipped —
                 </div>
               ) : (
@@ -688,7 +688,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                   marginLeft: 17, padding: '9px 13px',
                   background: '#f8f6f4', borderRadius: 3, border: '1px solid #e8e4e0',
                 }}>
-                  <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                  <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                     {operatorName}
                   </div>
                   <div style={{ fontSize: 13, color: '#3a3530', lineHeight: 1.6, fontFamily: FNT }}>
@@ -701,19 +701,19 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
 
           {/* Current state */}
           {loading ? (
-            <div style={{ borderLeft: '3px solid #4FA89A', paddingLeft: 14 }}>
-              <div style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700, marginBottom: 6 }}>
+            <div style={{ borderLeft: '3px solid var(--md1-accent)', paddingLeft: 14 }}>
+              <div style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700, marginBottom: 6 }}>
                 Q{displayTurns.length + 1}
               </div>
               <Dots />
             </div>
           ) : currentQuestion ? (
             <div>
-              <div style={{ borderLeft: '3px solid #4FA89A', paddingLeft: 14, marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ borderLeft: '3px solid var(--md1-accent)', paddingLeft: 14, marginBottom: 16 }}>
+                <div style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 700, marginBottom: 6 }}>
                   Q{displayTurns.length + 1}
                 </div>
-                <div style={{ fontSize: 15, color: '#062044', fontFamily: FNT, lineHeight: 1.55, fontWeight: 500 }}>
+                <div style={{ fontSize: 15, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1.55, fontWeight: 500 }}>
                   {currentQuestion}
                 </div>
               </div>
@@ -725,7 +725,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                   <div style={{ display: 'flex', marginBottom: 10 }}>
                     <div style={{
                       display: 'inline-flex', borderRadius: 3, overflow: 'hidden',
-                      border: '1px solid #D8CEC3',
+                      border: '1px solid var(--md1-border)',
                     }}>
                       {['type', 'speak'].map(mode => (
                         <button
@@ -738,8 +738,8 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                             padding: '5px 16px', fontSize: 11, fontFamily: FNT, fontWeight: 700,
                             border: 'none', cursor: 'pointer', letterSpacing: 0.4,
                             textTransform: 'capitalize',
-                            background: inputMode === mode ? '#062044' : 'transparent',
-                            color: inputMode === mode ? '#fff' : '#8a8278',
+                            background: inputMode === mode ? 'var(--md1-primary)' : 'transparent',
+                            color: inputMode === mode ? '#fff' : 'var(--md1-muted)',
                             transition: 'background 0.15s, color 0.15s',
                           }}
                         >
@@ -773,8 +773,8 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         style={{
                           padding: '9px 20px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
                           border: 'none', cursor: answer.trim() ? 'pointer' : 'default',
-                          background: answer.trim() ? '#062044' : '#e8e4e0',
-                          color: answer.trim() ? '#fff' : '#b0a898',
+                          background: answer.trim() ? 'var(--md1-primary)' : '#e8e4e0',
+                          color: answer.trim() ? '#fff' : 'var(--md1-muted-light)',
                         }}
                       >
                         Continue →
@@ -783,7 +783,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         onClick={skipQuestion}
                         style={{
                           padding: '9px 14px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 600,
-                          background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+                          background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer',
                         }}
                       >
                         Skip →
@@ -792,7 +792,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         onClick={finishEarly}
                         style={{
                           padding: '9px 14px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 600,
-                          background: 'transparent', border: 'none', color: '#b0a898', cursor: 'pointer',
+                          background: 'transparent', border: 'none', color: 'var(--md1-muted-light)', cursor: 'pointer',
                         }}
                       >
                         I'm done talking
@@ -808,14 +808,14 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                       <div style={{
                         width: '100%', marginBottom: 16, padding: '12px 14px',
                         background: showTranscript ? '#e6f5f1' : '#f8f6f4',
-                        border: `1px solid ${showTranscript ? '#4FA89A' : '#e8e4e0'}`,
+                        border: `1px solid ${showTranscript ? 'var(--md1-accent)' : '#e8e4e0'}`,
                         borderRadius: 3, minHeight: 48,
                         transition: 'background 0.3s, border-color 0.3s',
                       }}>
-                        <div style={{ fontSize: 9, color: showTranscript ? '#4FA89A' : '#b0a898', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+                        <div style={{ fontSize: 9, color: showTranscript ? 'var(--md1-accent)' : 'var(--md1-muted-light)', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
                           {showTranscript ? 'Submitting…' : 'Listening…'}
                         </div>
-                        <div style={{ fontSize: 14, color: '#1F1F1F', fontFamily: FNT, lineHeight: 1.6 }}>
+                        <div style={{ fontSize: 14, color: 'var(--md1-text)', fontFamily: FNT, lineHeight: 1.6 }}>
                           {transcript || answer}
                         </div>
                       </div>
@@ -828,17 +828,17 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                       style={{
                         width: 80, height: 80, borderRadius: '50%',
                         border: 'none', cursor: showTranscript ? 'default' : 'pointer',
-                        background: listening ? '#e74c3c' : '#062044',
+                        background: listening ? '#e74c3c' : 'var(--md1-primary)',
                         color: '#fff', fontSize: 32, lineHeight: 1,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: listening ? '0 0 0 12px rgba(231,76,60,0.15)' : '0 2px 8px rgba(6,32,68,0.2)',
+                        boxShadow: listening ? '0 0 0 12px rgba(231,76,60,0.15)' : '0 2px 8px rgba(var(--md1-primary-rgb),0.2)',
                         animation: listening ? 'mic-pulse 1.5s ease-in-out infinite' : 'none',
                         transition: 'background 0.2s, box-shadow 0.3s',
                       }}
                     >
                       {listening ? '⏹' : '🎤'}
                     </button>
-                    <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginTop: 10 }}>
+                    <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginTop: 10 }}>
                       {listening ? 'Tap to stop' : 'Tap to start speaking'}
                     </div>
 
@@ -850,7 +850,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         onClick={skipQuestion}
                         style={{
                           padding: '8px 14px', borderRadius: 3, fontSize: 11, fontFamily: FNT, fontWeight: 600,
-                          background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+                          background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer',
                         }}
                       >
                         Skip →
@@ -859,7 +859,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         onClick={finishEarly}
                         style={{
                           padding: '8px 14px', borderRadius: 3, fontSize: 11, fontFamily: FNT, fontWeight: 600,
-                          background: 'transparent', border: 'none', color: '#b0a898', cursor: 'pointer',
+                          background: 'transparent', border: 'none', color: 'var(--md1-muted-light)', cursor: 'pointer',
                         }}
                       >
                         I'm done talking
@@ -913,13 +913,13 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
         {/* ── Sticky header ── */}
         <div style={{
           flexShrink: 0, padding: '14px 28px', borderBottom: '1px solid #e8e4e0',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FAFAF9',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--md1-section-bg)',
         }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#062044', fontFamily: FNT }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT }}>
               Review extracted knowledge
             </div>
-            <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginTop: 2 }}>
               {counterParts.length > 0 ? counterParts.join(' · ') : `${reviewItems.length} items to review`}
             </div>
           </div>
@@ -929,8 +929,8 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
             style={{
               padding: '9px 22px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
               border: 'none', cursor: toSaveCount > 0 && !saving ? 'pointer' : 'default',
-              background: toSaveCount > 0 && !saving ? '#062044' : '#e8e4e0',
-              color: toSaveCount > 0 && !saving ? '#fff' : '#b0a898',
+              background: toSaveCount > 0 && !saving ? 'var(--md1-primary)' : '#e8e4e0',
+              color: toSaveCount > 0 && !saving ? '#fff' : 'var(--md1-muted-light)',
             }}
           >
             {saving ? 'Saving…' : `Save ${toSaveCount} item${toSaveCount !== 1 ? 's' : ''} →`}
@@ -948,7 +948,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
           <div style={{
             margin: '20px 0 20px',
             padding: '16px 24px',
-            background: '#062044',
+            background: 'var(--md1-primary)',
             borderRadius: 4,
             display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap',
           }}>
@@ -966,7 +966,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
               <div key={label} style={{ textAlign: 'center' }}>
                 <div style={{
                   fontSize: 18, fontWeight: 700, fontFamily: FNT, lineHeight: 1,
-                  color: accent ? '#4FA89A' : warm ? '#F2652F' : '#fff',
+                  color: accent ? 'var(--md1-accent)' : warm ? '#F2652F' : '#fff',
                 }}>{val}</div>
                 <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 3 }}>{label}</div>
               </div>
@@ -978,11 +978,11 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                 onClick={approveAll}
                 style={{
                   padding: '8px 16px', borderRadius: 3, fontSize: 11, fontFamily: FNT, fontWeight: 700,
-                  background: 'rgba(79,168,154,0.15)', border: '1px solid rgba(79,168,154,0.4)',
-                  color: '#4FA89A', cursor: 'pointer', flexShrink: 0,
+                  background: 'rgba(var(--md1-accent-rgb),0.15)', border: '1px solid rgba(var(--md1-accent-rgb),0.4)',
+                  color: 'var(--md1-accent)', cursor: 'pointer', flexShrink: 0,
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(79,168,154,0.25)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(79,168,154,0.15)'}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(var(--md1-accent-rgb),0.25)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(var(--md1-accent-rgb),0.15)'}
               >
                 ✓ Approve All
               </button>
@@ -991,10 +991,10 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
 
           {/* ── Empty state ── */}
           {reviewItems.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: '#b0a898', fontFamily: FNT, fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 13 }}>
               No knowledge items were extracted from this interview.
               <div style={{ marginTop: 16 }}>
-                <button onClick={restart} style={{ fontSize: 12, color: '#4FA89A', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT }}>
+                <button onClick={restart} style={{ fontSize: 12, color: 'var(--md1-accent)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT }}>
                   Start another interview
                 </button>
               </div>
@@ -1019,10 +1019,10 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                   borderTop: '1px solid',
                   borderRight: '1px solid',
                   borderBottom: '1px solid',
-                  borderTopColor:    isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(79,168,154,0.3)' : '#D8CEC3',
-                  borderRightColor:  isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(79,168,154,0.3)' : '#D8CEC3',
-                  borderBottomColor: isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(79,168,154,0.3)' : '#D8CEC3',
-                  borderLeft: `3px solid ${isRejected ? '#e74c3c' : (isApproved || isEdited) ? '#4FA89A' : '#D8CEC3'}`,
+                  borderTopColor:    isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(var(--md1-accent-rgb),0.3)' : 'var(--md1-border)',
+                  borderRightColor:  isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(var(--md1-accent-rgb),0.3)' : 'var(--md1-border)',
+                  borderBottomColor: isRejected ? '#f0d8d5' : (isApproved || isEdited) ? 'rgba(var(--md1-accent-rgb),0.3)' : 'var(--md1-border)',
+                  borderLeft: `3px solid ${isRejected ? '#e74c3c' : (isApproved || isEdited) ? 'var(--md1-accent)' : 'var(--md1-border)'}`,
                   backgroundColor: isRejected ? '#fef7f6' : (isApproved || isEdited) ? '#f4fbf8' : '#FFFFFF',
                   opacity: isRejected ? 0.6 : 1,
                   animation: item._flash === 'approved' ? 'approve-flash 0.5s ease-out' : item._flash === 'rejected' ? 'reject-flash 0.5s ease-out' : 'none',
@@ -1038,17 +1038,17 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                     <TypeBadge type={item.type} />
                   </button>
                   {item.processArea && !item.editing && (
-                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: 'var(--md1-muted)', fontFamily: FNT, flexShrink: 0 }}>
                       {item.processArea}
                     </span>
                   )}
                   {item.category && !item.editing && (
-                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#f0eeec', color: 'var(--md1-muted)', fontFamily: FNT, flexShrink: 0 }}>
                       {item.category}
                     </span>
                   )}
                   {isEdited && !item.editing && (
-                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#e6f5f1', color: '#2d6b5e', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#e6f5f1', color: 'var(--md1-accent-deep)', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>
                       edited
                     </span>
                   )}
@@ -1067,7 +1067,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         }}
                         style={{
                           padding: '5px 14px', borderRadius: 3, fontSize: 10, fontFamily: FNT, fontWeight: 700,
-                          background: '#4FA89A', border: 'none', color: '#fff', cursor: 'pointer',
+                          background: 'var(--md1-accent)', border: 'none', color: '#fff', cursor: 'pointer',
                         }}
                       >
                         ✓ Save edit
@@ -1076,7 +1076,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         onClick={() => updateItem(item._id, 'editing', false)}
                         style={{
                           padding: '5px 10px', borderRadius: 3, fontSize: 10, fontFamily: FNT,
-                          background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer',
+                          background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer',
                         }}
                       >
                         Cancel
@@ -1085,14 +1085,14 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                   ) : isRejected ? (
                     <button
                       onClick={() => updateItem(item._id, 'decision', 'pending')}
-                      style={{ fontSize: 10, fontFamily: FNT, fontWeight: 700, color: '#4FA89A', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}
+                      style={{ fontSize: 10, fontFamily: FNT, fontWeight: 700, color: 'var(--md1-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}
                     >
                       ↩ Restore
                     </button>
                   ) : (
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       {(isApproved || isEdited) && (
-                        <span style={{ fontSize: 13, color: '#4FA89A', fontWeight: 700, marginRight: 2 }}>✓</span>
+                        <span style={{ fontSize: 13, color: 'var(--md1-accent)', fontWeight: 700, marginRight: 2 }}>✓</span>
                       )}
                       {item.decision === 'pending' && (
                         <button
@@ -1104,7 +1104,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                           }}
                           style={{
                             padding: '5px 12px', borderRadius: 3, fontSize: 10, fontFamily: FNT, fontWeight: 700,
-                            background: '#e6f5f1', border: '1px solid rgba(79,168,154,0.35)', color: '#2d6b5e', cursor: 'pointer',
+                            background: '#e6f5f1', border: '1px solid rgba(var(--md1-accent-rgb),0.35)', color: 'var(--md1-accent-deep)', cursor: 'pointer',
                           }}
                           onMouseEnter={e => e.currentTarget.style.background = '#d0ede6'}
                           onMouseLeave={e => e.currentTarget.style.background = '#e6f5f1'}
@@ -1116,7 +1116,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         onClick={() => updateItem(item._id, 'editing', true)}
                         style={{
                           padding: '5px 10px', borderRadius: 3, fontSize: 10, fontFamily: FNT, fontWeight: 600,
-                          background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer',
+                          background: 'transparent', border: '1px solid var(--md1-border)', color: '#5a5550', cursor: 'pointer',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#f8f6f4' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
@@ -1147,16 +1147,16 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                 {/* ── Edit mode form ── */}
                 {item.editing ? (
                   <div>
-                    <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Title</div>
+                    <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Title</div>
                     <input
                       value={item.title}
                       onChange={e => updateItem(item._id, 'title', e.target.value)}
-                      style={{ ...iS, fontSize: 13, fontWeight: 600, color: '#062044', width: '100%', boxSizing: 'border-box', marginBottom: 10 }}
+                      style={{ ...iS, fontSize: 13, fontWeight: 600, color: 'var(--md1-primary)', width: '100%', boxSizing: 'border-box', marginBottom: 10 }}
                       autoFocus
                     />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                       <div>
-                        <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Process area</div>
+                        <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Process area</div>
                         <input
                           value={item.processArea || ''}
                           onChange={e => updateItem(item._id, 'processArea', e.target.value)}
@@ -1165,7 +1165,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         />
                       </div>
                       <div>
-                        <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Category</div>
+                        <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Category</div>
                         <select
                           value={item.category || 'Process'}
                           onChange={e => updateItem(item._id, 'category', e.target.value)}
@@ -1177,7 +1177,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                     </div>
                     {item.type === 'rule' && (
                       <div>
-                        <div style={{ fontSize: 9, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Rationale</div>
+                        <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: FNT, marginBottom: 4 }}>Rationale</div>
                         <textarea
                           value={item.rationale || ''}
                           onChange={e => updateItem(item._id, 'rationale', e.target.value)}
@@ -1192,14 +1192,14 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                   /* ── Normal display mode ── */
                   <div>
                     <div style={{
-                      fontSize: 13, fontWeight: 600, color: '#062044', fontFamily: FNT, lineHeight: 1.4,
+                      fontSize: 13, fontWeight: 600, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1.4,
                       textDecoration: isRejected ? 'line-through' : 'none',
                       marginBottom: item._sourceAnswer ? 8 : 0,
                     }}>
                       {item.title}
                     </div>
                     {item.type === 'rule' && item.rationale && !isRejected && (
-                      <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, lineHeight: 1.5, marginBottom: item._sourceAnswer ? 8 : 0 }}>
+                      <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, lineHeight: 1.5, marginBottom: item._sourceAnswer ? 8 : 0 }}>
                         {item.rationale}
                       </div>
                     )}
@@ -1209,7 +1209,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
                         <button
                           onClick={() => updateItem(item._id, '_expanded', !item._expanded)}
                           style={{
-                            fontSize: 9, color: '#b0a898', background: 'none', border: 'none', cursor: 'pointer',
+                            fontSize: 9, color: 'var(--md1-muted-light)', background: 'none', border: 'none', cursor: 'pointer',
                             fontFamily: FNT, padding: 0, textTransform: 'uppercase', letterSpacing: 0.6,
                             display: 'flex', alignItems: 'center', gap: 4,
                           }}
@@ -1246,7 +1246,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
 
   return (
     <div style={{
-      flex: 1, background: '#062044',
+      flex: 1, background: 'var(--md1-primary)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       overflow: 'auto', padding: '32px 24px', position: 'relative',
     }}>
@@ -1262,15 +1262,15 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
         {/* Check circle */}
         <div style={{
           width: 64, height: 64, borderRadius: '50%',
-          background: 'rgba(79,168,154,0.15)', border: '1px solid rgba(79,168,154,0.4)',
+          background: 'rgba(var(--md1-accent-rgb),0.15)', border: '1px solid rgba(var(--md1-accent-rgb),0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 22px', fontSize: 26, color: '#4FA89A',
+          margin: '0 auto 22px', fontSize: 26, color: 'var(--md1-accent)',
         }}>
           ✓
         </div>
 
         {/* Session complete label */}
-        <div style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 14 }}>
+        <div style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 14 }}>
           Session Complete
         </div>
 
@@ -1286,7 +1286,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
         {totalSaved > 0 && (
           <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', fontFamily: FNT, lineHeight: 1.5, marginBottom: 32 }}>
             Your plant knowledge coverage increased by approximately{' '}
-            <span style={{ color: '#4FA89A', fontWeight: 700 }}>{coverageGain}%</span>
+            <span style={{ color: 'var(--md1-accent)', fontWeight: 700 }}>{coverageGain}%</span>
           </div>
         )}
 
@@ -1308,7 +1308,7 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
             }}>
               <div style={{
                 fontSize: 20, fontWeight: 700, fontFamily: FNT, lineHeight: 1,
-                color: accent ? '#4FA89A' : '#fff', marginBottom: 5,
+                color: accent ? 'var(--md1-accent)' : '#fff', marginBottom: 5,
               }}>
                 {val}
               </div>
@@ -1357,11 +1357,11 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
             onClick={() => onNavigate?.(savedCounts.rules > 0 ? 'rules' : 'assertions')}
             style={{
               padding: '12px 24px', borderRadius: 3, fontSize: 12, fontFamily: FNT, fontWeight: 700,
-              background: '#4FA89A', border: 'none', color: '#fff', cursor: 'pointer',
+              background: 'var(--md1-accent)', border: 'none', color: '#fff', cursor: 'pointer',
               transition: 'background 0.15s',
             }}
             onMouseEnter={e => e.currentTarget.style.background = '#3d9487'}
-            onMouseLeave={e => e.currentTarget.style.background = '#4FA89A'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--md1-accent)'}
           >
             View in Knowledge Bank →
           </button>

@@ -64,7 +64,7 @@ export default function HealthDashboard({ onNavigate }) {
   }, [])
 
   if (loading) return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 13 }}>
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 13 }}>
       Loading health data…
     </div>
   )
@@ -149,18 +149,18 @@ export default function HealthDashboard({ onNavigate }) {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* ── Sticky stats bar ── */}
-      <div style={{ flexShrink: 0, padding: isMobile ? '12px 16px' : '16px 28px', borderBottom: '1px solid #e8e4e0', background: '#FAFAF9' }}>
+      <div style={{ flexShrink: 0, padding: isMobile ? '12px 16px' : '16px 28px', borderBottom: '1px solid #e8e4e0', background: 'var(--md1-section-bg)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 8 }}>
-          <div style={{ padding: 16, background: contradictions.length > 0 ? '#fde8e5' : '#e6f5f1', borderRadius: 3, border: `1px solid ${contradictions.length > 0 ? '#c0392b20' : '#4FA89A20'}` }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: contradictions.length > 0 ? '#c0392b' : '#4FA89A', fontFamily: FNT }}>{contradictions.length}</div>
+          <div style={{ padding: 16, background: contradictions.length > 0 ? '#fde8e5' : '#e6f5f1', borderRadius: 3, border: `1px solid ${contradictions.length > 0 ? '#c0392b20' : 'var(--md1-accent)20'}` }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: contradictions.length > 0 ? '#c0392b' : 'var(--md1-accent)', fontFamily: FNT }}>{contradictions.length}</div>
             <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, fontWeight: 600 }}>Contradicted</div>
           </div>
-          <div style={{ padding: 16, background: staleItems.length > 0 ? '#fef3e2' : '#e6f5f1', borderRadius: 3, border: `1px solid ${staleItems.length > 0 ? '#F2652F20' : '#4FA89A20'}` }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: staleItems.length > 0 ? '#F2652F' : '#4FA89A', fontFamily: FNT }}>{staleItems.length}</div>
+          <div style={{ padding: 16, background: staleItems.length > 0 ? '#fef3e2' : '#e6f5f1', borderRadius: 3, border: `1px solid ${staleItems.length > 0 ? '#F2652F20' : 'var(--md1-accent)20'}` }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: staleItems.length > 0 ? '#F2652F' : 'var(--md1-accent)', fontFamily: FNT }}>{staleItems.length}</div>
             <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, fontWeight: 600 }}>Stale</div>
           </div>
-          <div style={{ padding: 16, background: '#e6f5f1', borderRadius: 3, border: '1px solid #4FA89A20' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: '#4FA89A', fontFamily: FNT }}>{activeCount}</div>
+          <div style={{ padding: 16, background: '#e6f5f1', borderRadius: 3, border: '1px solid var(--md1-accent)20' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--md1-accent)', fontFamily: FNT }}>{activeCount}</div>
             <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, fontWeight: 600 }}>Active Knowledge</div>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function HealthDashboard({ onNavigate }) {
                           <div style={{ fontSize: 10, color: '#c0392b', fontFamily: FNT, fontWeight: 700 }}>
                             CONTRADICTION
                           </div>
-                          <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT }}>
+                          <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT }}>
                             flagged by {c.flaggedBy} · {formatDate(c.flaggedAt)}
                           </div>
                         </div>
@@ -202,18 +202,18 @@ export default function HealthDashboard({ onNavigate }) {
                             style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F', cursor: 'pointer' }}
                             onClick={() => { const item = findItem(c.itemA.id); if (item) setSel(item) }}
                           >
-                            <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemA.type} · {c.itemA.displayId}</div>
-                            <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.itemA.title}</div>
-                            {c.itemA.processArea && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 3, fontFamily: FNT }}>{c.itemA.processArea}</div>}
+                            <div style={{ fontSize: 9, color: 'var(--md1-muted)', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemA.type} · {c.itemA.displayId}</div>
+                            <div style={{ fontSize: 12, color: 'var(--md1-text)', lineHeight: 1.3 }}>{c.itemA.title}</div>
+                            {c.itemA.processArea && <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', marginTop: 3, fontFamily: FNT }}>{c.itemA.processArea}</div>}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#c0392b', fontWeight: 700 }}>⇄</div>
                           <div
                             style={{ flex: 1, padding: '8px 10px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #F2652F', cursor: 'pointer' }}
                             onClick={() => { const item = findItem(c.itemB.id); if (item) setSel(item) }}
                           >
-                            <div style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemB.type} · {c.itemB.displayId}</div>
-                            <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.3 }}>{c.itemB.title}</div>
-                            {c.itemB.processArea && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 3, fontFamily: FNT }}>{c.itemB.processArea}</div>}
+                            <div style={{ fontSize: 9, color: 'var(--md1-muted)', fontFamily: FNT, fontWeight: 600, marginBottom: 2, textTransform: 'uppercase' }}>{c.itemB.type} · {c.itemB.displayId}</div>
+                            <div style={{ fontSize: 12, color: 'var(--md1-text)', lineHeight: 1.3 }}>{c.itemB.title}</div>
+                            {c.itemB.processArea && <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', marginTop: 3, fontFamily: FNT }}>{c.itemB.processArea}</div>}
                           </div>
                         </div>
                       </div>
@@ -227,22 +227,22 @@ export default function HealthDashboard({ onNavigate }) {
                     {staleItems.map(item => {
                       const st = checkStaleness(item, events)
                       return (
-                        <div key={item.id} style={{ padding: '12px 16px', background: '#fff', border: '1px solid #D8CEC3', borderRadius: 3, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div key={item.id} style={{ padding: '12px 16px', background: '#fff', border: '1px solid var(--md1-border)', borderRadius: 3, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
                           <div
                             style={{ flex: 1, cursor: 'pointer' }}
                             onClick={() => setSel(item)}
                           >
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
-                              <span style={{ fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, textDecoration: 'underline' }}>{item.displayId}</span>
+                              <span style={{ fontSize: 11, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 600, textDecoration: 'underline' }}>{item.displayId}</span>
                               <Badge label={item.status} colorFn={statusColor} />
                               <span style={{ fontSize: 10, color: '#F2652F', fontFamily: FNT, fontWeight: 600 }}>{st.daysSince}d without activity</span>
                             </div>
-                            <div style={{ fontSize: 13, color: '#1F1F1F', lineHeight: 1.3 }}>{item.title}</div>
+                            <div style={{ fontSize: 13, color: 'var(--md1-text)', lineHeight: 1.3 }}>{item.title}</div>
                           </div>
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                             <button
                               onClick={() => confirmValid(item)}
-                              style={{ padding: '4px 10px', fontSize: 10, background: '#e6f5f1', border: '1px solid #4FA89A30', borderRadius: 3, cursor: 'pointer', fontFamily: FNT, fontWeight: 700, color: '#4FA89A' }}
+                              style={{ padding: '4px 10px', fontSize: 10, background: '#e6f5f1', border: '1px solid var(--md1-accent)30', borderRadius: 3, cursor: 'pointer', fontFamily: FNT, fontWeight: 700, color: 'var(--md1-accent)' }}
                             >Confirm Valid</button>
                             <button
                               onClick={() => retireItem(item)}
@@ -258,7 +258,7 @@ export default function HealthDashboard({ onNavigate }) {
             ) : (
               <div style={{ padding: '32px 0', textAlign: 'center' }}>
                 <div style={{ fontSize: 24, marginBottom: 6 }}>✓</div>
-                <div style={{ fontSize: 14, color: '#4FA89A', fontWeight: 700, fontFamily: FNT }}>No items need review</div>
+                <div style={{ fontSize: 14, color: 'var(--md1-accent)', fontWeight: 700, fontFamily: FNT }}>No items need review</div>
               </div>
             )}
 
@@ -271,7 +271,7 @@ export default function HealthDashboard({ onNavigate }) {
           : { borderRight: '1px solid #e8e4e0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
         }>
           <div style={{ flexShrink: 0, padding: '14px 20px 12px', borderBottom: '1px solid #e8e4e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 13, color: '#062044', fontFamily: FNT, fontWeight: 700 }}>Top Knowledge</div>
+            <div style={{ fontSize: 13, color: 'var(--md1-primary)', fontFamily: FNT, fontWeight: 700 }}>Top Knowledge</div>
             <div style={{ display: 'flex', gap: 3 }}>
               {['day', 'week', 'month', 'year', 'all'].map(p => (
                 <button
@@ -280,9 +280,9 @@ export default function HealthDashboard({ onNavigate }) {
                   style={{
                     padding: '2px 8px', borderRadius: 3, fontSize: 9, fontFamily: FNT,
                     fontWeight: topPeriod === p ? 700 : 400,
-                    background: topPeriod === p ? '#062044' : 'transparent',
-                    color: topPeriod === p ? '#fff' : '#8a8278',
-                    border: topPeriod === p ? 'none' : '1px solid #D8CEC3',
+                    background: topPeriod === p ? 'var(--md1-primary)' : 'transparent',
+                    color: topPeriod === p ? '#fff' : 'var(--md1-muted)',
+                    border: topPeriod === p ? 'none' : '1px solid var(--md1-border)',
                     cursor: 'pointer',
                   }}
                 >{p === 'all' ? 'All' : p.charAt(0).toUpperCase() + p.slice(1)}</button>
@@ -299,19 +299,19 @@ export default function HealthDashboard({ onNavigate }) {
                 onMouseEnter={e => e.currentTarget.style.background = '#f8f6f4'}
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}
               >
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#D8CEC3', fontFamily: FNT, width: 24, textAlign: 'right', flexShrink: 0 }}>{idx + 1}</span>
-                <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, width: 40, flexShrink: 0 }}>{item.displayId}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--md1-border)', fontFamily: FNT, width: 24, textAlign: 'right', flexShrink: 0 }}>{idx + 1}</span>
+                <span style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 600, width: 40, flexShrink: 0 }}>{item.displayId}</span>
                 <Badge label={item.status} colorFn={statusColor} />
-                <div style={{ flex: 1, fontSize: 12, color: '#1F1F1F', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}</div>
+                <div style={{ flex: 1, fontSize: 12, color: 'var(--md1-text)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}</div>
                 {(verifications[item.id] || []).length > 0 && (
-                  <span style={{ fontSize: 9, color: '#4FA89A', fontFamily: FNT, flexShrink: 0 }}>✓{(verifications[item.id] || []).length}</span>
+                  <span style={{ fontSize: 9, color: 'var(--md1-accent)', fontFamily: FNT, flexShrink: 0 }}>✓{(verifications[item.id] || []).length}</span>
                 )}
                 {(comments[item.id] || []).length > 0 && (
-                  <span style={{ fontSize: 9, color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>{(comments[item.id] || []).length}c</span>
+                  <span style={{ fontSize: 9, color: 'var(--md1-muted)', fontFamily: FNT, flexShrink: 0 }}>{(comments[item.id] || []).length}c</span>
                 )}
               </div>
             )) : (
-              <div style={{ padding: 20, textAlign: 'center', color: '#D8CEC3', fontSize: 12 }}>No knowledge items in this period.</div>
+              <div style={{ padding: 20, textAlign: 'center', color: 'var(--md1-border)', fontSize: 12 }}>No knowledge items in this period.</div>
             )}
 
           </div>
@@ -320,11 +320,11 @@ export default function HealthDashboard({ onNavigate }) {
         {/* ── Column 3: Knowledge Archive ── */}
         <div style={isMobile ? {} : { display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ flexShrink: 0, padding: '14px 20px 12px', borderBottom: '1px solid #e8e4e0' }}>
-            <div style={{ fontSize: 13, color: '#8a8278', fontFamily: FNT, fontWeight: 700 }}>Knowledge Archive</div>
+            <div style={{ fontSize: 13, color: 'var(--md1-muted)', fontFamily: FNT, fontWeight: 700 }}>Knowledge Archive</div>
           </div>
           <div style={isMobile ? { padding: '16px 20px' } : { flex: 1, padding: '16px 20px', overflowY: 'auto' }}>
 
-            <div style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, marginBottom: 14, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 11, color: 'var(--md1-muted-light)', fontFamily: FNT, marginBottom: 14, lineHeight: 1.6 }}>
               Retired knowledge is preserved for reference. These items are no longer active but remain part of the plant's institutional memory.
             </div>
 
@@ -349,7 +349,7 @@ export default function HealthDashboard({ onNavigate }) {
             )}
 
             {retiredItems.length === 0 && pendingArchiveItems.length === 0 ? (
-              <div style={{ padding: 16, textAlign: 'center', color: '#D8CEC3', fontSize: 12 }}>No retired knowledge yet.</div>
+              <div style={{ padding: 16, textAlign: 'center', color: 'var(--md1-border)', fontSize: 12 }}>No retired knowledge yet.</div>
             ) : retiredItems.map(item => (
               <div
                 key={item.id}
@@ -359,11 +359,11 @@ export default function HealthDashboard({ onNavigate }) {
                 onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
               >
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{item.displayId}</span>
+                  <span style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, fontWeight: 600 }}>{item.displayId}</span>
                   <Badge label="Retired" colorFn={statusColor} />
                   {item.processArea && <Tag label={item.processArea} />}
                 </div>
-                <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.3 }}>{item.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--md1-muted)', lineHeight: 1.3 }}>{item.title}</div>
               </div>
             ))}
 
@@ -395,14 +395,14 @@ export default function HealthDashboard({ onNavigate }) {
                       const prevStatus = await rejectArchive(sel.type, sel.id, sel.title, sel.versions || [])
                       updateLocalItem({ ...sel, status: prevStatus })
                     }}
-                    style={{ padding: '6px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#8a8278', cursor: 'pointer', fontFamily: FNT }}
+                    style={{ padding: '6px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer', fontFamily: FNT }}
                   >Reject Archive</button>
                 </div>
               </div>
             )}
 
             {/* Title + badges */}
-            <h3 style={{ fontSize: 16, color: '#062044', fontWeight: 700, lineHeight: 1.4, marginBottom: 16, fontFamily: FNT }}>
+            <h3 style={{ fontSize: 16, color: 'var(--md1-primary)', fontWeight: 700, lineHeight: 1.4, marginBottom: 16, fontFamily: FNT }}>
               {sel.title}
             </h3>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
@@ -451,14 +451,14 @@ export default function HealthDashboard({ onNavigate }) {
             {/* Evidence */}
             <DetailSection label="Evidence">
               {(sel.evidence || []).length === 0 && (
-                <div style={{ fontSize: 12, color: '#D8CEC3' }}>None recorded</div>
+                <div style={{ fontSize: 12, color: 'var(--md1-border)' }}>None recorded</div>
               )}
               {(sel.evidence || []).map((ev, i) => (
-                <div key={i} style={{ padding: '8px 10px', background: '#f8f6f4', borderRadius: 4, marginBottom: 4, border: '1px solid #D8CEC3' }}>
-                  <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginBottom: 3 }}>
+                <div key={i} style={{ padding: '8px 10px', background: '#f8f6f4', borderRadius: 4, marginBottom: 4, border: '1px solid var(--md1-border)' }}>
+                  <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, marginBottom: 3 }}>
                     {(ev.type || '').replace(/_/g, ' ').toUpperCase()} · {ev.date}
                   </div>
-                  <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.4 }}>{ev.text}</div>
+                  <div style={{ fontSize: 12, color: 'var(--md1-muted)', lineHeight: 1.4 }}>{ev.text}</div>
                 </div>
               ))}
             </DetailSection>
@@ -486,7 +486,7 @@ export default function HealthDashboard({ onNavigate }) {
             )}
 
             {/* Footer meta */}
-            <div style={{ padding: '10px 0', borderTop: '1px solid #D8CEC3', marginTop: 12, fontSize: 10, color: '#D8CEC3', fontFamily: FNT, lineHeight: 1.8 }}>
+            <div style={{ padding: '10px 0', borderTop: '1px solid var(--md1-border)', marginTop: 12, fontSize: 10, color: 'var(--md1-border)', fontFamily: FNT, lineHeight: 1.8 }}>
               <div>Created by: {sel.createdBy}</div>
               <div>Created: {formatDate(sel.createdAt)}</div>
             </div>
@@ -505,7 +505,7 @@ export default function HealthDashboard({ onNavigate }) {
 function DetailSection({ label, children }) {
   return (
     <div style={{ marginBottom: 18 }}>
-      <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>
+      <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>
         {label}
       </div>
       {children}
@@ -537,15 +537,15 @@ function PhotosSection({ photos, onAdd, onRemove }) {
   return (
     <div style={{ marginBottom: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT }}>Photos</div>
-        <label style={{ cursor: 'pointer', fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+        <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT }}>Photos</div>
+        <label style={{ cursor: 'pointer', fontSize: 11, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
           {uploading ? 'Uploading…' : <><CameraIcon /> Add Photo</>}
           <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style={{ display: 'none' }} onChange={handleFile} disabled={uploading} />
         </label>
       </div>
       {err && <div style={{ fontSize: 11, color: '#c0392b', marginBottom: 6 }}>{err}</div>}
       {photos.length === 0 && !uploading && (
-        <div style={{ fontSize: 12, color: '#D8CEC3' }}>No photos attached</div>
+        <div style={{ fontSize: 12, color: 'var(--md1-border)' }}>No photos attached</div>
       )}
       {photos.length > 0 && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -555,7 +555,7 @@ function PhotosSection({ photos, onAdd, onRemove }) {
                 src={url}
                 alt={`Photo ${i + 1}`}
                 onClick={() => setLightbox(url)}
-                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 3, border: '1px solid #D8CEC3', cursor: 'pointer' }}
+                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 3, border: '1px solid var(--md1-border)', cursor: 'pointer' }}
               />
               <button
                 onClick={() => onRemove(url)}

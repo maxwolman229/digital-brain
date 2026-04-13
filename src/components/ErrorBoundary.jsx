@@ -1,6 +1,6 @@
 import { Component } from 'react'
 
-const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
+const FNT = 'var(--md1-font-sans)'
 
 function isAuthError(error) {
   const msg = error?.message?.toLowerCase() || ''
@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component {
       const authRelated = isAuthError(this.state.error)
       return (
         <div style={{
-          minHeight: '100vh', background: '#062044',
+          minHeight: '100vh', background: 'var(--md1-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: 40, fontFamily: FNT,
         }}>
@@ -58,7 +58,7 @@ export default class ErrorBoundary extends Component {
                 onClick={() => { window.location.href = '/auth' }}
                 style={{
                   padding: '9px 22px', borderRadius: 3, fontSize: 12,
-                  background: '#FFFFFF', border: 'none', color: '#062044',
+                  background: '#FFFFFF', border: 'none', color: 'var(--md1-primary)',
                   cursor: 'pointer', fontFamily: FNT, fontWeight: 700,
                 }}
               >

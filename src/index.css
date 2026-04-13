@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Brand theme — values also set at runtime by applyTheme() in theme.js.
+   These serve as static fallbacks before the JS runs and as SSR defaults. */
+:root {
+  --md1-primary: #062044;
+  --md1-primary-dim: #0d2d55;
+  --md1-accent: #4FA89A;
+  --md1-accent-deep: #2d6b5e;
+  --md1-accent-light: #b8e0d8;
+  --md1-bg: #f4f1ed;
+  --md1-section-bg: #FAFAF9;
+  --md1-card-bg: #ffffff;
+  --md1-input-bg: #f8f6f4;
+  --md1-border: #D8CEC3;
+  --md1-text: #1F1F1F;
+  --md1-muted: #8a8278;
+  --md1-muted-light: #b0a898;
+  --md1-primary-rgb: 6,32,68;
+  --md1-accent-rgb: 79,168,154;
+  --md1-font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --md1-font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -9,6 +31,6 @@
 }
 
 body {
-  font-family: 'IBM Plex Sans', sans-serif;
-  background: #f4f1ed;
+  font-family: var(--md1-font-sans);
+  background: var(--md1-bg);
 }

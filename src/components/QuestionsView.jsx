@@ -187,22 +187,22 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
               padding: '10px 14px', marginBottom: 4,
               background: depth === 0 ? '#e6f5f1' : '#f0f8f6',
               borderRadius: 3,
-              borderLeft: `3px solid ${depth === 0 ? '#4FA89A' : '#4FA89A80'}`,
+              borderLeft: `3px solid ${depth === 0 ? 'var(--md1-accent)' : 'var(--md1-accent)80'}`,
             }}>
               {r.replyTo && (
-                <div style={{ fontSize: 9, color: '#4FA89A', fontFamily: FNT, marginBottom: 4, opacity: 0.7 }}>
+                <div style={{ fontSize: 9, color: 'var(--md1-accent)', fontFamily: FNT, marginBottom: 4, opacity: 0.7 }}>
                   ↩ replying to {responses.find(x => x.id === r.replyTo)?.by || 'response'}
                 </div>
               )}
-              <div style={{ fontSize: 12, color: '#1F1F1F', lineHeight: 1.6 }}>{r.text}</div>
+              <div style={{ fontSize: 12, color: 'var(--md1-text)', lineHeight: 1.6 }}>{r.text}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT }}>— <span
+                <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT }}>— <span
                   onClick={() => r.by && onViewProfile?.(r.by)}
-                  style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
+                  style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? 'var(--md1-accent)' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
                 >{r.by}</span> · {new Date(r.date).toLocaleDateString()}</div>
                 <button
                   onClick={() => { setReplyTo(r.id); setAnswerText(''); document.getElementById('answer-input')?.focus() }}
-                  style={{ fontSize: 9, color: '#4FA89A', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
+                  style={{ fontSize: 9, color: 'var(--md1-accent)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
                 >
                   ↩ Reply
                 </button>
@@ -222,9 +222,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* ── Sticky header ── */}
-      <div style={{ flexShrink: 0, padding: '14px 28px', borderBottom: '1px solid #e8e4e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAFAF9' }}>
+      <div style={{ flexShrink: 0, padding: '14px 28px', borderBottom: '1px solid #e8e4e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--md1-section-bg)' }}>
         <div>
-          <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, letterSpacing: 0.8 }}>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, letterSpacing: 0.8 }}>
             {questions.length} QUESTIONS · {openQuestions.length} OPEN
           </div>
           <div style={{ fontSize: 11, color: '#5a5550', fontFamily: FNT, lineHeight: 1.5, marginTop: 2 }}>
@@ -233,14 +233,14 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
         </div>
         <button
           onClick={() => { setAskForm(EMPTY_ASK); setAskTagInput(''); setShowAskForm(true) }}
-          style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: '#062044', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4, flexShrink: 0 }}
+          style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: 'var(--md1-primary)', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4, flexShrink: 0 }}
         >
           + Ask a Question
         </button>
       </div>
 
       {loading && (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 12 }}>Loading questions…</div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>Loading questions…</div>
       )}
 
       {!loading && (
@@ -250,12 +250,12 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
           <div style={{ borderRight: '1px solid #e8e4e0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ flexShrink: 0, padding: '12px 20px 10px', borderBottom: '1px solid #e8e4e0' }}>
               <div style={{ fontSize: 11, color: '#F2652F', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700 }}>
-                ? Awaiting Answers{openQuestions.length > 0 && <span style={{ marginLeft: 6, color: '#b0a898', fontWeight: 400 }}>{openQuestions.length}</span>}
+                ? Awaiting Answers{openQuestions.length > 0 && <span style={{ marginLeft: 6, color: 'var(--md1-muted-light)', fontWeight: 400 }}>{openQuestions.length}</span>}
               </div>
             </div>
             <div style={{ flex: 1, padding: '12px 20px', overflowY: 'auto' }}>
               {openQuestions.length === 0 ? (
-                <div style={{ padding: '32px 0', textAlign: 'center', color: '#D8CEC3', fontFamily: FNT, fontSize: 12 }}>No open questions.</div>
+                <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--md1-border)', fontFamily: FNT, fontSize: 12 }}>No open questions.</div>
               ) : openQuestions.map(q => (
                 <QuestionCard
                   key={q.id}
@@ -269,13 +269,13 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
           {/* ── Panel 2: Answered ── */}
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ flexShrink: 0, padding: '12px 20px 10px', borderBottom: '1px solid #e8e4e0' }}>
-              <div style={{ fontSize: 11, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700 }}>
-                ✓ Answered{answeredQuestions.length > 0 && <span style={{ marginLeft: 6, color: '#b0a898', fontWeight: 400 }}>{answeredQuestions.length}</span>}
+              <div style={{ fontSize: 11, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, fontWeight: 700 }}>
+                ✓ Answered{answeredQuestions.length > 0 && <span style={{ marginLeft: 6, color: 'var(--md1-muted-light)', fontWeight: 400 }}>{answeredQuestions.length}</span>}
               </div>
             </div>
             <div style={{ flex: 1, padding: '12px 20px', overflowY: 'auto' }}>
               {answeredQuestions.length === 0 ? (
-                <div style={{ padding: '32px 0', textAlign: 'center', color: '#D8CEC3', fontFamily: FNT, fontSize: 12 }}>No answered questions yet.</div>
+                <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--md1-border)', fontFamily: FNT, fontSize: 12 }}>No answered questions yet.</div>
               ) : answeredQuestions.map(q => (
                 <QuestionCard
                   key={q.id}
@@ -298,22 +298,22 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
       >
         {sel && (
           <div>
-            <div style={{ fontSize: 15, color: '#1F1F1F', fontWeight: 600, lineHeight: 1.5, marginBottom: 12 }}>{sel.question}</div>
+            <div style={{ fontSize: 15, color: 'var(--md1-text)', fontWeight: 600, lineHeight: 1.5, marginBottom: 12 }}>{sel.question}</div>
 
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 2, background: sel.status === 'open' ? '#fef3e2' : '#e6f5f1', color: sel.status === 'open' ? '#F2652F' : '#4FA89A', fontWeight: 700, fontFamily: FNT }}>
+              <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 2, background: sel.status === 'open' ? '#fef3e2' : '#e6f5f1', color: sel.status === 'open' ? '#F2652F' : 'var(--md1-accent)', fontWeight: 700, fontFamily: FNT }}>
                 {sel.status === 'open' ? 'OPEN' : 'ANSWERED'}
               </span>
               <Tag label={sel.processArea} />
-              <span style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT }}>Asked by <span
+              <span style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT }}>Asked by <span
                 onClick={() => sel.askedBy && onViewProfile?.(sel.askedBy)}
-                style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? '#4FA89A' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
+                style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? 'var(--md1-accent)' : 'inherit', textDecoration: onViewProfile ? 'underline' : 'none' }}
               >{sel.askedBy}</span> · {new Date(sel.askedAt).toLocaleDateString()}</span>
             </div>
 
             {sel.detail && (
               <div style={{ padding: '12px 16px', background: '#f8f6f4', borderRadius: 3, marginBottom: 16, border: '1px solid #e8e4e0' }}>
-                <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 4 }}>CONTEXT</div>
+                <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 4 }}>CONTEXT</div>
                 <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6 }}>{sel.detail}</div>
               </div>
             )}
@@ -321,9 +321,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
             {/* Tagged people */}
             {(sel.taggedPeople || []).length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
-                <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT }}>Tagged:</span>
+                <span style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT }}>Tagged:</span>
                 {sel.taggedPeople.map((p, i) => (
-                  <span key={i} style={{ padding: '3px 10px', borderRadius: 3, background: '#e8edf4', color: '#062044', fontSize: 10, fontFamily: FNT, fontWeight: 600 }}>{p}</span>
+                  <span key={i} style={{ padding: '3px 10px', borderRadius: 3, background: '#e8edf4', color: 'var(--md1-primary)', fontSize: 10, fontFamily: FNT, fontWeight: 600 }}>{p}</span>
                 ))}
               </div>
             )}
@@ -331,7 +331,7 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
             {/* Threaded responses */}
             {(sel.responses || []).length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 8 }}>
+                <div style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 8 }}>
                   RESPONSES ({sel.responses.length})
                 </div>
                 <ResponseThread responses={sel.responses} parentId={null} depth={0} />
@@ -341,9 +341,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
             {/* Generated rules/assertions */}
             {(sel.generatedRules || []).length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 6 }}>GENERATED RULES</div>
+                <div style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 6 }}>GENERATED RULES</div>
                 {sel.generatedRules.map(rid => (
-                  <div key={rid} style={{ padding: '6px 10px', background: '#f8f6f4', borderRadius: 3, marginBottom: 4, fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, border: '1px solid #e8e4e0' }}>
+                  <div key={rid} style={{ padding: '6px 10px', background: '#f8f6f4', borderRadius: 3, marginBottom: 4, fontSize: 11, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700, border: '1px solid #e8e4e0' }}>
                     {rid}
                   </div>
                 ))}
@@ -351,9 +351,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
             )}
             {(sel.generatedAssertions || []).length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 6 }}>GENERATED ASSERTIONS</div>
+                <div style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 6 }}>GENERATED ASSERTIONS</div>
                 {sel.generatedAssertions.map(aid => (
-                  <div key={aid} style={{ padding: '6px 10px', background: '#f8f6f4', borderRadius: 3, marginBottom: 4, fontSize: 11, color: '#8a8278', fontFamily: FNT, fontWeight: 700, border: '1px solid #e8e4e0' }}>
+                  <div key={aid} style={{ padding: '6px 10px', background: '#f8f6f4', borderRadius: 3, marginBottom: 4, fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, fontWeight: 700, border: '1px solid #e8e4e0' }}>
                     {aid}
                   </div>
                 ))}
@@ -385,7 +385,7 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
               <button
                 onClick={handleSubmitResponse}
                 disabled={!answerText.trim()}
-                style={{ width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, background: answerText.trim() ? '#4FA89A' : '#f0eeec', border: 'none', color: answerText.trim() ? '#FFFFFF' : '#444', cursor: answerText.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
+                style={{ width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, background: answerText.trim() ? 'var(--md1-accent)' : '#f0eeec', border: 'none', color: answerText.trim() ? '#FFFFFF' : '#444', cursor: answerText.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
               >
                 {replyTo ? 'Submit Reply' : 'Submit Answer'}
               </button>
@@ -402,13 +402,13 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
 
                 {extractParsed && !accepting && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, fontFamily: FNT, fontWeight: 700 }}>
+                    <div style={{ fontSize: 10, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, fontFamily: FNT, fontWeight: 700 }}>
                       Extracted ({extractParsed.assertions.length} Assertions · {extractParsed.rules.length} Rules) — review before accepting
                     </div>
 
                     {extractParsed.assertions.map((a, i) => (
-                      <div key={i} style={{ padding: '10px 12px', background: '#f8f6f4', borderRadius: 3, marginBottom: 6, border: '1px solid #D8CEC3' }}>
-                        <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>Assertion</div>
+                      <div key={i} style={{ padding: '10px 12px', background: '#f8f6f4', borderRadius: 3, marginBottom: 6, border: '1px solid var(--md1-border)' }}>
+                        <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>Assertion</div>
                         <input
                           value={a.title}
                           onChange={e => setExtractParsed(p => ({ ...p, assertions: p.assertions.map((x, j) => j === i ? { ...x, title: e.target.value } : x) }))}
@@ -418,8 +418,8 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
                     ))}
 
                     {extractParsed.rules.map((r, i) => (
-                      <div key={i} style={{ padding: '10px 12px', background: '#f8f6f4', borderRadius: 3, marginBottom: 6, border: '1px solid #D8CEC3' }}>
-                        <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>Rule</div>
+                      <div key={i} style={{ padding: '10px 12px', background: '#f8f6f4', borderRadius: 3, marginBottom: 6, border: '1px solid var(--md1-border)' }}>
+                        <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>Rule</div>
                         <input
                           value={r.title}
                           onChange={e => setExtractParsed(p => ({ ...p, rules: p.rules.map((x, j) => j === i ? { ...x, title: e.target.value } : x) }))}
@@ -457,7 +457,7 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
                   <button
                     onClick={handleExtract}
                     disabled={extracting}
-                    style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontSize: 12, background: extracting ? '#f0eeec' : '#062044', border: 'none', color: extracting ? '#8a8278' : '#FFFFFF', cursor: extracting ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
+                    style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontSize: 12, background: extracting ? '#f0eeec' : 'var(--md1-primary)', border: 'none', color: extracting ? 'var(--md1-muted)' : '#FFFFFF', cursor: extracting ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
                   >
                     {extracting ? 'Extracting knowledge…' : 'Extract Rules & Assertions from Answers →'}
                   </button>
@@ -470,7 +470,7 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
 
       {/* ── Ask a Question form modal ── */}
       <Modal open={showAskForm} onClose={() => setShowAskForm(false)} title="Ask the Team" width={600}>
-        <div style={{ fontSize: 12, color: '#8a8278', lineHeight: 1.6, marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: 'var(--md1-muted)', lineHeight: 1.6, marginBottom: 16 }}>
           Describe what you need in detail — experienced team members will see this in the Open Questions queue and can contribute their knowledge.
         </div>
 
@@ -503,9 +503,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
         <Field label="Tag People" hint="People who might know the answer">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
             {askForm.taggedPeople.map((p, i) => (
-              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 3, background: '#e8edf4', color: '#062044', fontSize: 10, fontFamily: FNT, fontWeight: 600 }}>
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 3, background: '#e8edf4', color: 'var(--md1-primary)', fontSize: 10, fontFamily: FNT, fontWeight: 600 }}>
                 {p}
-                <button onClick={() => setAskForm(f => ({ ...f, taggedPeople: f.taggedPeople.filter((_, j) => j !== i) }))} style={{ background: 'none', border: 'none', color: '#8a8278', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}>✕</button>
+                <button onClick={() => setAskForm(f => ({ ...f, taggedPeople: f.taggedPeople.filter((_, j) => j !== i) }))} style={{ background: 'none', border: 'none', color: 'var(--md1-muted)', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}>✕</button>
               </span>
             ))}
           </div>
@@ -523,14 +523,14 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
                 }
               }}
             />
-            <div style={{ position: 'absolute', right: 8, top: 7, fontSize: 9, color: '#b0a898', fontFamily: FNT }}>Enter to add</div>
+            <div style={{ position: 'absolute', right: 8, top: 7, fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT }}>Enter to add</div>
           </div>
         </Field>
 
         <button
           onClick={handleAsk}
           disabled={!askForm.question.trim()}
-          style={{ width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, background: askForm.question.trim() ? '#062044' : '#f0eeec', border: 'none', color: askForm.question.trim() ? '#FFFFFF' : '#444', cursor: askForm.question.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT, fontWeight: 700, marginTop: 8, letterSpacing: 0.4 }}
+          style={{ width: '100%', padding: '10px 0', borderRadius: 3, fontSize: 13, background: askForm.question.trim() ? 'var(--md1-primary)' : '#f0eeec', border: 'none', color: askForm.question.trim() ? '#FFFFFF' : '#444', cursor: askForm.question.trim() ? 'pointer' : 'not-allowed', fontFamily: FNT, fontWeight: 700, marginTop: 8, letterSpacing: 0.4 }}
         >
           Submit Question to Team
         </button>
@@ -553,30 +553,30 @@ function QuestionCard({ q, onClick }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: '#b0a898', fontFamily: FNT, fontWeight: 600 }}>{q.displayId || q.id}</span>
-          <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 2, background: isOpen ? '#fef3e2' : '#e6f5f1', color: isOpen ? '#F2652F' : '#4FA89A', fontWeight: 700, fontFamily: FNT }}>
+          <span style={{ fontSize: 11, color: 'var(--md1-muted-light)', fontFamily: FNT, fontWeight: 600 }}>{q.displayId || q.id}</span>
+          <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 2, background: isOpen ? '#fef3e2' : '#e6f5f1', color: isOpen ? '#F2652F' : 'var(--md1-accent)', fontWeight: 700, fontFamily: FNT }}>
             {isOpen ? 'OPEN' : 'ANSWERED'}
           </span>
           <Tag label={q.processArea} />
         </div>
-        <span style={{ fontSize: 10, color: '#D8CEC3', fontFamily: FNT }}>{formatDate(q.askedAt)}</span>
+        <span style={{ fontSize: 10, color: 'var(--md1-border)', fontFamily: FNT }}>{formatDate(q.askedAt)}</span>
       </div>
 
-      <div style={{ fontSize: 14, color: '#1F1F1F', fontWeight: 500, lineHeight: 1.4, marginBottom: 6 }}>{q.question}</div>
+      <div style={{ fontSize: 14, color: 'var(--md1-text)', fontWeight: 500, lineHeight: 1.4, marginBottom: 6 }}>{q.question}</div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT }}>
+        <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT }}>
           Asked by {q.askedBy}
           {!isOpen && q.responses?.length > 0 && ` · Answered by ${q.responses[0].by}`}
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
           {(q.responses || []).length > 0 && (
-            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#e6f5f1', color: '#4FA89A', fontFamily: FNT, fontWeight: 700 }}>
+            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#e6f5f1', color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700 }}>
               {q.responses.length} response{q.responses.length > 1 ? 's' : ''}
             </span>
           )}
           {(q.generatedRules || []).length > 0 && (
-            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#e6f5f1', color: '#4FA89A', fontFamily: FNT, fontWeight: 700 }}>
+            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 2, background: '#e6f5f1', color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700 }}>
               {q.generatedRules.length} rule{q.generatedRules.length > 1 ? 's' : ''}
             </span>
           )}

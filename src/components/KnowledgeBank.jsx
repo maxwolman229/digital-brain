@@ -151,10 +151,10 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
   const hasFilters = fStatus.length > 0 || fCat.length > 0 || fProc.length > 0
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#FFFFFF', color: '#1F1F1F', fontFamily: FNT }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#FFFFFF', color: 'var(--md1-text)', fontFamily: FNT }}>
 
       {/* ── Header ── */}
-      <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', padding: isMobile ? '0 12px' : '10px 24px', minHeight: isMobile ? 52 : 'auto', display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 16, background: '#062044' }}>
+      <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', padding: isMobile ? '0 12px' : '10px 24px', minHeight: isMobile ? 52 : 'auto', display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 16, background: 'var(--md1-primary)' }}>
 
         {/* Logo */}
         <div
@@ -167,7 +167,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
           <span style={{
             position: 'absolute', top: -7, right: -22,
             fontSize: 7, fontWeight: 700, letterSpacing: 0.8,
-            background: '#4FA89A', color: '#fff',
+            background: 'var(--md1-accent)', color: '#fff',
             padding: '2px 5px', borderRadius: 2,
             fontFamily: FNT, textTransform: 'uppercase',
           }}>
@@ -211,11 +211,11 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     borderBottom: '1px solid #f0eeec',
                   }}
                 >
-                  <div style={{ fontSize: 12, fontWeight: m.plantId === activePlantId ? 700 : 500, color: '#062044' }}>
+                  <div style={{ fontSize: 12, fontWeight: m.plantId === activePlantId ? 700 : 500, color: 'var(--md1-primary)' }}>
                     {m.plantId === activePlantId ? '◆ ' : ''}{m.plantName}
                   </div>
-                  <div style={{ fontSize: 10, color: '#8a8278', marginTop: 1 }}>{m.orgName} · {m.role}</div>
-                  {m.industry && <div style={{ fontSize: 9, color: '#b0a898', marginTop: 1 }}>{m.industry}</div>}
+                  <div style={{ fontSize: 10, color: 'var(--md1-muted)', marginTop: 1 }}>{m.orgName} · {m.role}</div>
+                  {m.industry && <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', marginTop: 1 }}>{m.industry}</div>}
                 </button>
               ))}
               <div style={{ borderTop: '1px solid #e8e4e0' }}>
@@ -294,7 +294,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             {(view === 'rules' || view === 'assertions') && (
               <button
                 onClick={() => setAddFormOpen(true)}
-                style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: '#FFFFFF', border: 'none', color: '#062044', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
+                style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: '#FFFFFF', border: 'none', color: 'var(--md1-primary)', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
               >
                 + Add {view === 'assertions' ? 'Assertion' : 'Rule'}
               </button>
@@ -346,17 +346,17 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               {showProfile && (
                 <div style={{ position: 'absolute', top: 38, right: 0, width: 240, background: '#fff', border: '1px solid #e8e4e0', borderRadius: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 999, overflow: 'hidden' }}>
                   <div style={{ padding: '14px 16px', borderBottom: '1px solid #e8e4e0', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--md1-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                       {initials(user?.displayName)}
                     </div>
                     <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#062044', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.displayName || 'You'}</div>
-                      <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, textTransform: 'capitalize' }}>{user?.role || 'Member'}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--md1-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.displayName || 'You'}</div>
+                      <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, textTransform: 'capitalize' }}>{user?.role || 'Member'}</div>
                     </div>
                   </div>
                   <button
                     onClick={() => { setShowProfile(false); switchView('profile') }}
-                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 12, color: '#1F1F1F' }}
+                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 12, color: 'var(--md1-text)' }}
                   >
                     ◉ My Profile
                   </button>
@@ -400,20 +400,20 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
       </div>
 
       {/* ── Summary bar — desktop only ── */}
-      {!isMobile && <div style={{ flexShrink: 0, padding: '12px 28px', display: 'flex', gap: 24, borderBottom: '1px solid #e8e4e0', fontSize: 11, fontFamily: FNT, color: '#b0a898', flexWrap: 'wrap', alignItems: 'center' }}>
+      {!isMobile && <div style={{ flexShrink: 0, padding: '12px 28px', display: 'flex', gap: 24, borderBottom: '1px solid #e8e4e0', fontSize: 11, fontFamily: FNT, color: 'var(--md1-muted-light)', flexWrap: 'wrap', alignItems: 'center' }}>
         <span><span style={{ color: '#F2652F', fontWeight: 700 }}>{contributions.total}</span> Contributions</span>
-        <span style={{ color: '#D8CEC3' }}>│</span>
-        <span><span style={{ color: '#062044', fontWeight: 600 }}>{contributions.rules}</span> Rules</span>
-        <span><span style={{ color: '#062044', fontWeight: 600 }}>{contributions.assertions}</span> Assertions</span>
-        <span><span style={{ color: '#062044', fontWeight: 600 }}>{contributions.events}</span> Events</span>
-        <span><span style={{ color: '#062044', fontWeight: 600 }}>{contributions.questions}</span> Questions</span>
+        <span style={{ color: 'var(--md1-border)' }}>│</span>
+        <span><span style={{ color: 'var(--md1-primary)', fontWeight: 600 }}>{contributions.rules}</span> Rules</span>
+        <span><span style={{ color: 'var(--md1-primary)', fontWeight: 600 }}>{contributions.assertions}</span> Assertions</span>
+        <span><span style={{ color: 'var(--md1-primary)', fontWeight: 600 }}>{contributions.events}</span> Events</span>
+        <span><span style={{ color: 'var(--md1-primary)', fontWeight: 600 }}>{contributions.questions}</span> Questions</span>
       </div>}
 
       {/* ── Body ── */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Sidebar — desktop only ── */}
-        {!isMobile && <div style={{ width: 220, borderRight: '1px solid #e8e4e0', padding: '20px 16px', flexShrink: 0, overflowY: 'auto', background: '#FAFAF9' }}>
+        {!isMobile && <div style={{ width: 220, borderRight: '1px solid #e8e4e0', padding: '20px 16px', flexShrink: 0, overflowY: 'auto', background: 'var(--md1-section-bg)' }}>
 
           {/* Nav tabs */}
           <div style={{ marginBottom: 24 }}>
@@ -430,7 +430,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     width: '100%', padding: '8px 12px', marginBottom: 2,
                     borderRadius: 3, fontSize: 12, fontWeight: view === tab.id ? 700 : 400,
                     background: view === tab.id ? '#f0eeec' : 'transparent',
-                    color: view === tab.id ? '#062044' : '#555',
+                    color: view === tab.id ? 'var(--md1-primary)' : '#555',
                     border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FNT,
                     boxSizing: 'border-box',
                   }}
@@ -440,7 +440,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       minWidth: 18, height: 18, padding: '0 5px',
-                      background: '#4FA89A', color: '#fff',
+                      background: 'var(--md1-accent)', color: '#fff',
                       borderRadius: 9, fontSize: 9, fontWeight: 700, fontFamily: FNT,
                       flexShrink: 0,
                     }}>
@@ -481,7 +481,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               {hasFilters && (
                 <button
                   onClick={() => { setFStatus([]); setFCat([]); setFProc([]) }}
-                  style={{ marginTop: 8, background: 'none', border: 'none', color: '#4FA89A', fontSize: 11, cursor: 'pointer', fontFamily: FNT }}
+                  style={{ marginTop: 8, background: 'none', border: 'none', color: 'var(--md1-accent)', fontSize: 11, cursor: 'pointer', fontFamily: FNT }}
                 >
                   ✕ Clear filters
                 </button>
@@ -491,8 +491,8 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
           {view === 'query' && (
             <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>ASK THE KNOWLEDGE BANK</div>
-              <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, lineHeight: 1.7 }}>
+              <div style={{ fontSize: 10, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>ASK THE KNOWLEDGE BANK</div>
+              <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, lineHeight: 1.7 }}>
                 Tell the system what you're about to do. Answers come strictly from the validated knowledge bank.
               </div>
             </div>
@@ -500,8 +500,8 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
           {view === 'capture' && (
             <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>KNOWLEDGE CAPTURE</div>
-              <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, lineHeight: 1.7 }}>
+              <div style={{ fontSize: 10, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>KNOWLEDGE CAPTURE</div>
+              <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, lineHeight: 1.7 }}>
                 Adaptive interview — the system asks one question at a time, extracts rules and assertions from your answers, then presents them for review.
               </div>
             </div>
@@ -608,8 +608,8 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
           {view !== 'rules' && view !== 'assertions' && view !== 'events' && view !== 'questions' && view !== 'health' && view !== 'graph' && view !== 'query' && view !== 'capture' && view !== 'profile' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 32, color: '#D8CEC3' }}>{TABS.find(t => t.id === view)?.icon}</div>
-              <div style={{ fontSize: 13, color: '#b0a898', fontFamily: FNT }}>{TABS.find(t => t.id === view)?.label} — coming soon</div>
+              <div style={{ fontSize: 32, color: 'var(--md1-border)' }}>{TABS.find(t => t.id === view)?.icon}</div>
+              <div style={{ fontSize: 13, color: 'var(--md1-muted-light)', fontFamily: FNT }}>{TABS.find(t => t.id === view)?.label} — coming soon</div>
             </div>
           )}
         </div>
@@ -650,9 +650,9 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
       {/* ── Mobile hamburger overlay ── */}
       {isMobile && menuOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: '#FAFAF9', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'var(--md1-section-bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Overlay header */}
-          <div style={{ flexShrink: 0, padding: '0 16px', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#062044' }}>
+          <div style={{ flexShrink: 0, padding: '0 16px', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--md1-primary)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', fontFamily: FNT, letterSpacing: 0.5 }}>
               {user?.plantName || 'Navigation'}
             </div>
@@ -670,14 +670,14 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               {(view === 'rules' || view === 'assertions') && (
                 <button
                   onClick={() => { setAddFormOpen(true); setMenuOpen(false) }}
-                  style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: '#062044', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, textAlign: 'left' }}
+                  style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'var(--md1-primary)', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, textAlign: 'left' }}
                 >
                   + Add {view === 'assertions' ? 'Assertion' : 'Rule'}
                 </button>
               )}
               <button
                 onClick={() => { switchView('events'); setReportEventOpen(true); setMenuOpen(false) }}
-                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid #D8CEC3', color: '#333', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
+                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid var(--md1-border)', color: '#333', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
               >
                 + Report Event
               </button>
@@ -689,7 +689,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               </button>
               <button
                 onClick={() => { switchView('capture'); setMenuOpen(false) }}
-                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid rgba(79,168,154,0.5)', color: '#4FA89A', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
+                style={{ padding: '13px 16px', minHeight: 48, borderRadius: 4, fontSize: 13, background: 'transparent', border: '1px solid rgba(var(--md1-accent-rgb),0.5)', color: 'var(--md1-accent)', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, textAlign: 'left' }}
               >
                 ◈ Capture Knowledge
               </button>
@@ -706,11 +706,11 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     style={{
                       width: '100%', boxSizing: 'border-box',
                       padding: '10px 12px 10px 32px', minHeight: 44,
-                      background: '#FFFFFF', border: '1px solid #D8CEC3', borderRadius: 4,
-                      fontSize: 13, color: '#1F1F1F', fontFamily: FNT, outline: 'none',
+                      background: '#FFFFFF', border: '1px solid var(--md1-border)', borderRadius: 4,
+                      fontSize: 13, color: 'var(--md1-text)', fontFamily: FNT, outline: 'none',
                     }}
                   />
-                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#b0a898', fontSize: 15, pointerEvents: 'none' }}>⌕</span>
+                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--md1-muted-light)', fontSize: 15, pointerEvents: 'none' }}>⌕</span>
                 </div>
               </div>
             )}
@@ -729,7 +729,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                       background: view === tab.id ? '#f0eeec' : 'transparent',
                       border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FNT,
                       fontSize: 14, fontWeight: view === tab.id ? 700 : 400,
-                      color: view === tab.id ? '#062044' : '#333',
+                      color: view === tab.id ? 'var(--md1-primary)' : '#333',
                       boxSizing: 'border-box',
                     }}
                   >
@@ -738,7 +738,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                       <span style={{
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                         minWidth: 20, height: 20, padding: '0 5px',
-                        background: '#4FA89A', color: '#fff',
+                        background: 'var(--md1-accent)', color: '#fff',
                         borderRadius: 10, fontSize: 10, fontWeight: 700, fontFamily: FNT,
                       }}>
                         {badgeCount > 99 ? '99+' : badgeCount}
@@ -762,7 +762,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                 {hasFilters && (
                   <button
                     onClick={() => { setFStatus([]); setFCat([]); setFProc([]) }}
-                    style={{ marginTop: 4, background: 'none', border: 'none', color: '#4FA89A', fontSize: 12, cursor: 'pointer', fontFamily: FNT, minHeight: 36, padding: '4px 0' }}
+                    style={{ marginTop: 4, background: 'none', border: 'none', color: 'var(--md1-accent)', fontSize: 12, cursor: 'pointer', fontFamily: FNT, minHeight: 36, padding: '4px 0' }}
                   >
                     ✕ Clear filters
                   </button>
@@ -785,16 +785,16 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: m.plantId === activePlantId ? 700 : 500, color: '#062044' }}>
+                      <div style={{ fontSize: 13, fontWeight: m.plantId === activePlantId ? 700 : 500, color: 'var(--md1-primary)' }}>
                         {m.plantId === activePlantId ? '◆ ' : ''}{m.plantName}
                       </div>
-                      <div style={{ fontSize: 10, color: '#8a8278', marginTop: 1 }}>{m.orgName} · {m.role}</div>
+                      <div style={{ fontSize: 10, color: 'var(--md1-muted)', marginTop: 1 }}>{m.orgName} · {m.role}</div>
                     </div>
                   </button>
                 ))}
                 <button
                   onClick={() => { setMenuOpen(false); navigate('/plants') }}
-                  style={{ display: 'block', width: '100%', padding: '10px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#4FA89A', fontWeight: 600 }}
+                  style={{ display: 'block', width: '100%', padding: '10px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: 'var(--md1-accent)', fontWeight: 600 }}
                 >
                   + Create a Plant
                 </button>
@@ -804,23 +804,23 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             {/* Profile & settings */}
             <div style={{ padding: '8px 0' }}>
               <div style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid #f0eeec' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#062044', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--md1-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
                   {initials(user?.displayName)}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#062044', fontFamily: FNT }}>{user?.displayName}</div>
-                  <div style={{ fontSize: 10, color: '#8a8278', textTransform: 'capitalize' }}>{user?.role}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT }}>{user?.displayName}</div>
+                  <div style={{ fontSize: 10, color: 'var(--md1-muted)', textTransform: 'capitalize' }}>{user?.role}</div>
                 </div>
               </div>
               <button
                 onClick={() => { switchView('profile'); setMenuOpen(false) }}
-                style={{ display: 'block', width: '100%', padding: '13px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#1F1F1F' }}
+                style={{ display: 'block', width: '100%', padding: '13px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: 'var(--md1-text)' }}
               >
                 ◉ My Profile
               </button>
               <button
                 onClick={() => { setShowPlantSettings(true); setMenuOpen(false) }}
-                style={{ display: 'block', width: '100%', padding: '13px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#1F1F1F' }}
+                style={{ display: 'block', width: '100%', padding: '13px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: 'var(--md1-text)' }}
               >
                 ⚙ Members{pendingCount > 0 ? ` (${pendingCount})` : ''}
               </button>

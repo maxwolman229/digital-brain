@@ -11,14 +11,14 @@ import LinkEditor from './LinkEditor.jsx'
 
 function edgeCol(relType) {
   return ({
-    supports:     '#4FA89A',
+    supports:     'var(--md1-accent)',
     contradicts:  '#c0392b',
-    relates_to:   '#B0A898',
+    relates_to:   'var(--md1-muted-light)',
     derived_from: '#4466AA',
     supersedes:   '#F2652F',
     caused_by:    '#c0392b',
     mitigates:    '#16a085',
-  })[relType] || '#B0A898'
+  })[relType] || 'var(--md1-muted-light)'
 }
 
 // Draw a rounded rectangle path (reusable)
@@ -472,7 +472,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
           const totalH = lines.length * lineH
           const startY = n.y - totalH / 2 + lineH / 2
           ctx.globalAlpha = labelAlpha * (dim ? 0.2 : 0.8)
-          ctx.fillStyle = '#1F1F1F'
+          ctx.fillStyle = 'var(--md1-text)'
           lines.forEach((line, i) => ctx.fillText(line, n.x, startY + i * lineH))
           ctx.globalAlpha = 1
         }
@@ -621,11 +621,11 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
 
   const btnStyle = {
     width: 28, height: 28, borderRadius: 3,
-    background: '#FFFFFFee', border: '1px solid #D8CEC3',
-    color: '#062044', fontSize: 16, fontWeight: 700,
+    background: '#FFFFFFee', border: '1px solid var(--md1-border)',
+    color: 'var(--md1-primary)', fontSize: 16, fontWeight: 700,
     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
     lineHeight: 1, fontFamily: FNT,
-    boxShadow: '0 1px 4px rgba(6,32,68,0.08)',
+    boxShadow: '0 1px 4px rgba(var(--md1-primary-rgb),0.08)',
   }
 
   return (
@@ -743,35 +743,35 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
       </div>
 
       {/* Legend */}
-      <div style={{ position: 'absolute', bottom: 16, left: 16, background: '#FFFFFFee', border: '1px solid #D8CEC3', borderRadius: 3, padding: '10px 14px', fontSize: 10, fontFamily: FNT, color: '#8a8278' }}>
-        <div style={{ marginBottom: 6, fontWeight: 700, color: '#062044', letterSpacing: 0.8 }}>LEGEND</div>
+      <div style={{ position: 'absolute', bottom: 16, left: 16, background: '#FFFFFFee', border: '1px solid var(--md1-border)', borderRadius: 3, padding: '10px 14px', fontSize: 10, fontFamily: FNT, color: 'var(--md1-muted)' }}>
+        <div style={{ marginBottom: 6, fontWeight: 700, color: 'var(--md1-primary)', letterSpacing: 0.8 }}>LEGEND</div>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 8 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: 2, border: '1.5px solid #062044' }} /> Rule
+            <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: 2, border: '1.5px solid var(--md1-primary)' }} /> Rule
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '1.5px solid #062044' }} /> Assertion
+            <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '1.5px solid var(--md1-primary)' }} /> Assertion
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '1px solid #D8CEC3', paddingTop: 6, marginBottom: 2 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '1px solid var(--md1-border)', paddingTop: 6, marginBottom: 2 }}>
           {['Proposed', 'Active', 'Verified', 'Established'].map(s => (
             <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: statusColor(s).text }} /> {s}
             </span>
           ))}
         </div>
-        <div style={{ marginTop: 6, paddingTop: 5, borderTop: '1px solid #D8CEC3' }}>
+        <div style={{ marginTop: 6, paddingTop: 5, borderTop: '1px solid var(--md1-border)' }}>
           {[['supports', 'supports'], ['contradicts', 'contradicts'], ['relates_to', 'relates to']].map(([rt, label]) => (
             <span key={rt} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
               <span style={{ display: 'inline-block', width: 16, height: 2, background: edgeCol(rt), borderRadius: 1 }} /> {label}
             </span>
           ))}
           <span style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
-            <span style={{ display: 'inline-block', width: 16, height: 0, borderTop: '2px dashed #B0A898', borderRadius: 1 }} />
+            <span style={{ display: 'inline-block', width: 16, height: 0, borderTop: '2px dashed var(--md1-muted-light)', borderRadius: 1 }} />
             <span style={{ color: '#8a6800' }}>cross-process link</span>
           </span>
         </div>
-        <div style={{ marginTop: 4, color: '#b0a898', fontStyle: 'italic' }}>Pinch to zoom · Drag to pan · Tap to inspect</div>
+        <div style={{ marginTop: 4, color: 'var(--md1-muted-light)', fontStyle: 'italic' }}>Pinch to zoom · Drag to pan · Tap to inspect</div>
       </div>
 
       {/* Hover tooltip */}
@@ -780,16 +780,16 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
           position: 'absolute',
           left: Math.min(tip.x + 14, szRef.current.w - 270),
           top: Math.max(tip.y - 12, 10),
-          background: '#FFFFFFf0', border: '1px solid #D8CEC3', borderRadius: 3,
+          background: '#FFFFFFf0', border: '1px solid var(--md1-border)', borderRadius: 3,
           padding: '10px 14px', maxWidth: 260, pointerEvents: 'none',
-          boxShadow: '0 8px 24px rgba(6,32,68,0.15)',
+          boxShadow: '0 8px 24px rgba(var(--md1-primary-rgb),0.15)',
         }}>
           {tip.node ? (
             <>
               <div style={{ fontSize: 11, fontWeight: 700, color: paColor(tip.node.processArea), fontFamily: FNT, marginBottom: 4 }}>
                 {tip.node.label} · {tip.node.type.toUpperCase()}
               </div>
-              <div style={{ fontSize: 11, color: '#1F1F1F', lineHeight: 1.4, marginBottom: 6 }}>{tip.node.title}</div>
+              <div style={{ fontSize: 11, color: 'var(--md1-text)', lineHeight: 1.4, marginBottom: 6 }}>{tip.node.title}</div>
               <div style={{ display: 'flex', gap: 4 }}>
                 {tip.node.status && <Badge label={tip.node.status} colorFn={statusColor} />}
               </div>
@@ -808,7 +808,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
                 {tip.edge.s} → {tip.edge.t}
               </div>
               {tip.edge.comment && (
-                <div style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT, fontStyle: 'italic' }}>
+                <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, fontStyle: 'italic' }}>
                   "{tip.edge.comment}"
                 </div>
               )}
@@ -826,36 +826,36 @@ function ItemDetailModal({ item, loading, onClose, onNavigate }) {
   return (
     <Modal open={!!(item || loading)} title={item ? `${item.displayId || item.id}${item.versions?.length ? ' · v' + item.versions.length : ''}` : 'Loading…'} onClose={onClose} width={640}>
       {loading && (
-        <div style={{ padding: '40px 0', textAlign: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 13 }}>Loading…</div>
+        <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 13 }}>Loading…</div>
       )}
       {item && !loading && (
         <div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
             {item.status && <Badge label={item.status} colorFn={statusColor} />}
-            {item.category && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: '#8a8278', fontFamily: FNT }}>{item.category}</span>}
+            {item.category && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#f0eeec', color: 'var(--md1-muted)', fontFamily: FNT }}>{item.category}</span>}
             {item.processArea && <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: paColor(item.processArea) + '22', color: paColor(item.processArea), fontFamily: FNT, fontWeight: 700 }}>{item.processArea}</span>}
           </div>
 
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#062044', lineHeight: 1.4, marginBottom: 14, fontFamily: FNT }}>{item.title}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--md1-primary)', lineHeight: 1.4, marginBottom: 14, fontFamily: FNT }}>{item.title}</div>
 
           {item.scope && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Detail</div>
+              <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Detail</div>
               <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{item.scope}</div>
             </div>
           )}
           {item.rationale && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Rationale</div>
+              <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, fontFamily: FNT }}>Rationale</div>
               <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5 }}>{item.rationale}</div>
             </div>
           )}
           {(item.evidence || []).length > 0 && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Evidence</div>
+              <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Evidence</div>
               {item.evidence.map((ev, i) => (
                 <div key={i} style={{ padding: '6px 10px', background: '#f8f6f4', borderRadius: 3, marginBottom: 4, fontSize: 11, color: '#5a5550', lineHeight: 1.4 }}>
-                  <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 9, color: '#b0a898', letterSpacing: 0.6 }}>{ev.type} · </span>{ev.text}
+                  <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 9, color: 'var(--md1-muted-light)', letterSpacing: 0.6 }}>{ev.type} · </span>{ev.text}
                 </div>
               ))}
             </div>
@@ -881,11 +881,11 @@ function ItemDetailModal({ item, loading, onClose, onNavigate }) {
           <div style={{ borderTop: '1px solid #e8e4e0', paddingTop: 14, display: 'flex', gap: 8 }}>
             <button
               onClick={() => { onClose(); onNavigate?.(item.type === 'rule' ? 'rules' : 'assertions') }}
-              style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: '#062044', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
+              style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: 'var(--md1-primary)', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
             >View Full Record</button>
             <button
               onClick={onClose}
-              style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', fontFamily: FNT }}
+              style={{ padding: '7px 14px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: '#5a5550', cursor: 'pointer', fontFamily: FNT }}
             >Close</button>
           </div>
         </div>
@@ -921,7 +921,7 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
     setArr(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])
 
   if (loading) return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b0a898', fontFamily: FNT, fontSize: 13 }}>
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 13 }}>
       Loading graph…
     </div>
   )
@@ -935,9 +935,9 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
 
       {isMobile ? (
         /* Mobile: compact horizontal filter strip */
-        <div style={{ flexShrink: 0, borderBottom: '1px solid #e8e4e0', background: '#FAFAF9', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ flexShrink: 0, borderBottom: '1px solid #e8e4e0', background: 'var(--md1-section-bg)', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '8px 12px', minWidth: 'max-content' }}>
-            <span style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, fontFamily: FNT, flexShrink: 0, marginRight: 4 }}>Filter:</span>
+            <span style={{ fontSize: 10, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, fontFamily: FNT, flexShrink: 0, marginRight: 4 }}>Filter:</span>
             {processAreas.map(p => (
               <button
                 key={p}
@@ -946,7 +946,7 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
                   padding: '4px 10px', borderRadius: 12, fontSize: 11, fontFamily: FNT, cursor: 'pointer',
                   background: gpf.includes(p) ? paColor(p) + '33' : '#f0eeec',
                   color: gpf.includes(p) ? paColor(p) : '#5a5550',
-                  border: gpf.includes(p) ? `1px solid ${paColor(p)}55` : '1px solid #D8CEC3',
+                  border: gpf.includes(p) ? `1px solid ${paColor(p)}55` : '1px solid var(--md1-border)',
                   fontWeight: gpf.includes(p) ? 700 : 400,
                   whiteSpace: 'nowrap',
                 }}
@@ -958,9 +958,9 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
                 onClick={() => tog(gcf, setGcf, c)}
                 style={{
                   padding: '4px 10px', borderRadius: 12, fontSize: 11, fontFamily: FNT, cursor: 'pointer',
-                  background: gcf.includes(c) ? '#062044' : '#f0eeec',
+                  background: gcf.includes(c) ? 'var(--md1-primary)' : '#f0eeec',
                   color: gcf.includes(c) ? '#fff' : '#5a5550',
-                  border: gcf.includes(c) ? '1px solid #062044' : '1px solid #D8CEC3',
+                  border: gcf.includes(c) ? '1px solid var(--md1-primary)' : '1px solid var(--md1-border)',
                   fontWeight: gcf.includes(c) ? 700 : 400,
                   whiteSpace: 'nowrap',
                 }}
@@ -969,18 +969,18 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
             {(gpf.length > 0 || gcf.length > 0) && (
               <button
                 onClick={() => { setGpf([]); setGcf([]) }}
-                style={{ padding: '4px 10px', borderRadius: 12, fontSize: 11, fontFamily: FNT, cursor: 'pointer', background: 'none', border: '1px solid #4FA89A', color: '#4FA89A', whiteSpace: 'nowrap' }}
+                style={{ padding: '4px 10px', borderRadius: 12, fontSize: 11, fontFamily: FNT, cursor: 'pointer', background: 'none', border: '1px solid var(--md1-accent)', color: 'var(--md1-accent)', whiteSpace: 'nowrap' }}
               >✕ Clear</button>
             )}
-            <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, flexShrink: 0, marginLeft: 8 }}>
-              <b style={{ color: '#062044' }}>{totalNodes}</b> nodes · <b style={{ color: '#4FA89A' }}>{linkedCount}</b> linked
+            <span style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, flexShrink: 0, marginLeft: 8 }}>
+              <b style={{ color: 'var(--md1-primary)' }}>{totalNodes}</b> nodes · <b style={{ color: 'var(--md1-accent)' }}>{linkedCount}</b> linked
             </span>
           </div>
         </div>
       ) : (
         /* Desktop: vertical filter sidebar */
-        <div style={{ width: 200, borderRight: '1px solid #e8e4e0', padding: '20px 14px', flexShrink: 0, background: '#FAFAF9', overflowY: 'auto' }}>
-          <div style={{ fontSize: 10, color: '#4FA89A', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>Graph Filters</div>
+        <div style={{ width: 200, borderRight: '1px solid #e8e4e0', padding: '20px 14px', flexShrink: 0, background: 'var(--md1-section-bg)', overflowY: 'auto' }}>
+          <div style={{ fontSize: 10, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, fontFamily: FNT, fontWeight: 700 }}>Graph Filters</div>
 
           <PillFilter
             label="Process Area"
@@ -999,15 +999,15 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
           {(gpf.length > 0 || gcf.length > 0) && (
             <button
               onClick={() => { setGpf([]); setGcf([]) }}
-              style={{ marginTop: 4, background: 'none', border: 'none', color: '#4FA89A', fontSize: 11, cursor: 'pointer', fontFamily: FNT }}
+              style={{ marginTop: 4, background: 'none', border: 'none', color: 'var(--md1-accent)', fontSize: 11, cursor: 'pointer', fontFamily: FNT }}
             >✕ Clear filters</button>
           )}
 
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #D8CEC3', fontSize: 10, color: '#b0a898', fontFamily: FNT, lineHeight: 1.7 }}>
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--md1-border)', fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, lineHeight: 1.7 }}>
             <div style={{ marginBottom: 8 }}>
-              <span style={{ color: '#062044', fontWeight: 700 }}>{totalNodes}</span> nodes
+              <span style={{ color: 'var(--md1-primary)', fontWeight: 700 }}>{totalNodes}</span> nodes
               {' · '}
-              <span style={{ color: '#4FA89A', fontWeight: 700 }}>{linkedCount}</span> linked
+              <span style={{ color: 'var(--md1-accent)', fontWeight: 700 }}>{linkedCount}</span> linked
             </div>
             Nodes cluster by process area. Dashed lines = cross-process links — the most valuable connections. Filter to isolate a knowledge chain.
           </div>

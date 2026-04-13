@@ -8,7 +8,7 @@ export default function LandingPage({ loggedInAs, onLogout }) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#062044',
+      background: 'var(--md1-primary)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -155,7 +155,7 @@ export default function LandingPage({ loggedInAs, onLogout }) {
               fontWeight: 700,
               letterSpacing: 2,
               textTransform: 'uppercase',
-              color: '#062044',
+              color: 'var(--md1-primary)',
               background: '#FFFFFF',
               border: '1.5px solid #FFFFFF',
               borderRadius: 2,
@@ -176,7 +176,7 @@ export default function LandingPage({ loggedInAs, onLogout }) {
               position: 'absolute',
               top: -8,
               right: -8,
-              background: '#4FA89A',
+              background: 'var(--md1-accent)',
               color: '#FFFFFF',
               fontSize: 8,
               fontWeight: 700,

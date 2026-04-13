@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { storeJwt, storeRefreshToken } from '../lib/supabase.js'
 
-const FNT = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
+const FNT = 'var(--md1-font-sans)'
 
 const inputStyle = {
   width: '100%',
@@ -74,7 +74,7 @@ export default function ResetPassword({ accessToken }) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#062044',
+      background: 'var(--md1-primary)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -122,11 +122,11 @@ export default function ResetPassword({ accessToken }) {
           {success ? (
             <div style={{
               padding: '14px 16px',
-              background: 'rgba(79,168,154,0.15)',
-              border: '1px solid rgba(79,168,154,0.3)',
+              background: 'rgba(var(--md1-accent-rgb),0.15)',
+              border: '1px solid rgba(var(--md1-accent-rgb),0.3)',
               borderRadius: 3,
               fontSize: 13,
-              color: '#4FA89A',
+              color: 'var(--md1-accent)',
               lineHeight: 1.5,
               textAlign: 'center',
             }}>
@@ -179,7 +179,7 @@ export default function ResetPassword({ accessToken }) {
                   width: '100%', padding: '12px 0', borderRadius: 3,
                   background: loading ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
                   border: 'none',
-                  color: loading ? 'rgba(255,255,255,0.4)' : '#062044',
+                  color: loading ? 'rgba(255,255,255,0.4)' : 'var(--md1-primary)',
                   fontSize: 13, fontWeight: 700, letterSpacing: 1.2,
                   textTransform: 'uppercase', cursor: loading ? 'default' : 'pointer',
                   fontFamily: FNT, transition: 'all 0.15s',

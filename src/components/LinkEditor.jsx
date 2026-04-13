@@ -16,14 +16,14 @@ const REL_TYPES = [
 
 function relColor(r) {
   return ({
-    supports:     { bg: '#e6f5f1', text: '#4FA89A' },
+    supports:     { bg: '#e6f5f1', text: 'var(--md1-accent)' },
     contradicts:  { bg: '#fde8e5', text: '#c0392b' },
-    relates_to:   { bg: '#f0eeec', text: '#8a8278' },
-    derived_from: { bg: '#e8edf4', text: '#062044' },
+    relates_to:   { bg: '#f0eeec', text: 'var(--md1-muted)' },
+    derived_from: { bg: '#e8edf4', text: 'var(--md1-primary)' },
     supersedes:   { bg: '#fef3e2', text: '#F2652F' },
     caused_by:    { bg: '#fde8e5', text: '#c0392b' },
     mitigates:    { bg: '#e6f5f1', text: '#16a085' },
-  })[r] || { bg: '#f0eeec', text: '#8a8278' }
+  })[r] || { bg: '#f0eeec', text: 'var(--md1-muted)' }
 }
 
 function relLabel(r) {
@@ -111,16 +111,16 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
     <div>
       {/* Section header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div style={{ fontSize: 10, color: '#b0a898', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT }}>
-          Links{links.length > 0 && <span style={{ color: '#4FA89A', marginLeft: 4 }}>({links.length})</span>}
+        <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT }}>
+          Links{links.length > 0 && <span style={{ color: 'var(--md1-accent)', marginLeft: 4 }}>({links.length})</span>}
         </div>
         <button
           onClick={() => { setEditMode(p => !p); setSelected(null); setSearch(''); setResults([]); setSuggestions([]) }}
           style={{
             fontSize: 9, padding: '2px 8px', borderRadius: 3, cursor: 'pointer', fontFamily: FNT, fontWeight: 600,
-            background: editMode ? '#062044' : 'transparent',
-            border: '1px solid ' + (editMode ? '#062044' : '#D8CEC3'),
-            color: editMode ? '#fff' : '#8a8278',
+            background: editMode ? 'var(--md1-primary)' : 'transparent',
+            border: '1px solid ' + (editMode ? 'var(--md1-primary)' : 'var(--md1-border)'),
+            color: editMode ? '#fff' : 'var(--md1-muted)',
           }}
         >
           {editMode ? 'Done' : 'Edit Links'}
@@ -129,7 +129,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
 
       {/* Existing links list */}
       {links.length === 0 && !editMode && (
-        <div style={{ fontSize: 11, color: '#D8CEC3', fontFamily: FNT, marginBottom: 4 }}>No links yet</div>
+        <div style={{ fontSize: 11, color: 'var(--md1-border)', fontFamily: FNT, marginBottom: 4 }}>No links yet</div>
       )}
 
       {links.map(link => {
@@ -160,24 +160,24 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
                 minWidth: 0,
               }}
             >
-              <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>
+              <span style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>
                 {link.linkedDisplayId || link.linkedId}
               </span>
-              <span style={{ fontSize: 11, color: '#1F1F1F', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 11, color: 'var(--md1-text)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {link.linkedTitle}
               </span>
             </button>
 
             {/* Comment */}
             {link.comment && (
-              <span style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, fontStyle: 'italic', flexShrink: 0, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, fontStyle: 'italic', flexShrink: 0, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 "{link.comment}"
               </span>
             )}
 
             {/* Process area pill */}
             {link.linkedProcessArea && !editMode && (
-              <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 2, background: '#f0eeec', color: '#8a8278', fontFamily: FNT, flexShrink: 0 }}>
+              <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 2, background: '#f0eeec', color: 'var(--md1-muted)', fontFamily: FNT, flexShrink: 0 }}>
                 {link.linkedProcessArea}
               </span>
             )}
@@ -198,30 +198,30 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
 
       {/* Add link panel (edit mode) */}
       {editMode && (
-        <div style={{ marginTop: 10, padding: '12px 14px', background: '#FFFFFF', border: '1px solid #D8CEC3', borderRadius: 4 }}>
-          <div style={{ fontSize: 10, color: '#b0a898', fontFamily: FNT, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>
+        <div style={{ marginTop: 10, padding: '12px 14px', background: '#FFFFFF', border: '1px solid var(--md1-border)', borderRadius: 4 }}>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>
             Add Link
           </div>
 
           {/* Suggested links */}
           {(suggestionsLoading || suggestions.length > 0) && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
+              <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
                 Suggested
               </div>
               {suggestionsLoading && (
-                <div style={{ fontSize: 11, color: '#D8CEC3', fontFamily: FNT }}>Loading…</div>
+                <div style={{ fontSize: 11, color: 'var(--md1-border)', fontFamily: FNT }}>Loading…</div>
               )}
               {suggestions.map(s => (
                 <div key={`${s.type}-${s.id}`} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, padding: '5px 8px', background: '#f8f6f4', borderRadius: 3, border: '1px solid #e8e4e0' }}>
-                  <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 2, flexShrink: 0, background: s.type === 'rule' ? '#e8edf4' : '#f0eeec', color: s.type === 'rule' ? '#062044' : '#8a8278', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 2, flexShrink: 0, background: s.type === 'rule' ? '#e8edf4' : '#f0eeec', color: s.type === 'rule' ? 'var(--md1-primary)' : 'var(--md1-muted)', fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase' }}>
                     {s.type}
                   </span>
-                  <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>{s.displayId || s.id}</span>
-                  <span style={{ fontSize: 11, color: '#1F1F1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</span>
+                  <span style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>{s.displayId || s.id}</span>
+                  <span style={{ fontSize: 11, color: 'var(--md1-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</span>
                   <button
                     onClick={() => { setSelected(s); setSuggestions([]) }}
-                    style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: '#062044', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}
+                    style={{ padding: '2px 8px', borderRadius: 3, fontSize: 10, background: 'var(--md1-primary)', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}
                   >
                     Link
                   </button>
@@ -244,7 +244,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
 
           {/* Search results dropdown */}
           {results.length > 0 && !selected && (
-            <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #D8CEC3', borderRadius: 3, marginBottom: 8, background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+            <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid var(--md1-border)', borderRadius: 3, marginBottom: 8, background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               {results.map(r => (
                 <button
                   key={`${r.type}-${r.id}`}
@@ -260,15 +260,15 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
                   <span style={{
                     fontSize: 9, padding: '1px 5px', borderRadius: 2, flexShrink: 0,
                     background: r.type === 'rule' ? '#e8edf4' : '#f0eeec',
-                    color: r.type === 'rule' ? '#062044' : '#8a8278',
+                    color: r.type === 'rule' ? 'var(--md1-primary)' : 'var(--md1-muted)',
                     fontFamily: FNT, fontWeight: 700, textTransform: 'uppercase',
                   }}>
                     {r.type}
                   </span>
-                  <span style={{ fontSize: 10, color: '#4FA89A', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>{r.displayId || r.id}</span>
-                  <span style={{ fontSize: 11, color: '#1F1F1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
+                  <span style={{ fontSize: 10, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700, flexShrink: 0 }}>{r.displayId || r.id}</span>
+                  <span style={{ fontSize: 11, color: 'var(--md1-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
                   {r.processArea && (
-                    <span style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, flexShrink: 0 }}>{r.processArea}</span>
+                    <span style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, flexShrink: 0 }}>{r.processArea}</span>
                   )}
                 </button>
               ))}
@@ -278,8 +278,8 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
           {/* Selected target indicator */}
           {selected && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 8px', background: '#e6f5f1', borderRadius: 3, marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: '#4FA89A', fontFamily: FNT, fontWeight: 700 }}>{selected.displayId || selected.id}</span>
-              <span style={{ fontSize: 11, color: '#1F1F1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.title}</span>
+              <span style={{ fontSize: 11, color: 'var(--md1-accent)', fontFamily: FNT, fontWeight: 700 }}>{selected.displayId || selected.id}</span>
+              <span style={{ fontSize: 11, color: 'var(--md1-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.title}</span>
               <button
                 onClick={() => { setSelected(null); setSearch('') }}
                 style={{ background: 'none', border: 'none', color: '#c0392b', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}
@@ -290,7 +290,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
           {/* Relationship type + comment */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>Relationship</div>
+              <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>Relationship</div>
               <select
                 value={relType}
                 onChange={e => setRelType(e.target.value)}
@@ -302,7 +302,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
               </select>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 9, color: '#b0a898', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>Comment (optional)</div>
+              <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>Comment (optional)</div>
               <input
                 value={comment}
                 onChange={e => setComment(e.target.value)}
@@ -319,7 +319,7 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
                 {relLabel(relType)}
               </span>
               {' '}→{' '}
-              <span style={{ color: '#4FA89A', fontWeight: 600 }}>{selected.displayId || selected.id}</span>
+              <span style={{ color: 'var(--md1-accent)', fontWeight: 600 }}>{selected.displayId || selected.id}</span>
               {' '}{selected.title}
             </div>
           )}
@@ -329,8 +329,8 @@ export default function LinkEditor({ sourceType, sourceId, onOpenItem, sourceMet
             disabled={!selected || saving}
             style={{
               padding: '6px 16px', borderRadius: 3, fontSize: 11, fontFamily: FNT, fontWeight: 700, border: 'none',
-              background: selected && !saving ? '#062044' : '#e8e4e0',
-              color: selected && !saving ? '#fff' : '#b0a898',
+              background: selected && !saving ? 'var(--md1-primary)' : '#e8e4e0',
+              color: selected && !saving ? '#fff' : 'var(--md1-muted-light)',
               cursor: selected && !saving ? 'pointer' : 'default',
             }}
           >

@@ -112,7 +112,7 @@ export default function GraphView({ rules, assertions, gpf, gcf, onSelect, focus
         const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
         const dx = b.x - a.x, dy = b.y - a.y, nx = -dy * 0.08, ny = dx * 0.08
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(mx + nx, my + ny, b.x, b.y)
-        ctx.strokeStyle = (hl || fl) ? "#4FA89A88" : focId && !fl ? "#D8CEC318" : "#D8CEC380"; ctx.lineWidth = (hl || fl) ? 2.5 : 1; ctx.stroke()
+        ctx.strokeStyle = (hl || fl) ? "var(--md1-accent)88" : focId && !fl ? "var(--md1-border)18" : "var(--md1-border)80"; ctx.lineWidth = (hl || fl) ? 2.5 : 1; ctx.stroke()
         const at = 0.5, dt = 0.01
         const px = (1 - at) * (1 - at) * a.x + 2 * (1 - at) * at * (mx + nx) + at * at * b.x
         const py = (1 - at) * (1 - at) * a.y + 2 * (1 - at) * at * (my + ny) + at * at * b.y
@@ -121,7 +121,7 @@ export default function GraphView({ rules, assertions, gpf, gcf, onSelect, focus
         const ang = Math.atan2(py2 - py, px2 - px)
         ctx.save(); ctx.translate(px, py); ctx.rotate(ang)
         ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -4); ctx.lineTo(-4, 4); ctx.closePath()
-        ctx.fillStyle = (hl || fl) ? "#4FA89A70" : "#D8CEC360"; ctx.fill(); ctx.restore()
+        ctx.fillStyle = (hl || fl) ? "var(--md1-accent)70" : "var(--md1-border)60"; ctx.fill(); ctx.restore()
       })
       ns.forEach(n => {
         const isH = hov && hov.id === n.id
@@ -183,24 +183,24 @@ export default function GraphView({ rules, assertions, gpf, gcf, onSelect, focus
         onDoubleClick={e => { const n = getN(e); if (n) { const it = [...rules, ...assertions].find(i => i.id === n.id); if (it) onSelect(it) } }}
         style={{ display: "block", width: "100%", height: "100%" }}
       />
-      <div style={{ position: "absolute", bottom: 16, left: 16, background: "#FFFFFFee", border: "1px solid #D8CEC3", borderRadius: 3, padding: "10px 14px", fontSize: 10, fontFamily: FNT, color: "#8a8278" }}>
-        <div style={{ marginBottom: 6, fontWeight: 700, color: "#062044", letterSpacing: 0.8 }}>LEGEND</div>
+      <div style={{ position: "absolute", bottom: 16, left: 16, background: "#FFFFFFee", border: "1px solid var(--md1-border)", borderRadius: 3, padding: "10px 14px", fontSize: 10, fontFamily: FNT, color: "var(--md1-muted)" }}>
+        <div style={{ marginBottom: 6, fontWeight: 700, color: "var(--md1-primary)", letterSpacing: 0.8 }}>LEGEND</div>
         <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 5 }}>
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ display: "inline-block", width: 14, height: 14, borderRadius: 2, border: "1.5px solid #F2652F" }} /> Rule</span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", border: "1.5px solid #4FA89A" }} /> Assertion</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", border: "1.5px solid var(--md1-accent)" }} /> Assertion</span>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
           {[...new Set([...rules, ...assertions].map(i => i.processArea).filter(Boolean))].slice(0, 6).map(pa => <span key={pa} style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: paColor(pa) }} /> {pa}</span>)}
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 5, borderTop: "1px solid #D8CEC3", paddingTop: 5 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 5, borderTop: "1px solid var(--md1-border)", paddingTop: 5 }}>
           {["Proposed", "Active", "Verified", "Established"].map(s => <span key={s} style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: statusColor(s).bg === "#155724" ? "#155724" : statusColor(s).text }} /> {s}</span>)}
         </div>
-        <div style={{ marginTop: 6, color: "#b0a898", fontStyle: "italic" }}>Double-click node to inspect · Drag to reposition</div>
+        <div style={{ marginTop: 6, color: "var(--md1-muted-light)", fontStyle: "italic" }}>Double-click node to inspect · Drag to reposition</div>
       </div>
       {tip && (
-        <div style={{ position: "absolute", left: Math.min(tip.x + 14, szRef.current.w - 270), top: Math.max(tip.y - 12, 10), background: "#FFFFFFf0", border: "1px solid #D8CEC3", borderRadius: 3, padding: "10px 14px", maxWidth: 260, pointerEvents: "none", boxShadow: "0 8px 24px rgba(6,32,68,0.15)" }}>
+        <div style={{ position: "absolute", left: Math.min(tip.x + 14, szRef.current.w - 270), top: Math.max(tip.y - 12, 10), background: "#FFFFFFf0", border: "1px solid var(--md1-border)", borderRadius: 3, padding: "10px 14px", maxWidth: 260, pointerEvents: "none", boxShadow: "0 8px 24px rgba(var(--md1-primary-rgb),0.15)" }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: paColor(tip.node.processArea), fontFamily: FNT, marginBottom: 4 }}>{tip.node.label} · {tip.node.type.toUpperCase()}</div>
-          <div style={{ fontSize: 11, color: "#1F1F1F", lineHeight: 1.4, marginBottom: 6 }}>{tip.node.title}</div>
+          <div style={{ fontSize: 11, color: "var(--md1-text)", lineHeight: 1.4, marginBottom: 6 }}>{tip.node.title}</div>
           <div style={{ display: "flex", gap: 4 }}>{tip.node.status && <Badge label={tip.node.status} colorFn={statusColor} />}</div>
         </div>
       )}

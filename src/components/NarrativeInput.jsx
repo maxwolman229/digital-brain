@@ -162,7 +162,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
       {/* ── Step 1: Input ── */}
       {step === 'input' && (
         <div>
-          <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT, lineHeight: 1.7, marginBottom: 20, padding: '10px 14px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid #4FA89A' }}>
+          <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT, lineHeight: 1.7, marginBottom: 20, padding: '10px 14px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid var(--md1-accent)' }}>
             Paste or type operator knowledge in plain language. Claude will extract structured rules and assertions that you can review before they're added to the knowledge bank.
           </div>
 
@@ -219,9 +219,9 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
             disabled={extracting || !form.text.trim()}
             style={{
               width: '100%', padding: '12px 0', borderRadius: 3, fontSize: 13,
-              background: (!extracting && form.text.trim()) ? '#062044' : '#f0eeec',
+              background: (!extracting && form.text.trim()) ? 'var(--md1-primary)' : '#f0eeec',
               border: 'none',
-              color: (!extracting && form.text.trim()) ? '#FFFFFF' : '#8a8278',
+              color: (!extracting && form.text.trim()) ? '#FFFFFF' : 'var(--md1-muted)',
               cursor: (!extracting && form.text.trim()) ? 'pointer' : 'not-allowed',
               fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4,
             }}
@@ -236,13 +236,13 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
         <div>
           {/* Source reminder */}
           {form.source && (
-            <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginBottom: 16, display: 'flex', gap: 6, alignItems: 'center' }}>
-              <span style={{ color: '#b0a898' }}>Source:</span>
+            <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 16, display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ color: 'var(--md1-muted-light)' }}>Source:</span>
               <span style={{ color: '#5a5550', fontWeight: 600 }}>{form.source}</span>
             </div>
           )}
 
-          <div style={{ fontSize: 11, color: '#8a8278', fontFamily: FNT, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 16 }}>
             Review and edit each item before adding to the knowledge bank. Remove any items that aren't accurate.
           </div>
 
@@ -261,7 +261,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
           </div>
 
           {items.length === 0 && (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: '#D8CEC3', fontFamily: FNT, fontSize: 12, marginBottom: 20 }}>
+            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--md1-border)', fontFamily: FNT, fontSize: 12, marginBottom: 20 }}>
               All items removed. Go back to re-extract.
             </div>
           )}
@@ -275,7 +275,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => setStep('input')}
-              style={{ padding: '10px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', fontFamily: FNT, fontWeight: 600 }}
+              style={{ padding: '10px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: '#5a5550', cursor: 'pointer', fontFamily: FNT, fontWeight: 600 }}
             >
               ← Back
             </button>
@@ -284,9 +284,9 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
               disabled={saving || items.length === 0}
               style={{
                 flex: 1, padding: '10px 0', borderRadius: 3, fontSize: 13,
-                background: (!saving && items.length > 0) ? '#062044' : '#f0eeec',
+                background: (!saving && items.length > 0) ? 'var(--md1-primary)' : '#f0eeec',
                 border: 'none',
-                color: (!saving && items.length > 0) ? '#FFFFFF' : '#8a8278',
+                color: (!saving && items.length > 0) ? '#FFFFFF' : 'var(--md1-muted)',
                 cursor: (!saving && items.length > 0) ? 'pointer' : 'not-allowed',
                 fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4,
               }}
@@ -304,23 +304,23 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
       {step === 'done' && (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#062044', fontFamily: FNT, marginBottom: 8 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT, marginBottom: 8 }}>
             {savedCount} item{savedCount !== 1 ? 's' : ''} added to Knowledge Bank
           </div>
-          <div style={{ fontSize: 12, color: '#8a8278', fontFamily: FNT, marginBottom: 24, lineHeight: 1.7 }}>
+          <div style={{ fontSize: 12, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 24, lineHeight: 1.7 }}>
             All items created with status <strong>Proposed</strong>. They'll appear in the Rules and Assertions views where your team can verify and promote them.
             {form.source && <><br />Evidence linked: <em>{form.source}</em></>}
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
             <button
               onClick={reset}
-              style={{ padding: '10px 20px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid #D8CEC3', color: '#5a5550', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
+              style={{ padding: '10px 20px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: '#5a5550', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
             >
               Add Another Narrative
             </button>
             <button
               onClick={handleClose}
-              style={{ padding: '10px 20px', borderRadius: 3, fontSize: 12, background: '#062044', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
+              style={{ padding: '10px 20px', borderRadius: 3, fontSize: 12, background: 'var(--md1-primary)', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FNT, fontWeight: 700 }}
             >
               Done
             </button>
@@ -340,8 +340,8 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
   return (
     <div style={{
       padding: '14px 16px', background: '#fff',
-      border: `1px solid ${isRule ? '#062044' : '#4FA89A'}20`,
-      borderLeft: `3px solid ${isRule ? '#062044' : '#4FA89A'}`,
+      border: `1px solid ${isRule ? 'var(--md1-primary)' : 'var(--md1-accent)'}20`,
+      borderLeft: `3px solid ${isRule ? 'var(--md1-primary)' : 'var(--md1-accent)'}`,
       borderRadius: 3,
     }}>
       {/* Type badge + remove */}
@@ -349,21 +349,21 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
         <span style={{
           fontSize: 9, padding: '2px 8px', borderRadius: 2, fontWeight: 700, fontFamily: FNT,
           background: isRule ? '#e8edf4' : '#e6f5f1',
-          color: isRule ? '#062044' : '#4FA89A',
+          color: isRule ? 'var(--md1-primary)' : 'var(--md1-accent)',
           textTransform: 'uppercase', letterSpacing: 0.8,
         }}>
           {isRule ? '◆ Rule' : '◇ Assertion'}
         </span>
         <button
           onClick={onRemove}
-          style={{ background: 'none', border: 'none', color: '#D8CEC3', cursor: 'pointer', fontSize: 14, padding: '0 4px', lineHeight: 1 }}
+          style={{ background: 'none', border: 'none', color: 'var(--md1-border)', cursor: 'pointer', fontSize: 14, padding: '0 4px', lineHeight: 1 }}
           title="Remove this item"
         >✕</button>
       </div>
 
       {/* Title */}
       <div style={{ marginBottom: 10 }}>
-        <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Title</label>
+        <label style={{ display: 'block', fontSize: 10, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Title</label>
         <input
           value={item.title || ''}
           onChange={e => onChange({ title: e.target.value })}
@@ -374,7 +374,7 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
       {/* Category · Process Area */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: isRule ? 10 : 0 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Category</label>
+          <label style={{ display: 'block', fontSize: 10, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Category</label>
           <TypeaheadInput
             value={item.category || ''}
             onChange={v => onChange({ category: v })}
@@ -383,7 +383,7 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Process Area</label>
+          <label style={{ display: 'block', fontSize: 10, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Process Area</label>
           <TypeaheadInput
             value={item.process_area || ''}
             onChange={v => onChange({ process_area: v })}
@@ -396,7 +396,7 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
       {/* Detail */}
       {item.scope !== undefined && (
         <div style={{ marginBottom: isRule ? 10 : 0 }}>
-          <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Detail</label>
+          <label style={{ display: 'block', fontSize: 10, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Detail</label>
           <input
             value={item.scope || ''}
             onChange={e => onChange({ scope: e.target.value })}
@@ -409,7 +409,7 @@ function ExtractedItem({ item, onChange, onRemove, processAreas = [], categories
       {/* Rationale (rules only) */}
       {isRule && (
         <div>
-          <label style={{ display: 'block', fontSize: 10, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Rationale</label>
+          <label style={{ display: 'block', fontSize: 10, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1, fontFamily: FNT, marginBottom: 4 }}>Rationale</label>
           <textarea
             value={item.rationale || ''}
             onChange={e => onChange({ rationale: e.target.value })}

@@ -33,7 +33,7 @@ export default function Verifications({ targetType, targetId }) {
         style={{
           padding: '6px 14px', borderRadius: 3, fontSize: 11,
           background: alreadyVerified ? '#e6f5f1' : '#FFFFFF',
-          border: '1px solid #4FA89A', color: '#4FA89A',
+          border: '1px solid var(--md1-accent)', color: 'var(--md1-accent)',
           cursor: (loading || alreadyVerified) ? 'default' : 'pointer',
           fontFamily: FNT, fontWeight: 700,
           opacity: loading ? 0.5 : 1,
@@ -42,7 +42,7 @@ export default function Verifications({ targetType, targetId }) {
         {alreadyVerified ? '✓ Verified' : '✓ Verify from Experience'}
       </button>
       {!loading && names.length > 0 && (
-        <span style={{ fontSize: 10, color: '#8a8278', fontFamily: FNT }}>
+        <span style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT }}>
           {names.length} verification{names.length > 1 ? 's' : ''}: {names.join(', ')}
         </span>
       )}
