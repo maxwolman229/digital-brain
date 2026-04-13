@@ -430,6 +430,18 @@ const VERIFICATION_THRESHOLDS = [
 
 export async function addVerification(targetType, targetId, displayId) {
   const userId = getUserId()
+
+  // Block self-verification: creators cannot verify their own contributions
+  const itemTable = targetType === 'rule' ? 'rules' : 'assertions'
+  const { data: ownerRow } = await supabase
+    .from(itemTable)
+    .select('created_by')
+    .eq('id', targetId)
+    .maybeSingle()
+  if (ownerRow?.created_by && ownerRow.created_by === userId) {
+    throw new Error("You can't verify your own contribution — ask a colleague to review it.")
+  }
+
   const { error } = await supabase
     .from('verifications')
     .upsert({ target_type: targetType, target_id: targetId, verified_by: userId })

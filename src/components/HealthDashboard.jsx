@@ -415,7 +415,7 @@ export default function HealthDashboard({ onNavigate }) {
             </div>
 
             {/* Verify */}
-            <Verifications targetType={sel.type} targetId={sel.id} />
+            <Verifications targetType={sel.type} targetId={sel.id} createdById={sel.createdById} />
 
             {/* Detail */}
             <DetailSection label="Detail">

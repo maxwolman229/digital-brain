@@ -228,7 +228,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
             </div>
 
             {/* Verify */}
-            <Verifications targetType="assertion" targetId={sel.id} />
+            <Verifications targetType="assertion" targetId={sel.id} createdById={sel.createdById} />
 
             {/* Detail */}
             <DetailSection label="Detail">

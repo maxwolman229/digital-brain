@@ -233,7 +233,7 @@ export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, o
             </div>
 
             {/* Verify */}
-            <Verifications targetType="rule" targetId={sel.id} />
+            <Verifications targetType="rule" targetId={sel.id} createdById={sel.createdById} />
 
             {/* Detail */}
             <DetailSection label="Detail">

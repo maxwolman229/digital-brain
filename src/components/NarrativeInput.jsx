@@ -4,7 +4,7 @@ import { Modal, Field, TypeaheadInput, MentionDropdown } from './shared.jsx'
 import { createRule, createAssertion, fetchPlantMembers } from '../lib/db.js'
 import { useMention } from '../lib/useMention.js'
 
-const EMPTY_FORM = { text: '', processArea: '', source: '', submittedBy: '' }
+const EMPTY_FORM = { text: '', processArea: '', source: '' }
 
 export default function NarrativeInput({ open, onClose, onCreated, processAreas = [], categories = [], industry, onItemSaved, plantId }) {
   const [step, setStep] = useState('input') // 'input' | 'review' | 'done'
@@ -180,24 +180,14 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
             </div>
           </Field>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="Primary Process Area">
-              <TypeaheadInput
-                value={form.processArea}
-                onChange={v => setForm(f => ({ ...f, processArea: v }))}
-                options={processAreas}
-                placeholder="Select process area..."
-              />
-            </Field>
-            <Field label="Submitted By">
-              <input
-                style={iS}
-                value={form.submittedBy}
-                onChange={e => setForm(f => ({ ...f, submittedBy: e.target.value }))}
-                placeholder="e.g. Your Name"
-              />
-            </Field>
-          </div>
+          <Field label="Primary Process Area">
+            <TypeaheadInput
+              value={form.processArea}
+              onChange={v => setForm(f => ({ ...f, processArea: v }))}
+              options={processAreas}
+              placeholder="Select process area..."
+            />
+          </Field>
 
           <Field label="Source" hint="Added as evidence on each created item">
             <input

@@ -35,7 +35,7 @@ function QueryItemDetail({ item, onCiteClick }) {
       </h3>
 
       {/* Verifications */}
-      <Verifications targetType={item.type} targetId={item.id} />
+      <Verifications targetType={item.type} targetId={item.id} createdById={item.createdById} />
 
       {/* Scope */}
       {item.scope && (

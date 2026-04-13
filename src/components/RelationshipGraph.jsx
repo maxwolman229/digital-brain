@@ -866,7 +866,7 @@ function ItemDetailModal({ item, loading, onClose, onNavigate }) {
           )}
 
           <div style={{ marginBottom: 12 }}>
-            <Verifications targetType={item.type} targetId={item.id} />
+            <Verifications targetType={item.type} targetId={item.id} createdById={item.createdById} />
           </div>
 
           <div style={{ marginBottom: 12 }}>
