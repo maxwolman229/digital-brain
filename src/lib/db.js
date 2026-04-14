@@ -1430,12 +1430,12 @@ export async function fetchUserIdByDisplayName(displayName, plantId) {
 export async function fetchSuggestedLinks(sourceType, sourceId, processArea, category) {
   if (!processArea) return []
   const [rulesRes, assertRes] = await Promise.all([
-    supabase.from('rules').select('id, title, process_area, category').eq('plant_id', PLANT_ID()).eq('process_area', processArea).limit(15),
-    supabase.from('assertions').select('id, title, process_area, category').eq('plant_id', PLANT_ID()).eq('process_area', processArea).limit(15),
+    supabase.from('rules').select('id, display_id, title, process_area, category').eq('plant_id', PLANT_ID()).eq('process_area', processArea).limit(15),
+    supabase.from('assertions').select('id, display_id, title, process_area, category').eq('plant_id', PLANT_ID()).eq('process_area', processArea).limit(15),
   ])
   const items = [
-    ...(rulesRes.data || []).map(r => ({ id: r.id, type: 'rule', title: r.title, processArea: r.process_area, category: r.category })),
-    ...(assertRes.data || []).map(a => ({ id: a.id, type: 'assertion', title: a.title, processArea: a.process_area, category: a.category })),
+    ...(rulesRes.data || []).map(r => ({ id: r.id, displayId: r.display_id || r.id, type: 'rule', title: r.title, processArea: r.process_area, category: r.category })),
+    ...(assertRes.data || []).map(a => ({ id: a.id, displayId: a.display_id || a.id, type: 'assertion', title: a.title, processArea: a.process_area, category: a.category })),
   ].filter(x => !(x.type === sourceType && x.id === sourceId))
   items.sort((a, b) => {
     const am = (a.category || '') === (category || ''), bm = (b.category || '') === (category || '')
