@@ -54,8 +54,8 @@ Deno.serve(async (req: Request) => {
       console.error('[invite] Not found:', invite_id, invErr?.message)
       return json({ error: 'Invite not found' }, 404)
     }
-    if (invite.status !== 'approved') {
-      return json({ error: `Invite status is '${invite.status}', must be 'approved'` }, 400)
+    if (invite.status !== 'pending' && invite.status !== 'approved') {
+      return json({ error: `Invite status is '${invite.status}', must be 'pending' or 'approved'` }, 400)
     }
 
     // ── Check if user already has an account ─────────────────────────────────
@@ -147,8 +147,16 @@ Deno.serve(async (req: Request) => {
         })
         const emailResult = await emailResp.json()
         emailSent = emailResp.ok
+        console.log(`[invite] Resend HTTP ${emailResp.status}: ${JSON.stringify(emailResult)}`)
         if (!emailResp.ok) {
           console.error('[invite] Resend error:', JSON.stringify(emailResult))
+          // Surface the Resend error in the response
+          return json({
+            sent: false,
+            action_link: actionLink,
+            user_id: linkData?.user?.id,
+            resend_error: emailResult,
+          })
         } else {
           console.log(`[invite] Email sent to ${invite.email} via Resend (id: ${emailResult.id})`)
         }

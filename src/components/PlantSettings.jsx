@@ -67,11 +67,13 @@ function InviteForm({ plantId, onSent }) {
     }
     setSending(true); setError(null); setSuccess(null)
     try {
-      await sendPlantInvite(plantId, trimmed)
-      setSuccess(`Invite sent to ${trimmed}`)
+      const result = await sendPlantInvite(plantId, trimmed)
+      setSuccess(result.emailSent
+        ? `Invite email sent to ${trimmed}`
+        : `Invite created for ${trimmed} — they already have an account`)
       setEmail('')
       onSent?.()
-      setTimeout(() => setSuccess(null), 3000)
+      setTimeout(() => setSuccess(null), 5000)
     } catch (err) {
       setError(err.message)
     }
@@ -81,7 +83,7 @@ function InviteForm({ plantId, onSent }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 8 }}>
-        Invite someone by email address. An admin will need to approve them.
+        Invite someone by email. They'll receive an email to create their account. An admin approves their access.
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <input
@@ -216,8 +218,6 @@ function PendingInvites({ plantId, onCountChange }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState({})
-  const [inviteLinks, setInviteLinks] = useState({}) // inviteId → actionLink
-  const [copiedId, setCopiedId] = useState(null)
 
   useEffect(() => { load() }, [plantId])
 
@@ -234,24 +234,11 @@ function PendingInvites({ plantId, onCountChange }) {
   async function handleApprove(inv) {
     setBusy(b => ({ ...b, [inv.id]: 'approve' }))
     try {
-      const result = await approveInvite(inv.id)
+      await approveInvite(inv.id)
       setInvites(prev => prev.map(i => i.id === inv.id ? { ...i, status: 'approved' } : i))
       onCountChange?.(invites.filter(i => i.status === 'pending' && i.id !== inv.id).length)
-      // Store the invite link so admin can copy and share it
-      if (result.actionLink) {
-        setInviteLinks(prev => ({ ...prev, [inv.id]: result.actionLink }))
-      }
     } catch (err) { setError(err.message) }
     setBusy(b => { const n = { ...b }; delete n[inv.id]; return n })
-  }
-
-  function handleCopyLink(invId) {
-    const link = inviteLinks[invId]
-    if (link) {
-      navigator.clipboard.writeText(link)
-      setCopiedId(invId)
-      setTimeout(() => setCopiedId(null), 2000)
-    }
   }
 
   async function handleReject(inv) {
@@ -266,9 +253,8 @@ function PendingInvites({ plantId, onCountChange }) {
 
   if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: 'var(--md1-muted-light)', fontFamily: FNT }}>Loading invites…</div>
 
-  // Keep invites with an unsent link in the "actionable" section even after approval
-  const actionable = invites.filter(i => i.status === 'pending' || inviteLinks[i.id])
-  const history = invites.filter(i => i.status !== 'pending' && !inviteLinks[i.id])
+  const pending = invites.filter(i => i.status === 'pending')
+  const history = invites.filter(i => i.status !== 'pending')
 
   return (
     <div>
@@ -278,13 +264,13 @@ function PendingInvites({ plantId, onCountChange }) {
         </div>
       )}
 
-      {/* Pending + just-approved with link */}
-      {actionable.length === 0 ? (
+      {/* Pending invites */}
+      {pending.length === 0 ? (
         <div style={{ padding: '24px 0', textAlign: 'center' }}>
           <div style={{ fontSize: 13, color: 'var(--md1-muted-light)', fontFamily: FNT }}>No pending invites</div>
         </div>
       ) : (
-        actionable.map(inv => (
+        pending.map(inv => (
           <div key={inv.id} style={{ padding: '12px 0', borderBottom: '1px solid #f0eeec' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -293,59 +279,30 @@ function PendingInvites({ plantId, onCountChange }) {
                   Invited by {inv.invitedByName} · {fmtDate(inv.createdAt)}
                 </div>
               </div>
-              {inviteLinks[inv.id] ? (
-                <>
-                  <button
-                    onClick={() => handleCopyLink(inv.id)}
-                    style={{
-                      padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 700,
-                      background: copiedId === inv.id ? 'var(--md1-accent)' : 'var(--md1-primary)',
-                      border: 'none', color: '#fff',
-                      cursor: 'pointer', fontFamily: FNT, whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {copiedId === inv.id ? 'Copied!' : 'Copy Invite Link'}
-                  </button>
-                  <button
-                    onClick={() => setInviteLinks(prev => { const n = { ...prev }; delete n[inv.id]; return n })}
-                    style={{
-                      padding: '6px 8px', borderRadius: 3, fontSize: 11,
-                      background: 'transparent', border: '1px solid var(--md1-border)',
-                      color: 'var(--md1-muted-light)', cursor: 'pointer', fontFamily: FNT,
-                    }}
-                    title="Dismiss"
-                  >
-                    ✓
-                  </button>
-                </>
-              ) : inv.status === 'pending' ? (
-                <>
-                  <button
-                    onClick={() => handleApprove(inv)}
-                    disabled={!!busy[inv.id]}
-                    style={{
-                      padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 700,
-                      background: busy[inv.id] === 'approve' ? '#3a8a7e' : 'var(--md1-accent)',
-                      border: 'none', color: '#fff',
-                      cursor: busy[inv.id] ? 'default' : 'pointer', fontFamily: FNT,
-                    }}
-                  >
-                    {busy[inv.id] === 'approve' ? 'Approving…' : 'Approve'}
-                  </button>
-                  <button
-                    onClick={() => handleReject(inv)}
-                    disabled={!!busy[inv.id]}
-                    style={{
-                      padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 600,
-                      background: 'transparent', border: '1px solid var(--md1-border)',
-                      color: busy[inv.id] === 'reject' ? 'var(--md1-muted-light)' : 'var(--md1-muted)',
-                      cursor: busy[inv.id] ? 'default' : 'pointer', fontFamily: FNT,
-                    }}
-                  >
-                    {busy[inv.id] === 'reject' ? '…' : 'Reject'}
-                  </button>
-                </>
-              ) : null}
+              <button
+                onClick={() => handleApprove(inv)}
+                disabled={!!busy[inv.id]}
+                style={{
+                  padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 700,
+                  background: busy[inv.id] === 'approve' ? '#3a8a7e' : 'var(--md1-accent)',
+                  border: 'none', color: '#fff',
+                  cursor: busy[inv.id] ? 'default' : 'pointer', fontFamily: FNT,
+                }}
+              >
+                {busy[inv.id] === 'approve' ? 'Approving…' : 'Approve'}
+              </button>
+              <button
+                onClick={() => handleReject(inv)}
+                disabled={!!busy[inv.id]}
+                style={{
+                  padding: '6px 14px', borderRadius: 3, fontSize: 11, fontWeight: 600,
+                  background: 'transparent', border: '1px solid var(--md1-border)',
+                  color: busy[inv.id] === 'reject' ? 'var(--md1-muted-light)' : 'var(--md1-muted)',
+                  cursor: busy[inv.id] ? 'default' : 'pointer', fontFamily: FNT,
+                }}
+              >
+                {busy[inv.id] === 'reject' ? '…' : 'Reject'}
+              </button>
             </div>
           </div>
         ))

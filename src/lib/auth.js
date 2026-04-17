@@ -308,9 +308,11 @@ export async function sendPlantInvite(plantId, email) {
   const payload = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
   const userId = payload.sub
 
+  const trimmedEmail = email.trim().toLowerCase()
+
   const { data, error } = await supabase
     .from('plant_invites')
-    .insert({ plant_id: plantId, email: email.trim().toLowerCase(), invited_by: userId })
+    .insert({ plant_id: plantId, email: trimmedEmail, invited_by: userId })
     .select()
     .single()
 
@@ -318,7 +320,27 @@ export async function sendPlantInvite(plantId, email) {
     if (error.code === '23505') throw new Error('This email has already been invited to this plant.')
     throw new Error(error.message)
   }
-  return data
+
+  // Send the invite email immediately via the edge function.
+  // This creates the auth account (if new) and sends the branded email.
+  // The invite stays "pending" — admin approval controls plant access, not the email.
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/invite`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwt}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'send_invite', invite_id: data.id }),
+    })
+    const result = await resp.json()
+    if (!resp.ok) console.warn('[sendPlantInvite] edge function error:', result.error)
+    return { ...data, emailSent: result.sent || false, actionLink: result.action_link || null }
+  } catch (err) {
+    console.warn('[sendPlantInvite] email send failed:', err.message)
+    return { ...data, emailSent: false, actionLink: null }
+  }
 }
 
 export async function fetchPlantInvites(plantId) {
@@ -374,27 +396,19 @@ export async function approveInvite(inviteId) {
 
   if (updateErr) throw new Error(updateErr.message)
 
-  // Call the invite edge function to create the auth account + generate invite link
+  // The invite email was already sent when the invite was created (sendPlantInvite).
+  // On approval, just create the plant membership if the user already signed up.
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/invite`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${jwt}`,
-        'apikey': SUPABASE_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: 'send_invite', invite_id: inviteId }),
-    })
-    const result = await resp.json()
-    if (!resp.ok) console.warn('[approveInvite] edge function error:', result.error)
-    return {
-      approved: true,
-      userExists: result.membership_created || false,
-      actionLink: result.action_link || null,
+    const { data: userId } = await supabase.rpc('get_user_id_by_email', { lookup_email: invite.email })
+    if (userId) {
+      await supabase.from('plant_memberships')
+        .upsert({ user_id: userId, plant_id: invite.plant_id, role: 'contributor', invited_by: adminUserId },
+                 { onConflict: 'user_id,plant_id' })
     }
+    return { approved: true, userExists: !!userId }
   } catch (err) {
-    console.warn('[approveInvite] edge function call failed:', err.message)
-    return { approved: true, userExists: false, actionLink: null }
+    console.warn('[approveInvite] membership creation:', err.message)
+    return { approved: true, userExists: false }
   }
 }
 
