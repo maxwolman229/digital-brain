@@ -320,27 +320,7 @@ export async function sendPlantInvite(plantId, email) {
     if (error.code === '23505') throw new Error('This email has already been invited to this plant.')
     throw new Error(error.message)
   }
-
-  // Send the invite email immediately via the edge function.
-  // This creates the auth account (if new) and sends the branded email.
-  // The invite stays "pending" — admin approval controls plant access, not the email.
-  try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/invite`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${jwt}`,
-        'apikey': SUPABASE_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: 'send_invite', invite_id: data.id }),
-    })
-    const result = await resp.json()
-    if (!resp.ok) console.warn('[sendPlantInvite] edge function error:', result.error)
-    return { ...data, emailSent: result.sent || false, actionLink: result.action_link || null }
-  } catch (err) {
-    console.warn('[sendPlantInvite] email send failed:', err.message)
-    return { ...data, emailSent: false, actionLink: null }
-  }
+  return data
 }
 
 export async function fetchPlantInvites(plantId) {
@@ -396,19 +376,23 @@ export async function approveInvite(inviteId) {
 
   if (updateErr) throw new Error(updateErr.message)
 
-  // The invite email was already sent when the invite was created (sendPlantInvite).
-  // On approval, just create the plant membership if the user already signed up.
+  // Call the invite edge function to send the email + create auth account (or membership for existing users)
   try {
-    const { data: userId } = await supabase.rpc('get_user_id_by_email', { lookup_email: invite.email })
-    if (userId) {
-      await supabase.from('plant_memberships')
-        .upsert({ user_id: userId, plant_id: invite.plant_id, role: 'contributor', invited_by: adminUserId },
-                 { onConflict: 'user_id,plant_id' })
-    }
-    return { approved: true, userExists: !!userId }
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/invite`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwt}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'send_invite', invite_id: inviteId }),
+    })
+    const result = await resp.json()
+    if (!resp.ok) console.warn('[approveInvite] edge function error:', result.error)
+    return { approved: true, emailSent: result.sent || false }
   } catch (err) {
-    console.warn('[approveInvite] membership creation:', err.message)
-    return { approved: true, userExists: false }
+    console.warn('[approveInvite] edge function call failed:', err.message)
+    return { approved: true, emailSent: false }
   }
 }
 

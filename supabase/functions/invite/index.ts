@@ -54,8 +54,8 @@ Deno.serve(async (req: Request) => {
       console.error('[invite] Not found:', invite_id, invErr?.message)
       return json({ error: 'Invite not found' }, 404)
     }
-    if (invite.status !== 'pending' && invite.status !== 'approved') {
-      return json({ error: `Invite status is '${invite.status}', must be 'pending' or 'approved'` }, 400)
+    if (invite.status !== 'approved') {
+      return json({ error: `Invite status is '${invite.status}', must be 'approved'` }, 400)
     }
 
     // ── Check if user already has an account ─────────────────────────────────
@@ -63,13 +63,55 @@ Deno.serve(async (req: Request) => {
       .rpc('get_user_id_by_email', { lookup_email: invite.email })
 
     if (existingUserId) {
+      // User already has an account — create membership and send notification email
       const { error: mErr } = await admin.from('plant_memberships').upsert(
         { user_id: existingUserId, plant_id: invite.plant_id, role: 'contributor' },
         { onConflict: 'user_id,plant_id' }
       )
       if (mErr) console.error('[invite] membership upsert error:', mErr.message)
-      console.log(`[invite] User ${invite.email} already exists — membership created`)
-      return json({ sent: false, reason: 'user_exists', membership_created: true })
+
+      // Send notification email
+      const { data: plant } = await admin.from('plants').select('name').eq('id', invite.plant_id).single()
+      const plantName = plant?.name || 'a Knowledge Bank'
+      const resendKey = Deno.env.get('RESEND_API_KEY')
+      if (resendKey) {
+        try {
+          const origin = req.headers.get('origin') || 'https://md1.app'
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              from: 'M/D/1 <noreply@md1.app>',
+              to: [invite.email],
+              subject: `You've been approved to join ${plantName} on M/D/1`,
+              html: `
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <div style="display: inline-block; font-size: 28px; font-weight: 700; letter-spacing: 4px; color: #062044; border: 2px solid #062044; padding: 5px 14px 7px;">M/D/1</div>
+                  </div>
+                  <h2 style="font-size: 18px; font-weight: 700; color: #062044; margin-bottom: 8px;">You've been approved</h2>
+                  <p style="font-size: 14px; color: #5a5550; line-height: 1.6; margin-bottom: 24px;">
+                    An admin has approved your access to <strong>${plantName}</strong> on M/D/1. Log in to start contributing.
+                  </p>
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <a href="${origin}/auth" style="display: inline-block; padding: 12px 32px; background: #062044; color: #ffffff; text-decoration: none; border-radius: 3px; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">
+                      Log In
+                    </a>
+                  </div>
+                  <hr style="border: none; border-top: 1px solid #e8e4e0; margin: 24px 0;" />
+                  <p style="font-size: 10px; color: #b0a898; text-align: center;">M/D/1 — The operational brain that never retires.</p>
+                </div>
+              `,
+            }),
+          })
+          console.log(`[invite] Approval email sent to existing user ${invite.email}`)
+        } catch (emailErr) {
+          console.error('[invite] Approval email error:', emailErr)
+        }
+      }
+
+      console.log(`[invite] User ${invite.email} already exists — membership created + notified`)
+      return json({ sent: true, reason: 'user_exists', membership_created: true })
     }
 
     // ── Generate invite link ─────────────────────────────────────────────────

@@ -67,13 +67,11 @@ function InviteForm({ plantId, onSent }) {
     }
     setSending(true); setError(null); setSuccess(null)
     try {
-      const result = await sendPlantInvite(plantId, trimmed)
-      setSuccess(result.emailSent
-        ? `Invite email sent to ${trimmed}`
-        : `Invite created for ${trimmed} — they already have an account`)
+      await sendPlantInvite(plantId, trimmed)
+      setSuccess(`Invite created for ${trimmed} — awaiting admin approval`)
       setEmail('')
       onSent?.()
-      setTimeout(() => setSuccess(null), 5000)
+      setTimeout(() => setSuccess(null), 4000)
     } catch (err) {
       setError(err.message)
     }
@@ -83,7 +81,7 @@ function InviteForm({ plantId, onSent }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 8 }}>
-        Invite someone by email. They'll receive an email to create their account. An admin approves their access.
+        Invite someone by email. When an admin approves, they'll receive an email to join.
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <input
