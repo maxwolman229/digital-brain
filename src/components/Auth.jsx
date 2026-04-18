@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { signIn, signUp } from '../lib/auth.js'
+import { signIn, signUp, resendConfirmationEmail } from '../lib/auth.js'
 
 const FNT = 'var(--md1-font-sans)'
 
@@ -44,6 +44,9 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
   const [showDemoGate, setShowDemoGate] = useState(false)
   const [demoGateInput, setDemoGateInput] = useState('')
   const [demoGateError, setDemoGateError] = useState(null)
+  const [confirmationEmail, setConfirmationEmail] = useState(null) // email awaiting verification
+  const [resending, setResending] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
 
   function switchMode(m) {
     setMode(m)
@@ -70,15 +73,24 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
         console.log('[Auth] calling signIn...')
         const { user } = await signIn(email.trim(), password)
         console.log('[Auth] signIn success, user:', user?.id, '— calling onSignedIn')
-        onSignedIn(user)  // fire-and-forget: App.jsx loads profile/memberships async
+        onSignedIn(user)
       } else {
-        const { user } = await signUp(email.trim(), password)
-        onNeedsOnboarding(user, displayName.trim())
+        const { user, needsConfirmation } = await signUp(email.trim(), password)
+        if (needsConfirmation) {
+          setConfirmationEmail(email.trim())
+        } else {
+          onNeedsOnboarding(user, displayName.trim())
+        }
       }
     } catch (err) {
-      console.error('[Auth] signIn error:', err.name, err.message)
-      const isAbort = err.name === 'AbortError' || err.message?.includes('aborted')
-      setError(isAbort ? 'Connection is slow — please try again.' : (err.message || 'Authentication failed.'))
+      console.error('[Auth] error:', err.name, err.message)
+      const msg = err.message || ''
+      const isAbort = err.name === 'AbortError' || msg.includes('aborted')
+      if (msg.toLowerCase().includes('email not confirmed')) {
+        setConfirmationEmail(email.trim())
+      } else {
+        setError(isAbort ? 'Connection is slow — please try again.' : (msg || 'Authentication failed.'))
+      }
     }
     setLoading(false)
   }
@@ -99,6 +111,20 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
     setDemoLoading(false)
   }
 
+  async function handleResend() {
+    if (!confirmationEmail || resending) return
+    setResending(true)
+    setResendSuccess(false)
+    try {
+      await resendConfirmationEmail(confirmationEmail)
+      setResendSuccess(true)
+      setTimeout(() => setResendSuccess(false), 4000)
+    } catch (err) {
+      setError(err.message)
+    }
+    setResending(false)
+  }
+
   async function handleDemoGateSubmit(e) {
     e.preventDefault()
     setDemoGateError(null)
@@ -110,6 +136,68 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
   }
 
   const isLogin = mode === 'login'
+
+  // ── Email confirmation screen ───────────────────────────────────────────────
+  if (confirmationEmail) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--md1-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FNT, position: 'relative' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px)', backgroundSize: '60px 60px', pointerEvents: 'none' }} />
+        <div style={{ width: '100%', maxWidth: 400, padding: '0 24px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ display: 'inline-block', fontSize: 36, fontWeight: 700, letterSpacing: 4, color: '#FFFFFF', lineHeight: 1, border: '2px solid #FFFFFF', padding: '8px 18px 10px', marginBottom: 10 }}>
+              M/D/1
+            </div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, padding: '32px 28px', textAlign: 'center' }}>
+            <div style={{ fontSize: 36, marginBottom: 16 }}>&#9993;</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 8 }}>
+              Check your email
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 24 }}>
+              We sent a verification link to <strong style={{ color: 'rgba(255,255,255,0.8)' }}>{confirmationEmail}</strong>. Click the link to confirm your account, then come back to log in.
+            </div>
+
+            {resendSuccess && (
+              <div style={{ padding: '9px 12px', marginBottom: 14, background: 'rgba(79,168,154,0.15)', border: '1px solid rgba(79,168,154,0.3)', borderRadius: 3, fontSize: 12, color: 'var(--md1-accent)', lineHeight: 1.5 }}>
+                Verification email resent
+              </div>
+            )}
+
+            {error && (
+              <div style={{ padding: '9px 12px', marginBottom: 14, background: 'rgba(231,76,60,0.15)', border: '1px solid rgba(231,76,60,0.3)', borderRadius: 3, fontSize: 12, color: '#e74c3c', lineHeight: 1.5 }}>
+                {error}
+              </div>
+            )}
+
+            <button
+              onClick={handleResend}
+              disabled={resending}
+              style={{
+                width: '100%', padding: '11px 0', borderRadius: 3, marginBottom: 10,
+                background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
+                color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600,
+                cursor: resending ? 'default' : 'pointer', fontFamily: FNT,
+                opacity: resending ? 0.5 : 1,
+              }}
+            >
+              {resending ? 'Sending…' : 'Resend Verification Email'}
+            </button>
+            <button
+              onClick={() => { setConfirmationEmail(null); setError(null); setMode('login') }}
+              style={{
+                width: '100%', padding: '11px 0', borderRadius: 3,
+                background: '#FFFFFF', border: 'none', color: 'var(--md1-primary)',
+                fontSize: 13, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase',
+                cursor: 'pointer', fontFamily: FNT,
+              }}
+            >
+              Back to Log In
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{

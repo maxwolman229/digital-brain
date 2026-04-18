@@ -55,7 +55,7 @@ export async function signUp(email, password) {
       'Authorization': 'Bearer ' + SUPABASE_KEY,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, password, data: { email_confirm: true } }),
+    body: JSON.stringify({ email, password }),
   })
   clearTimeout(timer)
 
@@ -65,9 +65,40 @@ export async function signUp(email, password) {
     throw new Error(json.error_description || json.msg || json.message || `Signup failed (${resp.status})`)
   }
 
-  if (json.access_token) storeJwt(json.access_token)
-  if (json.refresh_token) storeRefreshToken(json.refresh_token)
-  return { user: json.user || json, session: json }
+  // When email confirmation is required, Supabase returns the user but no access_token.
+  // The user must click the confirmation link before they can sign in.
+  if (json.access_token) {
+    storeJwt(json.access_token)
+    if (json.refresh_token) storeRefreshToken(json.refresh_token)
+    return { user: json.user || json, session: json, needsConfirmation: false }
+  }
+
+  // No access_token = confirmation required
+  return { user: json.user || json, session: null, needsConfirmation: true }
+}
+
+// ─── Resend confirmation email ───────────────────────────────────────────────
+
+export async function resendConfirmationEmail(email) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 15000)
+
+  const resp = await fetch(SUPABASE_URL + '/auth/v1/resend', {
+    method: 'POST',
+    signal: controller.signal,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ type: 'signup', email }),
+  })
+  clearTimeout(timer)
+
+  if (!resp.ok) {
+    const json = await resp.json().catch(() => ({}))
+    throw new Error(json.error_description || json.msg || json.message || 'Failed to resend')
+  }
 }
 
 // ─── Sign out ─────────────────────────────────────────────────────────────────
