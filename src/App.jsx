@@ -132,6 +132,15 @@ export default function App() {
     activateContext(profile, updated, newMembership.plantId)
   }
 
+  function handlePlantDeleted(deletedPlantId) {
+    const updated = memberships.filter(m => m.plantId !== deletedPlantId)
+    setMemberships(updated)
+    if (activePlantId === deletedPlantId) {
+      setActivePlantId(null)
+      try { localStorage.removeItem('md1-active-plant') } catch {}
+    }
+  }
+
   async function handleLogout() {
     await signOut()
     clearUserContext()
@@ -300,6 +309,7 @@ export default function App() {
                 activePlantId={activePlantId}
                 onSwitchPlant={handleSwitchPlant}
                 onLogout={handleLogout}
+                onPlantDeleted={handlePlantDeleted}
               />
             )
           }

@@ -47,7 +47,7 @@ const shortName = (name) => {
   return parts.length >= 2 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0]
 }
 
-export default function KnowledgeBank({ user, memberships, activePlantId, onSwitchPlant, onLogout }) {
+export default function KnowledgeBank({ user, memberships, activePlantId, onSwitchPlant, onLogout, onPlantDeleted }) {
   const navigate = useNavigate()
   const [view, setView] = useState('rules')
   const [search, setSearch] = useState('')
@@ -639,7 +639,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
           isPlantAdmin={isPlantAdmin}
           onPendingCountChange={setPendingCount}
           onClose={() => setShowPlantSettings(false)}
-          onDeleted={() => { setShowPlantSettings(false); navigate('/plants') }}
+          onDeleted={(deletedId) => { setShowPlantSettings(false); onPlantDeleted?.(deletedId); navigate('/plants') }}
         />
       )}
 
