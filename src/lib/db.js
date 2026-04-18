@@ -1592,6 +1592,7 @@ export async function deletePlant(plantId) {
       supabase.from('links').delete().in('target_id', allItemIds),
       supabase.from('comments').delete().in('target_id', allItemIds),
       supabase.from('versions').delete().in('target_id', allItemIds),
+      supabase.from('embeddings').delete().in('target_id', allItemIds),
     )
   }
   if (ruleIds.length || assertionIds.length) {
@@ -1607,9 +1608,18 @@ export async function deletePlant(plantId) {
   deletes.push(
     supabase.from('notifications').delete().eq('plant_id', plantId),
     supabase.from('plant_memberships').delete().eq('plant_id', plantId),
+    supabase.from('plant_invites').delete().eq('plant_id', plantId),
   )
 
-  await Promise.all(deletes)
+  const results = await Promise.all(deletes)
+  const deleteErrors = results.filter(r => r?.error).map(r => r.error.message)
+  if (deleteErrors.length) {
+    console.error('[deletePlant] Errors cleaning up dependents:', deleteErrors)
+  }
+
+  // Null out any profiles referencing this plant (FK has ON DELETE SET NULL
+  // after migration 027, but do it explicitly in case migration hasn't run)
+  await supabase.from('profiles').update({ plant_id: null }).eq('plant_id', plantId)
 
   // Delete the items themselves
   await Promise.all([
@@ -1620,8 +1630,14 @@ export async function deletePlant(plantId) {
   ].filter(Boolean))
 
   // Finally delete the plant
-  const { error } = await supabase.from('plants').delete().eq('id', plantId)
-  if (error) throw new Error(error.message)
+  const { error, count } = await supabase.from('plants').delete().eq('id', plantId)
+  if (error) throw new Error(`Failed to delete plant: ${error.message}`)
+
+  // Verify the plant was actually deleted (RLS may silently block)
+  const { data: check } = await supabase.from('plants').select('id').eq('id', plantId).maybeSingle()
+  if (check) {
+    throw new Error('Plant deletion was blocked. You may need super-admin permissions.')
+  }
 }
 
 // ─── Photo upload ─────────────────────────────────────────────────────────────
