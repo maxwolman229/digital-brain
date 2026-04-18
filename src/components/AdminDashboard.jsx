@@ -601,7 +601,7 @@ export default function AdminDashboard() {
         ) : error ? (
           <div style={{ padding: '16px', background: '#fde8e5', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 4, color: '#c0392b', fontSize: 13 }}>
             {error}
-            {error.includes('Forbidden') && <div style={{ marginTop: 6, fontSize: 11 }}>Only super admins can access this page.</div>}
+            {error.includes('Forbidden') && <div style={{ marginTop: 6, fontSize: 11 }}>Only plant admins can access this page.</div>}
           </div>
         ) : (
           <>
