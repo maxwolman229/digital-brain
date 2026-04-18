@@ -337,8 +337,8 @@ function PendingInvites({ plantId, onCountChange }) {
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 
-export default function PlantSettings({ membership, isSuperAdmin, onClose, onPendingCountChange, onDeleted }) {
-  const isAdmin = membership.role === 'admin' || isSuperAdmin
+export default function PlantSettings({ membership, onClose, onPendingCountChange, onDeleted }) {
+  const isAdmin = membership.role === 'admin'
 
   const [tab, setTab] = useState('members')
   const [pendingCount, setPending] = useState(0)
@@ -422,8 +422,8 @@ export default function PlantSettings({ membership, isSuperAdmin, onClose, onPen
             />
           )}
 
-          {/* Danger Zone — super admins only */}
-          {isSuperAdmin && (
+          {/* Danger Zone — admins only */}
+          {isAdmin && (
             <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid #f0eeec' }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, fontFamily: FNT }}>
                 Danger Zone

@@ -15,7 +15,7 @@
  *   { action: 'get_stats' }
  *   { action: 'list_all_plants' }
  *
- * Admin check: caller's email must be in ADMIN_EMAILS or is_super_admin=true in profiles.
+ * Admin check: caller's email must be in ADMIN_EMAILS or role='admin' in plant_memberships.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -28,7 +28,7 @@ const CORS = {
 
 const BEVCAN_PLANT_ID = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
 
-// Fallback email whitelist (also checked via is_super_admin DB flag)
+// Fallback email whitelist (also checked via plant_memberships role='admin')
 const ADMIN_EMAILS = ['mw@korfsteel.com']
 
 function json(data: unknown, status = 200) {
@@ -127,12 +127,15 @@ Deno.serve(async (req: Request) => {
 
     let isAdmin = ADMIN_EMAILS.includes(callerEmail)
     if (!isAdmin && callerUserId) {
-      const { data: prof } = await admin
-        .from('profiles')
-        .select('is_super_admin')
+      // Check if user is an admin of any plant
+      const { data: membership } = await admin
+        .from('plant_memberships')
+        .select('role')
         .eq('user_id', callerUserId)
-        .single()
-      isAdmin = prof?.is_super_admin === true
+        .eq('role', 'admin')
+        .limit(1)
+        .maybeSingle()
+      isAdmin = !!membership
     }
     if (!isAdmin) {
       console.warn(`[bevcan-admin] Rejected non-admin caller: ${callerEmail}`)

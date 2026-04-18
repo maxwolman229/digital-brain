@@ -300,7 +300,6 @@ export default function App() {
                 activePlantId={activePlantId}
                 onSwitchPlant={handleSwitchPlant}
                 onLogout={handleLogout}
-                isSuperAdmin={profile?.isSuperAdmin || false}
               />
             )
           }
@@ -348,12 +347,12 @@ export default function App() {
 
         <Route path="/bevcan/pending" element={<BevCanPending />} />
 
-        {/* Admin dashboard — super admins only */}
+        {/* Admin dashboard — plant admins */}
         <Route
           path="/admin"
           element={
             !session ? <Navigate to="/auth" replace />
-            : !(profile?.isSuperAdmin) ? <Navigate to="/app" replace />
+            : !memberships.some(m => m.role === 'admin') ? <Navigate to="/app" replace />
             : <AdminDashboard />
           }
         />

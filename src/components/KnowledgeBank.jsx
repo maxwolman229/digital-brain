@@ -47,7 +47,7 @@ const shortName = (name) => {
   return parts.length >= 2 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0]
 }
 
-export default function KnowledgeBank({ user, memberships, activePlantId, onSwitchPlant, onLogout, isSuperAdmin }) {
+export default function KnowledgeBank({ user, memberships, activePlantId, onSwitchPlant, onLogout }) {
   const navigate = useNavigate()
   const [view, setView] = useState('rules')
   const [search, setSearch] = useState('')
@@ -71,7 +71,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
   const [menuOpen, setMenuOpen] = useState(false)
 
   const activeMembership = memberships.find(m => m.plantId === activePlantId)
-  const isPlantAdmin = user?.role === 'admin' || isSuperAdmin
+  const isPlantAdmin = user?.role === 'admin'
 
   async function refreshVocabulary() {
     const v = await fetchVocabulary(activePlantId, activeMembership?.processAreas || [])
@@ -314,7 +314,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
             <div style={{ width: 1, height: 22, background: 'rgba(255,255,255,0.15)', margin: '0 2px' }} />
 
-            {isSuperAdmin && (
+            {isPlantAdmin && (
               <button
                 onClick={() => navigate('/admin')}
                 title="Admin Dashboard"
@@ -636,7 +636,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             role: user.role,
             industry: activeMembership?.industry || '',
           }}
-          isSuperAdmin={isSuperAdmin}
+          isPlantAdmin={isPlantAdmin}
           onPendingCountChange={setPendingCount}
           onClose={() => setShowPlantSettings(false)}
           onDeleted={() => { setShowPlantSettings(false); navigate('/plants') }}
@@ -824,7 +824,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               >
                 ⚙ Members{pendingCount > 0 ? ` (${pendingCount})` : ''}
               </button>
-              {isSuperAdmin && (
+              {isPlantAdmin && (
                 <button
                   onClick={() => { navigate('/admin'); setMenuOpen(false) }}
                   style={{ display: 'block', width: '100%', padding: '13px 20px', minHeight: 48, textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid #f0eeec', cursor: 'pointer', fontFamily: FNT, fontSize: 13, color: '#5a5550' }}

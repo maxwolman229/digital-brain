@@ -155,7 +155,6 @@ export async function loadProfile(userId) {
     role: data.role || 'member',
     plantId: data.plant_id,
     orgId: data.org_id,
-    isSuperAdmin: data.is_super_admin || false,
   }
 }
 
