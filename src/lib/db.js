@@ -1570,7 +1570,9 @@ export async function fetchCaptureContext(plantId, processArea, topic) {
 // ─── Delete plant and all associated data ─────────────────────────────────────
 
 export async function deletePlant(plantId) {
-  // Collect all item IDs in this plant first
+  console.log('[deletePlant] Starting deletion for plant:', plantId)
+
+  // Step 1: Collect all item IDs BEFORE deleting anything
   const [rulesRes, assertRes, eventsRes, questionsRes] = await Promise.all([
     supabase.from('rules').select('id').eq('plant_id', plantId),
     supabase.from('assertions').select('id').eq('plant_id', plantId),
@@ -1583,11 +1585,13 @@ export async function deletePlant(plantId) {
   const eventIds = (eventsRes.data || []).map(e => e.id)
   const questionIds = (questionsRes.data || []).map(q => q.id)
   const allItemIds = [...ruleIds, ...assertionIds, ...eventIds, ...questionIds]
+  console.log('[deletePlant] Items to clean up:', { rules: ruleIds.length, assertions: assertionIds.length, events: eventIds.length, questions: questionIds.length })
 
-  // Delete dependent data in parallel
-  const deletes = []
+  // Step 2: Clean up orphan-prone dependents (text-FK tables without CASCADE)
+  // These reference item IDs but have no FK constraint, so they won't cascade.
+  const cleanups = []
   if (allItemIds.length) {
-    deletes.push(
+    cleanups.push(
       supabase.from('links').delete().in('source_id', allItemIds),
       supabase.from('links').delete().in('target_id', allItemIds),
       supabase.from('comments').delete().in('target_id', allItemIds),
@@ -1597,47 +1601,46 @@ export async function deletePlant(plantId) {
   }
   if (ruleIds.length || assertionIds.length) {
     const raIds = [...ruleIds, ...assertionIds]
-    deletes.push(
+    cleanups.push(
       supabase.from('verifications').delete().in('target_id', raIds),
       supabase.from('evidence').delete().in('parent_id', raIds),
     )
   }
   if (questionIds.length) {
-    deletes.push(supabase.from('responses').delete().in('question_id', questionIds))
+    cleanups.push(supabase.from('responses').delete().in('question_id', questionIds))
   }
-  deletes.push(
-    supabase.from('notifications').delete().eq('plant_id', plantId),
-    supabase.from('plant_memberships').delete().eq('plant_id', plantId),
-    supabase.from('plant_invites').delete().eq('plant_id', plantId),
-  )
+  // Notifications reference plant_id but don't have CASCADE
+  cleanups.push(supabase.from('notifications').delete().eq('plant_id', plantId))
 
-  const results = await Promise.all(deletes)
-  const deleteErrors = results.filter(r => r?.error).map(r => r.error.message)
-  if (deleteErrors.length) {
-    console.error('[deletePlant] Errors cleaning up dependents:', deleteErrors)
+  if (cleanups.length) {
+    const results = await Promise.all(cleanups)
+    const errs = results.filter(r => r?.error).map(r => r.error.message)
+    if (errs.length) console.warn('[deletePlant] Cleanup warnings:', errs)
+    else console.log('[deletePlant] Dependents cleaned up')
   }
 
-  // Null out any profiles referencing this plant (FK has ON DELETE SET NULL
-  // after migration 027, but do it explicitly in case migration hasn't run)
+  // Step 3: Null out profiles.plant_id (FK without CASCADE)
   await supabase.from('profiles').update({ plant_id: null }).eq('plant_id', plantId)
+  console.log('[deletePlant] Profiles cleared')
 
-  // Delete the items themselves
-  await Promise.all([
-    ruleIds.length && supabase.from('rules').delete().eq('plant_id', plantId),
-    assertionIds.length && supabase.from('assertions').delete().eq('plant_id', plantId),
-    eventIds.length && supabase.from('events').delete().eq('plant_id', plantId),
-    questionIds.length && supabase.from('questions').delete().eq('plant_id', plantId),
-  ].filter(Boolean))
+  // Step 4: DELETE THE PLANT — this must happen WHILE the admin's membership
+  // still exists, because the RLS DELETE policy checks plant_memberships.
+  // ON DELETE CASCADE will automatically remove: plant_memberships, plant_invites,
+  // rules, assertions, events, questions.
+  const { error } = await supabase.from('plants').delete().eq('id', plantId)
+  if (error) {
+    console.error('[deletePlant] DELETE failed:', error.message, error.details, error.hint)
+    throw new Error(`Failed to delete plant: ${error.message}`)
+  }
+  console.log('[deletePlant] Plant DELETE executed')
 
-  // Finally delete the plant
-  const { error, count } = await supabase.from('plants').delete().eq('id', plantId)
-  if (error) throw new Error(`Failed to delete plant: ${error.message}`)
-
-  // Verify the plant was actually deleted (RLS may silently block)
+  // Step 5: Verify it's actually gone
   const { data: check } = await supabase.from('plants').select('id').eq('id', plantId).maybeSingle()
   if (check) {
-    throw new Error('Plant deletion was blocked. You may need super-admin permissions.')
+    console.error('[deletePlant] Plant still exists after DELETE — RLS blocked it')
+    throw new Error('Plant deletion was blocked. Make sure you are an admin of this plant.')
   }
+  console.log('[deletePlant] Verified — plant is gone')
 }
 
 // ─── Photo upload ─────────────────────────────────────────────────────────────
