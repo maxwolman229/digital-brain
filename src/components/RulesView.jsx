@@ -311,7 +311,7 @@ export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, o
             </div>
 
             {/* Comments */}
-            <Comments targetType="rule" targetId={sel.id} onCommentPosted={() => setComments(prev => ({ ...prev, [sel.id]: [...(prev[sel.id] || []), {}] }))} />
+            <Comments targetType="rule" targetId={sel.id} onViewProfile={onViewProfile} onCommentPosted={() => setComments(prev => ({ ...prev, [sel.id]: [...(prev[sel.id] || []), {}] }))} />
           </div>
         )}
       </Modal>

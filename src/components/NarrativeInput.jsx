@@ -17,11 +17,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
   const [saveError, setSaveError] = useState(null)
   const [members, setMembers] = useState([])
   const textRef = useRef(null)
-  const { mentionQuery, handleMentionChange, insertMention } = useMention(
-    form.text,
-    v => setForm(f => ({ ...f, text: v })),
-    textRef
-  )
+  const mention = useMention(form.text, v => setForm(f => ({ ...f, text: v })), textRef, members)
 
   useEffect(() => {
     fetchPlantMembers().then(setMembers).catch(() => {})
@@ -172,11 +168,12 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
                 ref={textRef}
                 style={{ ...iS, height: 160, resize: 'vertical', lineHeight: 1.6, fontSize: 13 }}
                 value={form.text}
-                onChange={handleMentionChange}
-                placeholder={'e.g. "When material quality drops below threshold we reduce line speed by 15% to avoid downstream defects. Ignoring this causes reject rates to spike — we\'ve seen this add 20+ minutes of rework..."'}
+                onChange={mention.handleChange}
+                onKeyDown={mention.handleKeyDown}
+                placeholder={'e.g. "When material quality drops below threshold we reduce line speed by 15% to avoid downstream defects..." (type @ to mention)'}
                 autoFocus
               />
-              <MentionDropdown query={mentionQuery} members={members} onSelect={insertMention} />
+              <MentionDropdown query={mention.query} members={mention.filtered} activeIndex={mention.activeIndex} onSelect={mention.insert} />
             </div>
           </Field>
 

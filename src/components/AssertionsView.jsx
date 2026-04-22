@@ -299,7 +299,7 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
             </div>
 
             {/* Comments */}
-            <Comments targetType="assertion" targetId={sel.id} onCommentPosted={() => setComments(prev => ({ ...prev, [sel.id]: [...(prev[sel.id] || []), {}] }))} />
+            <Comments targetType="assertion" targetId={sel.id} onViewProfile={onViewProfile} onCommentPosted={() => setComments(prev => ({ ...prev, [sel.id]: [...(prev[sel.id] || []), {}] }))} />
           </div>
         )}
       </Modal>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { FNT, iS, IMPACTS, EVENT_STATUSES, EVENT_OUTCOMES, ISHIKAWA_CATS, formatDate, outcomeColor, impactColor, eventStatusColor, statusColor } from '../lib/constants.js'
-import { Badge, Tag, Modal, Field, TypeaheadInput, MentionDropdown } from './shared.jsx'
+import { Badge, Tag, Modal, Field, TypeaheadInput, MentionDropdown, MentionText } from './shared.jsx'
 import { fetchEvents, addEvent, updateEvent, updateEventStatus, fetchEventKnowledgeCounts, fetchEventConnectedKnowledge, saveLink, searchKnowledge, fetchItemById, fetchPlantMembers } from '../lib/db.js'
 import { getDisplayName } from '../lib/userContext.js'
 import { useMention } from '../lib/useMention.js'
@@ -39,8 +39,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
   const [tagInput, setTagInput] = useState('')
   const [members, setMembers] = useState([])
   const descRef = useRef(null)
-  const { mentionQuery: descMention, handleMentionChange: handleDescChange, insertMention: insertDescMention } =
-    useMention(form.description, v => setForm(f => ({ ...f, description: v })), descRef)
+  const descMention = useMention(form.description, v => setForm(f => ({ ...f, description: v })), descRef, members)
   const [fOutcome, setFOutcome] = useState([])
   const [fImpact, setFImpact] = useState([])
   const [fEvStatus, setFEvStatus] = useState([])
@@ -367,7 +366,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             </h3>
 
             <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6, marginBottom: 16, padding: '10px 14px', background: '#f8f6f4', borderRadius: 3, border: `1px solid ${sel.outcome === 'Positive' ? 'var(--md1-accent)20' : 'var(--md1-border)80'}` }}>
-              {sel.description}
+              <MentionText text={sel.description} onMentionClick={onViewProfile ? (m => onViewProfile(m.displayName)) : undefined} />
             </div>
 
             {/* Tagged people */}
@@ -433,7 +432,7 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
             )}
 
             {/* Comments */}
-            <Comments targetType="event" targetId={sel.id} />
+            <Comments targetType="event" targetId={sel.id} onViewProfile={onViewProfile} />
           </div>
           )
         })()}
@@ -585,10 +584,11 @@ export default function EventsView({ reportOpen, onReportClose, processAreas = [
               ref={descRef}
               style={{ ...iS, height: 70, resize: 'vertical', lineHeight: 1.5, width: '100%', boxSizing: 'border-box' }}
               value={form.description}
-              onChange={handleDescChange}
+              onChange={descMention.handleChange}
+              onKeyDown={descMention.handleKeyDown}
               placeholder={form.outcome === 'Positive' ? 'What went well? Include heat numbers, product grades, conditions that drove success...' : 'What happened? Include heat numbers, product grades, timing… (type @ to mention someone)'}
             />
-            <MentionDropdown query={descMention} members={members} onSelect={insertDescMention} />
+            <MentionDropdown query={descMention.query} members={descMention.filtered} activeIndex={descMention.activeIndex} onSelect={descMention.insert} />
           </div>
         </Field>
 

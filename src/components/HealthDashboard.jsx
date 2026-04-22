@@ -31,7 +31,7 @@ function checkStaleness(item, events) {
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
-export default function HealthDashboard({ onNavigate }) {
+export default function HealthDashboard({ onNavigate, onViewProfile }) {
   const isMobile = useIsMobile()
   const [rules, setRules] = useState([])
   const [assertions, setAssertions] = useState([])
@@ -492,7 +492,7 @@ export default function HealthDashboard({ onNavigate }) {
             </div>
 
             {/* Comments */}
-            <Comments targetType={sel.type} targetId={sel.id} />
+            <Comments targetType={sel.type} targetId={sel.id} onViewProfile={onViewProfile} />
           </div>
         )}
       </Modal>

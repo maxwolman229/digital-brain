@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { FNT, FNTM, iS, formatDate } from '../lib/constants.js'
-import { Badge, Tag, Modal, Field, TypeaheadInput, MentionDropdown } from './shared.jsx'
+import { Badge, Tag, Modal, Field, TypeaheadInput, MentionDropdown, MentionText } from './shared.jsx'
 import {
   fetchQuestions, addQuestion, updateQuestionStatus, saveResponse, fetchResponses,
   addRuleFromExtraction, addAssertionFromExtraction, fetchPlantMembers,
 } from '../lib/db.js'
 import { useMention } from '../lib/useMention.js'
+import { stripMentionTokens } from '../lib/mentions.js'
 
 const EMPTY_ASK = { question: '', detail: '', processArea: '', taggedPeople: [] }
 
@@ -24,11 +25,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
   const [accepting, setAccepting] = useState(false)
   const [members, setMembers] = useState([])
   const detailRef = useRef(null)
-  const { mentionQuery, handleMentionChange, insertMention } = useMention(
-    askForm.detail,
-    v => setAskForm(f => ({ ...f, detail: v })),
-    detailRef
-  )
+  const answerRef = useRef(null)
+  const detailMention = useMention(askForm.detail, v => setAskForm(f => ({ ...f, detail: v })), detailRef, members)
+  const answerMention = useMention(answerText, setAnswerText, answerRef, members)
 
   useEffect(() => {
     load()
@@ -116,8 +115,8 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
     setExtractError(null)
     setExtractParsed(null)
 
-    const answerContent = (sel.responses || []).map(r => `${r.by}: ${r.text}`).join('\n\n')
-    const narrative = `QUESTION: ${sel.question}\nCONTEXT: ${sel.detail || ''}\n\nANSWERS:\n${answerContent}`
+    const answerContent = (sel.responses || []).map(r => `${r.by}: ${stripMentionTokens(r.text)}`).join('\n\n')
+    const narrative = `QUESTION: ${stripMentionTokens(sel.question)}\nCONTEXT: ${stripMentionTokens(sel.detail || '')}\n\nANSWERS:\n${answerContent}`
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -194,7 +193,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
                   ↩ replying to {responses.find(x => x.id === r.replyTo)?.by || 'response'}
                 </div>
               )}
-              <div style={{ fontSize: 12, color: 'var(--md1-text)', lineHeight: 1.6 }}>{r.text}</div>
+              <div style={{ fontSize: 12, color: 'var(--md1-text)', lineHeight: 1.6 }}>
+                <MentionText text={r.text} onMentionClick={onViewProfile ? (m => onViewProfile(m.displayName)) : undefined} />
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
                 <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT }}>— <span
                   onClick={() => r.by && onViewProfile?.(r.by)}
@@ -298,7 +299,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
       >
         {sel && (
           <div>
-            <div style={{ fontSize: 15, color: 'var(--md1-text)', fontWeight: 600, lineHeight: 1.5, marginBottom: 12 }}>{sel.question}</div>
+            <div style={{ fontSize: 15, color: 'var(--md1-text)', fontWeight: 600, lineHeight: 1.5, marginBottom: 12 }}>
+              <MentionText text={sel.question} onMentionClick={onViewProfile ? (m => onViewProfile(m.displayName)) : undefined} />
+            </div>
 
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 2, background: sel.status === 'open' ? '#fef3e2' : '#e6f5f1', color: sel.status === 'open' ? '#F2652F' : 'var(--md1-accent)', fontWeight: 700, fontFamily: FNT }}>
@@ -314,7 +317,9 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
             {sel.detail && (
               <div style={{ padding: '12px 16px', background: '#f8f6f4', borderRadius: 3, marginBottom: 16, border: '1px solid #e8e4e0' }}>
                 <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.8, marginBottom: 4 }}>CONTEXT</div>
-                <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6 }}>{sel.detail}</div>
+                <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.6 }}>
+                  <MentionText text={sel.detail} onMentionClick={onViewProfile ? (m => onViewProfile(m.displayName)) : undefined} />
+                </div>
               </div>
             )}
 
@@ -374,13 +379,18 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
                 label={(sel.responses || []).length > 0 ? (replyTo ? 'Your Reply' : 'Add Another Response') : 'Your Answer'}
                 hint="Share what you know — be specific and operational"
               >
-                <textarea
-                  id="answer-input"
-                  style={{ ...iS, height: 90, resize: 'vertical', lineHeight: 1.5 }}
-                  value={answerText}
-                  onChange={e => setAnswerText(e.target.value)}
-                  placeholder="e.g. Full DRI needs a flat power profile — no need for the bore-in phase you use with scrap..."
-                />
+                <div style={{ position: 'relative' }}>
+                  <textarea
+                    id="answer-input"
+                    ref={answerRef}
+                    style={{ ...iS, height: 90, resize: 'vertical', lineHeight: 1.5 }}
+                    value={answerText}
+                    onChange={answerMention.handleChange}
+                    onKeyDown={answerMention.handleKeyDown}
+                    placeholder="e.g. Full DRI needs a flat power profile — no need for the bore-in phase you use with scrap... (type @ to mention)"
+                  />
+                  <MentionDropdown query={answerMention.query} members={answerMention.filtered} activeIndex={answerMention.activeIndex} onSelect={answerMention.insert} />
+                </div>
               </Field>
               <button
                 onClick={handleSubmitResponse}
@@ -489,10 +499,11 @@ export default function QuestionsView({ processAreas = [], industry, onItemSaved
               ref={detailRef}
               style={{ ...iS, height: 90, resize: 'vertical', lineHeight: 1.5 }}
               value={askForm.detail}
-              onChange={handleMentionChange}
-              placeholder="e.g. Had this happen on night shift. Ended up calling the quality lab and waiting 20 minutes. There must be a faster backup procedure..."
+              onChange={detailMention.handleChange}
+              onKeyDown={detailMention.handleKeyDown}
+              placeholder="e.g. Had this happen on night shift. Ended up calling the quality lab and waiting 20 minutes. There must be a faster backup procedure... (type @ to mention)"
             />
-            <MentionDropdown query={mentionQuery} members={members} onSelect={insertMention} />
+            <MentionDropdown query={detailMention.query} members={detailMention.filtered} activeIndex={detailMention.activeIndex} onSelect={detailMention.insert} />
           </div>
         </Field>
 

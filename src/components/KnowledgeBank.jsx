@@ -570,7 +570,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             />
           )}
 
-          {view === 'health' && <HealthDashboard key={activePlantId} onNavigate={switchView} />}
+          {view === 'health' && <HealthDashboard key={activePlantId} onNavigate={switchView} onViewProfile={name => setViewingUser(name)} />}
 
           {view === 'graph' && (
             <RelationshipGraph
@@ -580,10 +580,11 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               onClearHighlight={() => setGraphHighlight(null)}
               processAreas={vocabulary.processAreas}
               categories={vocabulary.categories}
+              onViewProfile={name => setViewingUser(name)}
             />
           )}
 
-          {view === 'query' && <QueryView key={activePlantId} onNavigate={switchView} industry={activeMembership?.industry} plantId={activePlantId} />}
+          {view === 'query' && <QueryView key={activePlantId} onNavigate={switchView} industry={activeMembership?.industry} plantId={activePlantId} onViewProfile={name => setViewingUser(name)} />}
 
           {view === 'capture' && (
             <CaptureView

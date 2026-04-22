@@ -879,7 +879,7 @@ function ItemDetailModal({ item, loading, onClose, onNavigate }) {
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <Comments targetType={item.type} targetId={item.id} />
+            <Comments targetType={item.type} targetId={item.id} onViewProfile={onViewProfile} />
           </div>
 
           <div style={{ borderTop: '1px solid #e8e4e0', paddingTop: 14, display: 'flex', gap: 8 }}>
@@ -900,7 +900,7 @@ function ItemDetailModal({ item, loading, onClose, onNavigate }) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function RelationshipGraph({ onNavigate, highlightId, onClearHighlight, processAreas = [], categories = [] }) {
+export default function RelationshipGraph({ onNavigate, highlightId, onClearHighlight, processAreas = [], categories = [], onViewProfile }) {
   const isMobile = useIsMobile()
   const [rules, setRules] = useState([])
   const [assertions, setAssertions] = useState([])

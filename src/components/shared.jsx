@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { FNTM, FNT, iS } from '../lib/constants.js'
 import { useIsMobile } from '../lib/hooks.js'
+import { parseMentionText } from '../lib/mentions.js'
 
 export const Badge = ({ label, colorFn }) => {
   const c = colorFn(label)
@@ -116,39 +117,105 @@ export const Field = ({ label, children, hint }) => (
   </div>
 )
 
-// Floating @-mention dropdown — position: absolute relative to a wrapping div
-export function MentionDropdown({ query, members, onSelect }) {
+// Floating @-mention dropdown.
+// Props:
+//   query       — filter string (null = hide)
+//   members     — [{ userId, displayName, role }] already filtered by useMention
+//   activeIndex — keyboard-highlighted row
+//   onSelect(member) — called on click or keyboard enter
+// Position the wrapping container relative; this dropdown is absolute.
+export function MentionDropdown({ query, members, activeIndex = 0, onSelect }) {
   if (query === null) return null
-  const filtered = members
-    .filter(m => m.toLowerCase().startsWith(query.toLowerCase()))
-    .slice(0, 8)
-  if (!filtered.length) return null
+  if (!members?.length) {
+    // Show "No matches" only when user has typed something
+    if (!query) return null
+    return (
+      <div style={{
+        position: 'absolute', zIndex: 50, background: '#fff',
+        border: '1px solid var(--md1-border)', borderRadius: 3,
+        boxShadow: '0 4px 12px rgba(var(--md1-primary-rgb),0.1)',
+        padding: '8px 12px', fontSize: 11, color: 'var(--md1-muted)',
+        fontFamily: FNT, fontStyle: 'italic', minWidth: 180, marginTop: 2,
+      }}>
+        No matches
+      </div>
+    )
+  }
   return (
     <div style={{
       position: 'absolute', zIndex: 50, background: '#fff',
       border: '1px solid var(--md1-border)', borderRadius: 3,
       boxShadow: '0 4px 12px rgba(var(--md1-primary-rgb),0.1)',
-      maxHeight: 200, overflowY: 'auto', minWidth: 180,
+      maxHeight: 220, overflowY: 'auto', minWidth: 220,
       marginTop: 2,
     }}>
-      {filtered.map(m => (
-        <button
-          key={m}
-          onMouseDown={e => { e.preventDefault(); onSelect(m) }}
-          style={{
-            display: 'block', width: '100%', padding: '7px 12px',
-            textAlign: 'left', background: 'none', border: 'none',
-            cursor: 'pointer', fontFamily: FNT, fontSize: 12, color: 'var(--md1-text)',
-            borderBottom: '1px solid #f0eeec',
-            minHeight: 44,
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#f8f6f4'}
-          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-        >
-          @{m}
-        </button>
-      ))}
+      {members.map((m, i) => {
+        const isActive = i === activeIndex
+        return (
+          <button
+            key={m.userId}
+            onMouseDown={e => { e.preventDefault(); onSelect(m) }}
+            style={{
+              display: 'flex', alignItems: 'baseline', gap: 6,
+              width: '100%', padding: '7px 12px',
+              textAlign: 'left', border: 'none',
+              background: isActive ? '#f0f4fb' : 'none',
+              cursor: 'pointer', fontFamily: FNT,
+              borderBottom: '1px solid #f0eeec',
+              minHeight: 36,
+            }}
+          >
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--md1-text)' }}>
+              {m.displayName}
+            </span>
+            {m.role && (
+              <span style={{ fontSize: 10, color: 'var(--md1-muted)', textTransform: 'capitalize' }}>
+                · {m.role}
+              </span>
+            )}
+          </button>
+        )
+      })}
     </div>
+  )
+}
+
+// Render text that may contain @[Name](user-uuid) mention tokens.
+// Mentions display as blue clickable pills; plain text segments render normally.
+// Props:
+//   text             — the raw stored text with tokens
+//   onMentionClick   — (member: {userId, displayName}) => void
+//   style            — inline style applied to the wrapping span
+export function MentionText({ text, onMentionClick, style }) {
+  const segments = parseMentionText(text || '')
+  return (
+    <span style={style}>
+      {segments.map((seg, i) => {
+        if (seg.type === 'mention') {
+          const handle = e => {
+            e.stopPropagation()
+            e.preventDefault()
+            onMentionClick?.({ userId: seg.userId, displayName: seg.displayName })
+          }
+          return (
+            <span
+              key={`m-${i}`}
+              onClick={onMentionClick ? handle : undefined}
+              onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline' }}
+              onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}
+              style={{
+                color: '#185FA5',
+                fontWeight: 600,
+                cursor: onMentionClick ? 'pointer' : 'default',
+              }}
+            >
+              @{seg.displayName}
+            </span>
+          )
+        }
+        return <span key={`t-${i}`}>{seg.content}</span>
+      })}
+    </span>
   )
 }
 

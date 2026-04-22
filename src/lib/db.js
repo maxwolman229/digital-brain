@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js'
 import { getPlantId, getDisplayName, getUserId } from './userContext.js'
 import { INITIAL_RULES, INITIAL_ASSERTIONS, INITIAL_EVENTS, INITIAL_QUESTIONS } from './data.js'
+import { extractMentionedUserIds, stripMentionTokens } from './mentions.js'
 
 // ─── Display name resolution ──────────────────────────────────────────────────
 // created_by / by / asked_by etc. fields store user UUIDs. This layer
@@ -50,6 +51,29 @@ async function notifyUser(userId, plantId, text, targetView, targetId, excludeUs
     target_view: targetView,
     target_id: targetId,
   })
+}
+
+// Notify every user mentioned in `rawText` (which contains @[Name](user-uuid)
+// tokens). Skips the author. Silently ignores rows if notifications.plant_id
+// doesn't exist yet or other table errors occur.
+async function notifyMentionedUsers(rawText, { plantId, targetView, targetId, authorName, contextLabel, excludeUserId }) {
+  const ids = extractMentionedUserIds(rawText)
+  if (!ids.length) return
+  const whoLabel = authorName || 'Someone'
+  const where = contextLabel ? ` on ${contextLabel}` : ''
+  const rows = ids
+    .filter(id => id !== excludeUserId)
+    .map(id => ({
+      user_id: id,
+      plant_id: plantId,
+      text: `${whoLabel} mentioned you${where}`,
+      read: false,
+      target_view: targetView,
+      target_id: targetId,
+    }))
+  if (!rows.length) return
+  const { error } = await supabase.from('notifications').insert(rows)
+  if (error) console.warn('[notifyMentionedUsers]', error.message)
 }
 
 // Look up the creator of a rule/assertion/event (stored as user_id) and notify them.
@@ -338,32 +362,49 @@ export async function addEvent(ev) {
   if (!pid) return null
   const id = randomId('E')
   const display_id = await generateDisplayId(pid, 'event')
-  const { data, error } = await supabase
-    .from('events')
-    .insert({
-      id,
-      display_id,
-      plant_id: pid,
-      title: ev.title,
-      outcome: ev.outcome,
-      impact: ev.impact,
-      status: ev.status || 'Open',
-      process_area: ev.processArea,
-      date: ev.date,
-      description: ev.description,
-      root_cause: ev.ishikawa || {},
-      resolution: ev.resolution,
-      reported_by: getUserId(),
-      tagged_people: ev.taggedPeople || [],
-      tags: ev.tags || [],
-    })
-    .select()
-    .single()
+  const userId = getUserId()
+  const mentionedIds = extractMentionedUserIds(ev.description || '')
+  const row = {
+    id,
+    display_id,
+    plant_id: pid,
+    title: ev.title,
+    outcome: ev.outcome,
+    impact: ev.impact,
+    status: ev.status || 'Open',
+    process_area: ev.processArea,
+    date: ev.date,
+    description: ev.description,
+    root_cause: ev.ishikawa || {},
+    resolution: ev.resolution,
+    reported_by: userId,
+    tagged_people: ev.taggedPeople || [],
+    tags: ev.tags || [],
+  }
+  if (mentionedIds.length) row.mentioned_user_ids = mentionedIds
+
+  let { data, error } = await supabase.from('events').insert(row).select().single()
+  if (error && /mentioned_user_ids/.test(error.message || '')) {
+    delete row.mentioned_user_ids
+    const res = await supabase.from('events').insert(row).select().single()
+    data = res.data; error = res.error
+  }
 
   if (error) {
     console.error('[addEvent] insert failed:', error.message)
     return null
   }
+
+  const displayName = getDisplayName() || userId
+  notifyMentionedUsers(ev.description || '', {
+    plantId: pid,
+    targetView: 'events',
+    targetId: id,
+    authorName: displayName,
+    contextLabel: `event ${display_id || id}`,
+    excludeUserId: userId,
+  }).catch(e => console.warn('[addEvent] mention notification failed:', e.message))
+
   const resolve = await makeNameResolver([data.reported_by])
   return normaliseEvent(data, resolve)
 }
@@ -399,11 +440,18 @@ export async function fetchItemVerifications(targetType, targetId) {
 
 export async function addComment(targetType, targetId, text, displayId) {
   const userId = getUserId()
-  const { data, error } = await supabase
-    .from('comments')
-    .insert({ target_type: targetType, target_id: targetId, text, by: userId })
-    .select()
-    .single()
+  const mentionedIds = extractMentionedUserIds(text)
+  const row = { target_type: targetType, target_id: targetId, text, by: userId }
+  if (mentionedIds.length) row.mentioned_user_ids = mentionedIds
+
+  let { data, error } = await supabase.from('comments').insert(row).select().single()
+  // Fallback if the mentioned_user_ids column doesn't exist yet (pre-migration 029)
+  if (error && /mentioned_user_ids/.test(error.message || '')) {
+    const res = await supabase.from('comments')
+      .insert({ target_type: targetType, target_id: targetId, text, by: userId })
+      .select().single()
+    data = res.data; error = res.error
+  }
 
   if (error) {
     console.error('[addComment] insert failed:', error.message)
@@ -411,11 +459,25 @@ export async function addComment(targetType, targetId, text, displayId) {
   }
 
   const displayName = getDisplayName() || userId
-  const preview = text.length > 60 ? text.slice(0, 57) + '…' : text
+  const preview = stripMentionTokens(text)
+  const previewShort = preview.length > 60 ? preview.slice(0, 57) + '…' : preview
   const label = displayId || targetId
   const view = targetType === 'event' ? 'events' : targetType + 's'
-  notifyCreatorOf(targetType, targetId, PLANT_ID(), `${displayName} commented on ${label}: "${preview}"`, view)
-    .catch(e => console.warn('[addComment] notification failed:', e.message))
+  const plantId = PLANT_ID()
+
+  // Notify item creator (existing behaviour)
+  notifyCreatorOf(targetType, targetId, plantId, `${displayName} commented on ${label}: "${previewShort}"`, view)
+    .catch(e => console.warn('[addComment] creator notification failed:', e.message))
+
+  // Notify every @mentioned user
+  notifyMentionedUsers(text, {
+    plantId,
+    targetView: view,
+    targetId,
+    authorName: displayName,
+    contextLabel: `a comment on ${label}`,
+    excludeUserId: userId,
+  }).catch(e => console.warn('[addComment] mention notification failed:', e.message))
 
   return { by: displayName, text: data.text, date: data.created_at }
 }
@@ -551,26 +613,43 @@ export async function addQuestion(q) {
   if (!pid) return null
   const id = randomId('Q')
   const display_id = await generateDisplayId(pid, 'question')
-  const { data, error } = await supabase
-    .from('questions')
-    .insert({
-      id,
-      display_id,
-      plant_id: pid,
-      question: q.question,
-      detail: q.detail || '',
-      process_area: q.processArea || '',
-      asked_by: getUserId(),
-      status: 'open',
-      tagged_people: q.taggedPeople || [],
-    })
-    .select()
-    .single()
+  const userId = getUserId()
+  const mentionedIds = extractMentionedUserIds((q.question || '') + ' ' + (q.detail || ''))
+  const row = {
+    id,
+    display_id,
+    plant_id: pid,
+    question: q.question,
+    detail: q.detail || '',
+    process_area: q.processArea || '',
+    asked_by: userId,
+    status: 'open',
+    tagged_people: q.taggedPeople || [],
+  }
+  if (mentionedIds.length) row.mentioned_user_ids = mentionedIds
+
+  let { data, error } = await supabase.from('questions').insert(row).select().single()
+  if (error && /mentioned_user_ids/.test(error.message || '')) {
+    delete row.mentioned_user_ids
+    const res = await supabase.from('questions').insert(row).select().single()
+    data = res.data; error = res.error
+  }
 
   if (error) {
     console.error('[addQuestion] insert failed:', error.message)
     return null
   }
+
+  const displayName = getDisplayName() || userId
+  notifyMentionedUsers((q.question || '') + ' ' + (q.detail || ''), {
+    plantId: pid,
+    targetView: 'questions',
+    targetId: id,
+    authorName: displayName,
+    contextLabel: `question ${display_id || id}`,
+    excludeUserId: userId,
+  }).catch(e => console.warn('[addQuestion] mention notification failed:', e.message))
+
   const resolve = await makeNameResolver([data.asked_by])
   return normaliseQuestion(data, resolve)
 }
@@ -585,24 +664,40 @@ export async function updateQuestionStatus(questionId, status) {
 
 export async function saveResponse(questionId, text, parentId) {
   const userId = getUserId()
-  const { data, error } = await supabase
-    .from('responses')
-    .insert({ question_id: questionId, text, by: userId, parent_id: parentId || null })
-    .select()
-    .single()
+  const mentionedIds = extractMentionedUserIds(text)
+  const row = { question_id: questionId, text, by: userId, parent_id: parentId || null }
+  if (mentionedIds.length) row.mentioned_user_ids = mentionedIds
+
+  let { data, error } = await supabase.from('responses').insert(row).select().single()
+  if (error && /mentioned_user_ids/.test(error.message || '')) {
+    delete row.mentioned_user_ids
+    const res = await supabase.from('responses').insert(row).select().single()
+    data = res.data; error = res.error
+  }
   if (error) {
     console.error('[saveResponse] insert failed:', error.message)
     return null
   }
 
   const displayName = getDisplayName() || userId
-  // Notify question asker
   const { data: q } = await supabase.from('questions').select('asked_by, display_id').eq('id', questionId).maybeSingle()
+  const qLabel = q?.display_id || questionId
+  const plantId = PLANT_ID()
+
   if (q?.asked_by) {
-    const qLabel = q.display_id || questionId
-    notifyUser(q.asked_by, PLANT_ID(), `${displayName} answered your question ${qLabel}`, 'questions', questionId, userId)
+    notifyUser(q.asked_by, plantId, `${displayName} answered your question ${qLabel}`, 'questions', questionId, userId)
       .catch(e => console.warn('[saveResponse] notification failed:', e.message))
   }
+
+  // Notify any @mentioned users in the response
+  notifyMentionedUsers(text, {
+    plantId,
+    targetView: 'questions',
+    targetId: questionId,
+    authorName: displayName,
+    contextLabel: `a response on question ${qLabel}`,
+    excludeUserId: userId,
+  }).catch(e => console.warn('[saveResponse] mention notification failed:', e.message))
 
   return { id: data.id, by: displayName, text: data.text, date: data.created_at, replyTo: data.parent_id }
 }
@@ -1484,15 +1579,18 @@ export async function fetchNewCounts(plantId, lastViewed) {
 export async function fetchPlantMembers() {
   const pid = PLANT_ID()
   if (!pid) return []
-  // Join plant_memberships → profiles to get display names for all members of
-  // this specific plant (profiles.plant_id is the primary plant and is unreliable
-  // for multi-plant users).
   const { data } = await supabase
     .from('plant_memberships')
-    .select('profiles!inner(display_name)')
+    .select('user_id, role, profiles!inner(display_name)')
     .eq('plant_id', pid)
     .order('profiles(display_name)')
-  return (data || []).map(m => m.profiles?.display_name).filter(Boolean)
+  return (data || [])
+    .map(m => ({
+      userId: m.user_id,
+      displayName: m.profiles?.display_name,
+      role: m.role,
+    }))
+    .filter(m => m.userId && m.displayName)
 }
 
 // ─── Capture context for interview edge function ──────────────────────────────

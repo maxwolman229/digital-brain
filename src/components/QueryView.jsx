@@ -19,7 +19,7 @@ const QUICK_PROMPTS = [
 
 // ── Full item detail shown in the query citation modal ─────────────────────────
 
-function QueryItemDetail({ item, onCiteClick }) {
+function QueryItemDetail({ item, onCiteClick, onViewProfile }) {
   return (
     <div>
       {/* Badges */}
@@ -91,7 +91,7 @@ function QueryItemDetail({ item, onCiteClick }) {
       </div>
 
       {/* Comments */}
-      <Comments targetType={item.type} targetId={item.id} />
+      <Comments targetType={item.type} targetId={item.id} onViewProfile={onViewProfile} />
     </div>
   )
 }
@@ -146,7 +146,7 @@ function SourceChips({ sources, onCiteClick }) {
   )
 }
 
-export default function QueryView({ onNavigate, industry, plantId }) {
+export default function QueryView({ onNavigate, industry, plantId, onViewProfile }) {
   const PLANT_ID = plantId || FALLBACK_PLANT_ID
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -405,7 +405,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
         {detailItem && (
-          <QueryItemDetail item={detailItem} onCiteClick={handleCrossCiteClick} />
+          <QueryItemDetail item={detailItem} onCiteClick={handleCrossCiteClick} onViewProfile={onViewProfile} />
         )}
       </Modal>
 
@@ -420,7 +420,7 @@ export default function QueryView({ onNavigate, industry, plantId }) {
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--md1-muted-light)', fontFamily: FNT, fontSize: 12 }}>Loading…</div>
         )}
         {crossItem && (
-          <QueryItemDetail item={crossItem} onCiteClick={() => {}} />
+          <QueryItemDetail item={crossItem} onCiteClick={() => {}} onViewProfile={onViewProfile} />
         )}
       </Modal>
 
