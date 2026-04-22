@@ -1579,18 +1579,35 @@ export async function fetchNewCounts(plantId, lastViewed) {
 export async function fetchPlantMembers() {
   const pid = PLANT_ID()
   if (!pid) return []
-  const { data } = await supabase
+  // Two-step: plant_memberships has no FK to profiles, so PostgREST
+  // embedded joins don't work. Fetch memberships first, then profiles.
+  const { data: memberships, error: mErr } = await supabase
     .from('plant_memberships')
-    .select('user_id, role, profiles!inner(display_name)')
+    .select('user_id, role')
     .eq('plant_id', pid)
-    .order('profiles(display_name)')
-  return (data || [])
+  if (mErr) {
+    console.warn('[fetchPlantMembers] memberships error:', mErr.message)
+    return []
+  }
+  if (!memberships?.length) return []
+
+  const userIds = memberships.map(m => m.user_id)
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, display_name')
+    .in('user_id', userIds)
+
+  const nameById = {}
+  ;(profiles || []).forEach(p => { nameById[p.user_id] = p.display_name })
+
+  return memberships
     .map(m => ({
       userId: m.user_id,
-      displayName: m.profiles?.display_name,
+      displayName: nameById[m.user_id] || null,
       role: m.role,
     }))
     .filter(m => m.userId && m.displayName)
+    .sort((a, b) => a.displayName.localeCompare(b.displayName))
 }
 
 // ─── Capture context for interview edge function ──────────────────────────────
