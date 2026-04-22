@@ -573,7 +573,9 @@ function QuestionCard({ q, onClick }) {
         <span style={{ fontSize: 10, color: 'var(--md1-border)', fontFamily: FNT }}>{formatDate(q.askedAt)}</span>
       </div>
 
-      <div style={{ fontSize: 14, color: 'var(--md1-text)', fontWeight: 500, lineHeight: 1.4, marginBottom: 6 }}>{q.question}</div>
+      <div style={{ fontSize: 14, color: 'var(--md1-text)', fontWeight: 500, lineHeight: 1.4, marginBottom: 6 }}>
+        <MentionText text={q.question} />
+      </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT }}>
