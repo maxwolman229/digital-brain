@@ -68,9 +68,18 @@ DECISION RULES — apply strictly:
    field. This is non-negotiable — process-area drift is a recategorisation
    signal for the reviewer, not high-confidence content.
 
-7. SOURCE EXCERPT must be VERBATIM — the exact words from the passage that
-   support the candidate. Reviewers check the extraction against this.
-   Keep it short: one or two sentences, just the supporting text.
+7. SOURCE EXCERPT must be ONE CONTINUOUS verbatim quote from the passage —
+   the exact words supporting the candidate, copied unchanged. Specifically:
+     • Do NOT join two non-adjacent passages with ellipses ("…").
+     • Do NOT paraphrase, summarise, or rewrite. Even minor cleanup
+       (adding spaces to broken words, fixing punctuation) is forbidden —
+       reviewers check this against the source as a single quoted string.
+     • If the supporting text in the source has odd spacing, broken
+       words, or apparent typos, REPRODUCE THEM EXACTLY as they appear.
+     • Keep it short: one or two consecutive sentences, just the supporting
+       text. Pick the tightest single contiguous span.
+   This is the field reviewers use to audit the extraction. Audit fails if
+   the excerpt is not a literal substring of the source passage.
 
 8. SCOPE answers "when does this apply?" — equipment, grade, condition,
    shift, etc. Use null if not stated. (Also use scope to flag off-area

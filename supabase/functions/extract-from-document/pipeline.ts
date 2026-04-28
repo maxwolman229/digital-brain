@@ -287,7 +287,31 @@ export async function processNextBatch(opts: WorkerOpts): Promise<{
     process_area:  doc.process_area,
   }
 
-  // 4. Process up to BATCH_PER_INVOCATION chunks.
+  // 4a. Pre-compute whitespace-insensitive page texts for source_page
+  // post-processing. The chunker tags candidates with the chunk's start page,
+  // but a 4000-char chunk often spans pages — so we search each excerpt
+  // across pages and override source_page to the actual location.
+  const stripWS = (s: string) => (s || '').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '')
+  const pageStripped = pages.map(p => stripWS(p.text))
+
+  function actualPageFor(excerpt: string, fallback: number | null): number | null {
+    const ex = stripWS(excerpt)
+    if (!ex) return fallback
+    // Try full excerpt first
+    for (let i = 0; i < pageStripped.length; i++) {
+      if (pageStripped[i].includes(ex)) return pages[i].pageNum ?? (i + 1)
+    }
+    // Fall back to a 40-char head — handles minor synthesis without abandoning
+    const head = ex.slice(0, 40)
+    if (head.length >= 20) {
+      for (let i = 0; i < pageStripped.length; i++) {
+        if (pageStripped[i].includes(head)) return pages[i].pageNum ?? (i + 1)
+      }
+    }
+    return fallback
+  }
+
+  // 4b. Process up to BATCH_PER_INVOCATION chunks.
   const batch = remaining.slice(0, BATCH_PER_INVOCATION)
   const processedThisRun: number[] = []
   const failedThisRun: number[] = []
@@ -304,19 +328,24 @@ export async function processNextBatch(opts: WorkerOpts): Promise<{
       log(`  → ${candidates.length} cand, ${ms}ms (in=${usage?.input_tokens}/out=${usage?.output_tokens})`)
 
       if (candidates.length > 0) {
-        const rows = candidates.map(cand => ({
-          document_id:    doc.id,
-          type:           cand.type,
-          title:          cand.title,
-          content:        cand.content,
-          scope:          cand.scope ?? null,
-          rationale:      cand.rationale ?? null,
-          source_excerpt: cand.source_excerpt,
-          source_page:    c.page ?? null,
-          source_section: c.page ? `Page ${c.page}` : `Chunk ${c.index + 1}`,
-          confidence:     cand.confidence,
-          status:         'pending_review',
-        }))
+        const rows = candidates.map(cand => {
+          // Override source_page based on where the excerpt actually appears
+          // in the document (the chunk-start page is just a hint).
+          const actualPage = actualPageFor(cand.source_excerpt, c.page)
+          return {
+            document_id:    doc.id,
+            type:           cand.type,
+            title:          cand.title,
+            content:        cand.content,
+            scope:          cand.scope ?? null,
+            rationale:      cand.rationale ?? null,
+            source_excerpt: cand.source_excerpt,
+            source_page:    actualPage,
+            source_section: actualPage ? `Page ${actualPage}` : `Chunk ${c.index + 1}`,
+            confidence:     cand.confidence,
+            status:         'pending_review',
+          }
+        })
         const { error } = await supabase.from('extraction_candidates').insert(rows)
         if (error) throw new Error(`Insert failed: ${error.message}`)
       }
