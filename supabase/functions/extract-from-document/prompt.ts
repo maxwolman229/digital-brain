@@ -48,17 +48,25 @@ DECISION RULES — apply strictly:
    extract once and pick the clearer source excerpt.
 
 5. CONFIDENCE CALIBRATION:
-   • high   — clear, specific, actionable. Source unambiguously states it.
-   • medium — useful but slightly under-specified, or implied not stated.
-   • low    — ambiguous, possibly outdated, possibly not operational. We'd
-              rather have a low-confidence candidate the reviewer can reject
-              than miss a valid one.
+   • high   — clear, specific, actionable. Source unambiguously states it
+              with definitive language ("must", "shall", a specific numeric,
+              or an unambiguous causal claim).
+   • medium — useful but hedged ("modern furnaces aim for", "is usually",
+              "generally", "typically"), or implied not stated, or
+              generic / grade-dependent without specifics.
+   • low    — ambiguous, possibly outdated, possibly not operational, OR
+              outside the document's process area (see rule 6).
+
+   DEFAULT TO MEDIUM if you're unsure. High requires BOTH definitive
+   language AND a specific (numeric, named entity, or unambiguous causal
+   mechanism). If the source is hedged, generic, or implied, it's medium
+   at best.
 
 6. PROCESS-AREA RELEVANCE: If the passage contains operational knowledge that
-   is clearly outside the {{process_area}} scope of this document, extract it
-   but mark confidence as 'low' and note the apparent process area in the
-   scope field. Don't drop it — the reviewer may want to recategorise it.
-   Don't artificially boost confidence just because something is operational.
+   is clearly outside the {{process_area}} scope of this document, you MUST
+   set confidence to 'low' and put the apparent process area in the scope
+   field. This is non-negotiable — process-area drift is a recategorisation
+   signal for the reviewer, not high-confidence content.
 
 7. SOURCE EXCERPT must be VERBATIM — the exact words from the passage that
    support the candidate. Reviewers check the extraction against this.
