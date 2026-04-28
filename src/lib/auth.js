@@ -584,7 +584,7 @@ export async function acceptInviteByToken(token) {
   const row = data?.[0]
   return {
     success: !!row?.success,
-    plantId: row?.plant_id || null,
+    plantId: row?.accepted_plant_id || null,
     message: row?.message || '',
   }
 }

@@ -136,8 +136,10 @@ GRANT EXECUTE ON FUNCTION lookup_invite_by_token(text) TO anon, authenticated;
 
 -- ── 6. accept_invite RPC (atomic, server-validated) ─────────────────────────
 
+-- Note: the OUT column is named `accepted_plant_id` (not `plant_id`) to avoid
+-- ambiguity with plant_memberships.plant_id inside the INSERT below.
 CREATE OR REPLACE FUNCTION accept_invite(p_token text)
-RETURNS TABLE (success boolean, plant_id uuid, message text)
+RETURNS TABLE (success boolean, accepted_plant_id uuid, message text)
 LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
   v_invite plant_invites%ROWTYPE;
