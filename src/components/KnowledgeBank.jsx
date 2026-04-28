@@ -19,6 +19,7 @@ import PlantSettings from './PlantSettings.jsx'
 import CaptureView from './CaptureView.jsx'
 import ProfileView from './ProfileView.jsx'
 import UserProfileModal from './UserProfileModal.jsx'
+import DocumentIngestionView from './DocumentIngestionView.jsx'
 
 const BEVCAN_PLANT_ID = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
 const SUPABASE_URL    = import.meta.env.VITE_SUPABASE_URL
@@ -26,6 +27,7 @@ const SUPABASE_URL    = import.meta.env.VITE_SUPABASE_URL
 const TABS = [
   { id: 'query',      icon: '⌕', label: 'Ask the Bank' },
   { id: 'capture',    icon: '◈', label: 'Capture Knowledge' },
+  { id: 'documents',  icon: '⌬', label: 'Document Ingestion', adminOnly: true },
   { id: 'questions',  icon: '?', label: 'Ask the Team' },
   { id: 'rules',      icon: '◆', label: 'Rules' },
   { id: 'assertions', icon: '◇', label: 'Assertions' },
@@ -417,7 +419,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
           {/* Nav tabs */}
           <div style={{ marginBottom: 24 }}>
-            {TABS.map(tab => {
+            {TABS.filter(t => !t.adminOnly || isPlantAdmin).map(tab => {
               const countKey = tab.id === 'questions' ? 'questions' : tab.id.replace(/s$/, '') + 's'
               // map tab id → newCounts key: rules→rules, assertions→assertions, events→events, questions→questions
               const badgeCount = BADGE_TABS.includes(tab.id) ? (newCounts[tab.id] || 0) : 0
@@ -607,7 +609,16 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             />
           )}
 
-          {view !== 'rules' && view !== 'assertions' && view !== 'events' && view !== 'questions' && view !== 'health' && view !== 'graph' && view !== 'query' && view !== 'capture' && view !== 'profile' && (
+          {view === 'documents' && isPlantAdmin && (
+            <DocumentIngestionView
+              key={activePlantId}
+              plantId={activePlantId}
+              processAreas={vocabulary.processAreas}
+              onOpenDocument={(id) => console.log('TODO: open document', id)}
+            />
+          )}
+
+          {view !== 'rules' && view !== 'assertions' && view !== 'events' && view !== 'questions' && view !== 'health' && view !== 'graph' && view !== 'query' && view !== 'capture' && view !== 'profile' && view !== 'documents' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 32, color: 'var(--md1-border)' }}>{TABS.find(t => t.id === view)?.icon}</div>
               <div style={{ fontSize: 13, color: 'var(--md1-muted-light)', fontFamily: FNT }}>{TABS.find(t => t.id === view)?.label} — coming soon</div>
@@ -718,7 +729,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
 
             {/* Nav tabs (capture is an action, not a tab here) */}
             <div style={{ padding: '8px 0', borderBottom: '1px solid #e8e4e0' }}>
-              {TABS.filter(tab => tab.id !== 'capture').map(tab => {
+              {TABS.filter(tab => tab.id !== 'capture' && (!tab.adminOnly || isPlantAdmin)).map(tab => {
                 const badgeCount = BADGE_TABS.includes(tab.id) ? (newCounts[tab.id] || 0) : 0
                 return (
                   <button
