@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { findOrCreateOrg, createPlant, createMembership, claimApprovedInvites, fetchMemberships } from '../lib/auth.js'
+import { findOrCreateOrg, createPlant, createMembership } from '../lib/auth.js'
 
 const FNT = 'var(--md1-font-sans)'
 const FNTM = 'var(--md1-font-mono)'
@@ -57,18 +57,7 @@ export default function PlantHome({ userId, email, profile, memberships, onJoine
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  // On mount, claim any approved invites for this user's email
-  useEffect(() => {
-    if (!email || !userId) return
-    claimApprovedInvites(userId, email).then(async (claimed) => {
-      if (claimed.length > 0) {
-        const updated = await fetchMemberships(userId)
-        onMembershipsChanged?.(updated)
-      }
-    }).catch(() => {})
-  }, [userId, email])
-
-  function resetPanels() {
+function resetPanels() {
     setPanel(null); setOrgName(''); setPlantName(''); setIndustry(''); setShortCode(''); setError(null)
   }
 

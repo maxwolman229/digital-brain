@@ -13,6 +13,7 @@ import BevCanSignup from './components/BevCanSignup.jsx'
 import BevCanPending from './components/BevCanPending.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
 import ResetPassword from './components/ResetPassword.jsx'
+import AcceptInvite from './components/AcceptInvite.jsx'
 
 
 export default function App() {
@@ -138,6 +139,28 @@ export default function App() {
     if (activePlantId === deletedPlantId) {
       setActivePlantId(null)
       try { localStorage.removeItem('md1-active-plant') } catch {}
+    }
+  }
+
+  // Re-load session/profile/memberships from storage. Used by AcceptInvite
+  // after a recipient signs up or logs in and accepts an invite.
+  async function handleAuthChange() {
+    const s = getRestoredSession()
+    if (!s) return
+    setSession(s)
+    try {
+      const p = await loadProfile(s.user.id)
+      if (p) {
+        setProfile(p)
+        const membs = await fetchMemberships(s.user.id)
+        setMemberships(membs)
+        if (membs.length > 0) {
+          const newest = membs[membs.length - 1]
+          activateContext(p, membs, newest.plantId)
+        }
+      }
+    } catch (e) {
+      console.error('[handleAuthChange] error:', e.message)
     }
   }
 
@@ -356,6 +379,11 @@ export default function App() {
         />
 
         <Route path="/bevcan/pending" element={<BevCanPending />} />
+
+        {/* Plant invite acceptance */}
+        <Route path="/accept-invite" element={
+          <AcceptInvite session={session} onAuthChange={handleAuthChange} />
+        } />
 
         {/* Admin dashboard — plant admins */}
         <Route

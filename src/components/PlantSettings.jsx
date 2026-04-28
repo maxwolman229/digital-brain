@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import {
   fetchPlantMembers, updateMemberRole, removeMember,
-  sendPlantInvite, fetchPlantInvites, approveInvite, rejectInvite,
+  sendPlantInvite, fetchPlantInvites, fetchOwnPendingInvites,
+  approveInvite, rejectInvite,
 } from '../lib/auth.js'
 import { deletePlant } from '../lib/db.js'
 
 const FNT = 'var(--md1-font-sans)'
 
 const ROLES = ['admin', 'contributor', 'viewer']
+const INVITE_ROLES = ['contributor', 'viewer'] // admin promotion is a separate action
 const roleColor = { admin: 'var(--md1-accent)', contributor: '#5a8cc0', viewer: 'var(--md1-muted)' }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -26,9 +28,11 @@ function fmtDate(iso) {
 }
 
 const statusBadge = {
-  pending:  { bg: '#FFF3E0', color: '#E65100', label: 'Pending' },
-  approved: { bg: '#E8F5E9', color: '#2E7D32', label: 'Approved' },
-  rejected: { bg: '#FFEBEE', color: '#C62828', label: 'Rejected' },
+  pending_approval: { bg: '#FFF3E0', color: '#E65100', label: 'Awaiting Approval' },
+  approved:         { bg: '#E0F2F1', color: '#00695C', label: 'Approved · Email Sent' },
+  rejected:         { bg: '#FFEBEE', color: '#C62828', label: 'Rejected' },
+  accepted:         { bg: '#E8F5E9', color: '#2E7D32', label: 'Accepted' },
+  expired:          { bg: '#ECEFF1', color: '#546E7A', label: 'Expired' },
 }
 
 // ── Tab button ────────────────────────────────────────────────────────────────
@@ -51,13 +55,25 @@ function TabBtn({ id, active, onClick, children }) {
   )
 }
 
-// ── INVITE FORM (visible to all members) ──────────────────────────────────────
+// ── INVITE FORM ───────────────────────────────────────────────────────────────
+// Visible to all members. Admins get auto-approved; non-admins get
+// "pending admin approval" status.
 
-function InviteForm({ plantId, onSent }) {
+function InviteForm({ plantId, isAdmin, onSent }) {
   const [email, setEmail] = useState('')
+  const [role, setRole] = useState('contributor')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  const [ownPending, setOwnPending] = useState([])
+
+  async function loadOwnPending() {
+    if (isAdmin) return // admins see the full Pending tab instead
+    const data = await fetchOwnPendingInvites(plantId).catch(() => [])
+    setOwnPending(data)
+  }
+
+  useEffect(() => { loadOwnPending() }, [plantId, isAdmin])
 
   async function handleSend() {
     const trimmed = email.trim().toLowerCase()
@@ -67,11 +83,18 @@ function InviteForm({ plantId, onSent }) {
     }
     setSending(true); setError(null); setSuccess(null)
     try {
-      await sendPlantInvite(plantId, trimmed)
-      setSuccess(`Invite created for ${trimmed} — awaiting admin approval`)
+      const result = await sendPlantInvite(plantId, trimmed, role)
+      if (result.autoApproved) {
+        setSuccess(result.emailSent
+          ? `Invite email sent to ${trimmed}.`
+          : `Invite created for ${trimmed}. Email delivery pending — recipient may not have received it.`)
+      } else {
+        setSuccess(`Invite sent for admin approval. ${trimmed} will receive an email once an admin approves.`)
+      }
       setEmail('')
       onSent?.()
-      setTimeout(() => setSuccess(null), 4000)
+      loadOwnPending()
+      setTimeout(() => setSuccess(null), 5000)
     } catch (err) {
       setError(err.message)
     }
@@ -81,9 +104,11 @@ function InviteForm({ plantId, onSent }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginBottom: 8 }}>
-        Invite someone by email. When an admin approves, they'll receive an email to join.
+        {isAdmin
+          ? 'Invite someone by email. They\'ll get an email immediately to join.'
+          : 'Invite someone by email. An admin will review before they get an email.'}
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
         <input
           type="email"
           value={email}
@@ -96,6 +121,19 @@ function InviteForm({ plantId, onSent }) {
             boxSizing: 'border-box',
           }}
         />
+        <select
+          value={role}
+          onChange={e => setRole(e.target.value)}
+          style={{
+            padding: '9px 8px', fontSize: 12, fontFamily: FNT,
+            border: '1px solid var(--md1-border)', borderRadius: 3, outline: 'none',
+            background: '#fff', cursor: 'pointer',
+          }}
+        >
+          {INVITE_ROLES.map(r => (
+            <option key={r} value={r}>{r === 'contributor' ? 'Contributor' : 'Viewer'}</option>
+          ))}
+        </select>
         <button
           onClick={handleSend}
           disabled={sending}
@@ -114,6 +152,18 @@ function InviteForm({ plantId, onSent }) {
       )}
       {success && (
         <div style={{ marginTop: 6, fontSize: 11, color: 'var(--md1-accent)', fontFamily: FNT }}>{success}</div>
+      )}
+
+      {/* Non-admins: show their own pending invites awaiting approval */}
+      {!isAdmin && ownPending.length > 0 && (
+        <div style={{ marginTop: 12, padding: '10px 12px', background: '#FFF8E1', border: '1px solid #FFE082', borderRadius: 3, fontSize: 11, fontFamily: FNT, color: '#5D4037' }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Awaiting admin approval</div>
+          {ownPending.map(inv => (
+            <div key={inv.id} style={{ marginTop: 2 }}>
+              · {inv.email} ({inv.role}) — sent {fmtDate(inv.invitedAt)}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
@@ -224,7 +274,7 @@ function PendingInvites({ plantId, onCountChange }) {
     try {
       const all = await fetchPlantInvites(plantId)
       setInvites(all)
-      onCountChange?.(all.filter(i => i.status === 'pending').length)
+      onCountChange?.(all.filter(i => i.status === 'pending_approval').length)
     } catch (err) { setError(err.message) }
     setLoading(false)
   }
@@ -232,27 +282,34 @@ function PendingInvites({ plantId, onCountChange }) {
   async function handleApprove(inv) {
     setBusy(b => ({ ...b, [inv.id]: 'approve' }))
     try {
-      await approveInvite(inv.id)
+      const result = await approveInvite(inv.id)
       setInvites(prev => prev.map(i => i.id === inv.id ? { ...i, status: 'approved' } : i))
-      onCountChange?.(invites.filter(i => i.status === 'pending' && i.id !== inv.id).length)
+      const remaining = invites.filter(i => i.status === 'pending_approval' && i.id !== inv.id).length
+      onCountChange?.(remaining)
+      if (!result.emailSent) {
+        setError(`Approved, but email delivery may have failed. ${inv.email} should still see the invite in their inbox shortly — if not, ask them to log in directly.`)
+        setTimeout(() => setError(null), 6000)
+      }
     } catch (err) { setError(err.message) }
     setBusy(b => { const n = { ...b }; delete n[inv.id]; return n })
   }
 
   async function handleReject(inv) {
+    if (!window.confirm(`Reject invite for ${inv.email}?`)) return
     setBusy(b => ({ ...b, [inv.id]: 'reject' }))
     try {
       await rejectInvite(inv.id)
       setInvites(prev => prev.map(i => i.id === inv.id ? { ...i, status: 'rejected' } : i))
-      onCountChange?.(invites.filter(i => i.status === 'pending' && i.id !== inv.id).length)
+      const remaining = invites.filter(i => i.status === 'pending_approval' && i.id !== inv.id).length
+      onCountChange?.(remaining)
     } catch (err) { setError(err.message) }
     setBusy(b => { const n = { ...b }; delete n[inv.id]; return n })
   }
 
   if (loading) return <div style={{ padding: '20px 0', fontSize: 12, color: 'var(--md1-muted-light)', fontFamily: FNT }}>Loading invites…</div>
 
-  const pending = invites.filter(i => i.status === 'pending')
-  const history = invites.filter(i => i.status !== 'pending')
+  const pending = invites.filter(i => i.status === 'pending_approval')
+  const history = invites.filter(i => i.status !== 'pending_approval')
 
   return (
     <div>
@@ -262,7 +319,7 @@ function PendingInvites({ plantId, onCountChange }) {
         </div>
       )}
 
-      {/* Pending invites */}
+      {/* Pending */}
       {pending.length === 0 ? (
         <div style={{ padding: '24px 0', textAlign: 'center' }}>
           <div style={{ fontSize: 13, color: 'var(--md1-muted-light)', fontFamily: FNT }}>No pending invites</div>
@@ -274,7 +331,7 @@ function PendingInvites({ plantId, onCountChange }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--md1-primary)', fontFamily: FNT }}>{inv.email}</div>
                 <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT, marginTop: 2 }}>
-                  Invited by {inv.invitedByName} · {fmtDate(inv.createdAt)}
+                  Invited by {inv.invitedByName} as {inv.role} · {fmtDate(inv.invitedAt)}
                 </div>
               </div>
               <button
@@ -313,12 +370,14 @@ function PendingInvites({ plantId, onCountChange }) {
             Invite History
           </div>
           {history.map(inv => {
-            const badge = statusBadge[inv.status] || statusBadge.pending
+            const badge = statusBadge[inv.status] || statusBadge.pending_approval
             return (
               <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f8f6f4' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT }}>{inv.email}</div>
-                  <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT }}>{fmtDate(inv.createdAt)}</div>
+                  <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', fontFamily: FNT }}>
+                    {inv.role} · {fmtDate(inv.invitedAt)}
+                  </div>
                 </div>
                 <span style={{
                   padding: '3px 8px', borderRadius: 3, fontSize: 10, fontWeight: 700,
@@ -390,7 +449,7 @@ export default function PlantSettings({ membership, onClose, onPendingCountChang
           <TabBtn id="members" active={tab === 'members'} onClick={setTab}>Members</TabBtn>
           {isAdmin && (
             <TabBtn id="pending" active={tab === 'pending'} onClick={setTab}>
-              Pending {pendingCount > 0 && (
+              Pending Invites {pendingCount > 0 && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 16, height: 16, background: '#e74c3c', color: '#fff', borderRadius: 8, fontSize: 9, fontWeight: 700, marginLeft: 5, padding: '0 4px' }}>
                   {pendingCount}
                 </span>
@@ -404,12 +463,11 @@ export default function PlantSettings({ membership, onClose, onPendingCountChang
 
           {tab === 'members' && (
             <div>
-              {/* Invite form — all members */}
               <InviteForm
                 plantId={membership.plantId}
+                isAdmin={isAdmin}
                 onSent={() => setInviteRefresh(r => r + 1)}
               />
-              {/* Member list */}
               <MembersList plantId={membership.plantId} isAdmin={isAdmin} />
             </div>
           )}

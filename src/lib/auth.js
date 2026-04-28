@@ -331,38 +331,133 @@ async function _buildMemberships(membRows) {
 }
 
 // ─── Plant invites ───────────────────────────────────────────────────────────
+//
+// Staged flow:
+//   1. Member invites someone → status='pending_approval'
+//      EXCEPTION: if member is an admin, status='approved' immediately.
+//   2. Admin approves → status='approved' (or rejects → 'rejected').
+//   3. On 'approved', edge function sends email with invite link via Resend.
+//   4. Recipient clicks link → /accept-invite → status='accepted', membership created.
 
-export async function sendPlantInvite(plantId, email) {
+const INVITE_EDGE_URL = `${SUPABASE_URL}/functions/v1/invite`
+
+// Fires the invite edge function for a token. Used both by sendPlantInvite
+// (when the inviter is an admin) and approveInvite (when an admin approves a
+// pending invite). The edge function looks up the invite by token, sends the
+// email, and tolerates "user already exists" (creating membership directly).
+async function triggerInviteEmail(token, jwt) {
+  try {
+    const resp = await fetch(INVITE_EDGE_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwt}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+    })
+    const result = await resp.json().catch(() => ({}))
+    if (!resp.ok) console.warn('[triggerInviteEmail] edge function error:', result?.error)
+    return { sent: !!result?.sent, result }
+  } catch (err) {
+    console.warn('[triggerInviteEmail] failed:', err.message)
+    return { sent: false, result: null }
+  }
+}
+
+// Returns true if the current logged-in user is an admin of the given plant.
+async function isInviterAdmin(plantId, userId) {
+  const { data } = await supabase
+    .from('plant_memberships')
+    .select('role')
+    .eq('plant_id', plantId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  return data?.role === 'admin'
+}
+
+// Stage 1: send an invite. If inviter is admin, skip approval and email immediately.
+// Returns { invite, autoApproved, emailSent }.
+export async function sendPlantInvite(plantId, email, role = 'contributor') {
   const jwt = getStoredJwt()
   if (!jwt) throw new Error('Not authenticated')
   const payload = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
   const userId = payload.sub
 
   const trimmedEmail = email.trim().toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    throw new Error('Enter a valid email address.')
+  }
+  if (role !== 'contributor' && role !== 'viewer') {
+    throw new Error('Role must be contributor or viewer.')
+  }
+
+  // Block inviting someone who's already a member of this plant.
+  const { data: existingUserId } = await supabase
+    .rpc('get_user_id_by_email', { lookup_email: trimmedEmail })
+  if (existingUserId) {
+    const { data: existingMembership } = await supabase
+      .from('plant_memberships')
+      .select('id')
+      .eq('plant_id', plantId)
+      .eq('user_id', existingUserId)
+      .maybeSingle()
+    if (existingMembership) {
+      throw new Error('This person is already a member of this plant.')
+    }
+  }
+
+  const inviterIsAdmin = await isInviterAdmin(plantId, userId)
+  const initialStatus = inviterIsAdmin ? 'approved' : 'pending_approval'
+  const insertRow = {
+    plant_id: plantId,
+    recipient_email: trimmedEmail,
+    invited_by: userId,
+    role,
+    status: initialStatus,
+  }
+  if (inviterIsAdmin) {
+    insertRow.approved_by = userId
+    insertRow.approved_at = new Date().toISOString()
+  }
 
   const { data, error } = await supabase
     .from('plant_invites')
-    .insert({ plant_id: plantId, email: trimmedEmail, invited_by: userId })
+    .insert(insertRow)
     .select()
     .single()
 
   if (error) {
-    if (error.code === '23505') throw new Error('This email has already been invited to this plant.')
+    // Exclusion constraint name from migration 030
+    if (error.code === '23P01' || /no_dupe_active|already exists/.test(error.message || '')) {
+      throw new Error('An invite is already pending for this email.')
+    }
+    if (error.code === '23505') {
+      throw new Error('An invite is already pending for this email.')
+    }
     throw new Error(error.message)
   }
-  return data
+
+  // If admin auto-approved, fire the email now.
+  let emailSent = false
+  if (inviterIsAdmin) {
+    const result = await triggerInviteEmail(data.token, jwt)
+    emailSent = result.sent
+  }
+
+  return { invite: data, autoApproved: inviterIsAdmin, emailSent }
 }
 
+// All invites for a plant (admin view).
 export async function fetchPlantInvites(plantId) {
   const { data, error } = await supabase
     .from('plant_invites')
-    .select('id, email, status, invited_by, reviewed_by, created_at, updated_at')
+    .select('id, recipient_email, status, invited_by, role, invited_at, approved_at, rejected_at, accepted_at, expires_at')
     .eq('plant_id', plantId)
-    .order('created_at', { ascending: false })
+    .order('invited_at', { ascending: false })
 
   if (error) throw new Error(error.message)
 
-  // Resolve inviter names
   const inviterIds = [...new Set((data || []).map(i => i.invited_by).filter(Boolean))]
   let nameMap = {}
   if (inviterIds.length) {
@@ -375,57 +470,74 @@ export async function fetchPlantInvites(plantId) {
 
   return (data || []).map(i => ({
     id: i.id,
-    email: i.email,
+    email: i.recipient_email,
     status: i.status,
+    role: i.role,
     invitedByName: nameMap[i.invited_by] || 'Unknown',
-    createdAt: i.created_at,
+    invitedById: i.invited_by,
+    invitedAt: i.invited_at,
+    approvedAt: i.approved_at,
+    rejectedAt: i.rejected_at,
+    acceptedAt: i.accepted_at,
+    expiresAt: i.expires_at,
   }))
 }
 
+// Pending invites the current user sent (so non-admins can confirm their
+// invite is awaiting admin approval).
+export async function fetchOwnPendingInvites(plantId) {
+  const userId = getStoredJwt()
+    ? JSON.parse(atob(getStoredJwt().split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub
+    : null
+  if (!userId) return []
+  const { data } = await supabase
+    .from('plant_invites')
+    .select('id, recipient_email, status, role, invited_at')
+    .eq('plant_id', plantId)
+    .eq('invited_by', userId)
+    .eq('status', 'pending_approval')
+    .order('invited_at', { ascending: false })
+  return (data || []).map(i => ({
+    id: i.id,
+    email: i.recipient_email,
+    status: i.status,
+    role: i.role,
+    invitedAt: i.invited_at,
+  }))
+}
+
+// Stage 2: admin approves. Flips status, fires email.
 export async function approveInvite(inviteId) {
   const jwt = getStoredJwt()
   if (!jwt) throw new Error('Not authenticated')
   const payload = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
   const adminUserId = payload.sub
 
-  // Fetch the invite
   const { data: invite, error: fetchErr } = await supabase
     .from('plant_invites')
-    .select('id, email, plant_id, status')
+    .select('id, token, status, plant_id')
     .eq('id', inviteId)
     .single()
-
   if (fetchErr || !invite) throw new Error('Invite not found.')
-  if (invite.status !== 'pending') throw new Error('Invite is no longer pending.')
+  if (invite.status !== 'pending_approval') {
+    throw new Error(`Invite is ${invite.status}, can't approve.`)
+  }
 
-  // Update invite status to approved
   const { error: updateErr } = await supabase
     .from('plant_invites')
-    .update({ status: 'approved', reviewed_by: adminUserId, updated_at: new Date().toISOString() })
+    .update({
+      status: 'approved',
+      approved_by: adminUserId,
+      approved_at: new Date().toISOString(),
+    })
     .eq('id', inviteId)
-
   if (updateErr) throw new Error(updateErr.message)
 
-  // Call the invite edge function to send the email + create auth account (or membership for existing users)
-  try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/invite`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${jwt}`,
-        'apikey': SUPABASE_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: 'send_invite', invite_id: inviteId }),
-    })
-    const result = await resp.json()
-    if (!resp.ok) console.warn('[approveInvite] edge function error:', result.error)
-    return { approved: true, emailSent: result.sent || false }
-  } catch (err) {
-    console.warn('[approveInvite] edge function call failed:', err.message)
-    return { approved: true, emailSent: false }
-  }
+  const result = await triggerInviteEmail(invite.token, jwt)
+  return { approved: true, emailSent: result.sent }
 }
 
+// Stage 2: admin rejects. No email is sent.
 export async function rejectInvite(inviteId) {
   const jwt = getStoredJwt()
   if (!jwt) throw new Error('Not authenticated')
@@ -434,35 +546,47 @@ export async function rejectInvite(inviteId) {
 
   const { error } = await supabase
     .from('plant_invites')
-    .update({ status: 'rejected', reviewed_by: adminUserId, updated_at: new Date().toISOString() })
+    .update({
+      status: 'rejected',
+      rejected_by: adminUserId,
+      rejected_at: new Date().toISOString(),
+    })
     .eq('id', inviteId)
-
   if (error) throw new Error(error.message)
 }
 
-// Called after signup to check if this user's email has any approved invites
-// and auto-create memberships for them.
-export async function claimApprovedInvites(userId, email) {
-  const { data: invites } = await supabase
-    .from('plant_invites')
-    .select('id, plant_id, invited_by')
-    .eq('email', email.toLowerCase())
-    .eq('status', 'approved')
-
-  if (!invites?.length) return []
-
-  const claimed = []
-  for (const inv of invites) {
-    const { error } = await supabase
-      .from('plant_memberships')
-      .insert({ user_id: userId, plant_id: inv.plant_id, role: 'contributor', invited_by: inv.invited_by })
-      .select()
-      .single()
-    if (!error || error.code === '23505') {
-      claimed.push(inv.plant_id)
-    }
+// Public lookup for /accept-invite. Returns invite metadata (without the
+// secret token, since the caller already has it in the URL).
+export async function lookupInviteByToken(token) {
+  const { data, error } = await supabase
+    .rpc('lookup_invite_by_token', { p_token: token })
+  if (error) throw new Error(error.message)
+  if (!data?.length) return null
+  const row = data[0]
+  return {
+    id: row.id,
+    plantId: row.plant_id,
+    plantName: row.plant_name,
+    recipientEmail: row.recipient_email,
+    status: row.status,
+    expiresAt: row.expires_at,
+    role: row.role,
   }
-  return claimed
+}
+
+// Stage 4: recipient (logged in) accepts the invite.
+// Server-validated: matches recipient_email to auth.users(email), creates
+// membership, flips status to 'accepted'. Returns { success, plantId, message }.
+export async function acceptInviteByToken(token) {
+  const { data, error } = await supabase
+    .rpc('accept_invite', { p_token: token })
+  if (error) throw new Error(error.message)
+  const row = data?.[0]
+  return {
+    success: !!row?.success,
+    plantId: row?.plant_id || null,
+    message: row?.message || '',
+  }
 }
 
 export async function fetchPlantMembers(plantId) {
