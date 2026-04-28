@@ -153,18 +153,24 @@ async function runFullMode(documentId: string, isContinuation = false) {
           .from('documents').select('*').eq('id', doc.id).single()
         await finalize(supabase, latest, (m) => console.log(`[extract:${doc.id.slice(0, 8)}] ${m}`))
       } else {
-        // More chunks remain — fire-and-forget self-trigger.
+        // More chunks remain — self-trigger. AWAIT the fetch so the request
+        // actually leaves the worker before this promise resolves; otherwise
+        // the worker may be recycled with the request still in flight.
         console.log(`[extract:${doc.id.slice(0, 8)}] more chunks remain, self-triggering`)
-        // Don't await: we want this to outlive our return and keep the chain alive.
-        fetch(SELF_URL, {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            'authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            'apikey': SUPABASE_SERVICE_ROLE_KEY,
-          },
-          body: JSON.stringify({ document_id: doc.id, _continue: true }),
-        }).catch(e => console.error('[extract] self-trigger failed:', e))
+        try {
+          const r = await fetch(SELF_URL, {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              'apikey': SUPABASE_SERVICE_ROLE_KEY,
+            },
+            body: JSON.stringify({ document_id: doc.id, _continue: true }),
+          })
+          console.log(`[extract:${doc.id.slice(0, 8)}] self-trigger status=${r.status}`)
+        } catch (e: any) {
+          console.error(`[extract:${doc.id.slice(0, 8)}] self-trigger failed: ${e?.message || e}`)
+        }
       }
     } catch (err: any) {
       console.error(`[extract:${doc.id.slice(0, 8)}] worker crashed:`, err)
