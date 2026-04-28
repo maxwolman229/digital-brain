@@ -1,11 +1,50 @@
 import { useState, useEffect } from 'react'
 import { FNT, FNTM, iS, STATUSES, formatDate, statusColor, paColor } from '../lib/constants.js'
 import { Badge, Tag, Modal, Field, TypeaheadInput } from './shared.jsx'
-import { fetchRules, fetchComments, fetchVerifications, fetchItemById, createRule, updateRule, uploadPhoto, deletePhoto, requestArchive, confirmArchive, rejectArchive } from '../lib/db.js'
+import { fetchRules, fetchComments, fetchVerifications, fetchItemById, createRule, updateRule, uploadPhoto, deletePhoto, requestArchive, confirmArchive, rejectArchive, runContradictionCheck } from '../lib/db.js'
 import { getUserId } from '../lib/userContext.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
+import ContradictionCheckModal from './ContradictionCheckModal.jsx'
+
+// Partition contradiction-check results into modal-worthy hits vs silent hits.
+//   modal:  high/medium-confidence contradictions, plus any near-duplicate
+//   silent: low-confidence contradictions (saved with a relates_to link
+//           without bothering the user) and refines/complements (recorded
+//           as relates_to too — useful structural signal in the link graph)
+function partitionContradictionResults(results) {
+  const modal = []
+  const silent = []
+  for (const r of results || []) {
+    if (!r) continue
+    if (r.relationship === 'unrelated') {
+      // Near-duplicate marker is the only "unrelated" we surface
+      if (/^near-duplicate of/i.test(r.explanation || '')) modal.push(r)
+      continue
+    }
+    if (r.relationship === 'contradicts') {
+      if (r.confidence === 'low') silent.push(r)
+      else modal.push(r)
+    } else {
+      // refines / complements — record silently as a structural hint
+      silent.push(r)
+    }
+  }
+  return { modal, silent }
+}
+
+// Convert silent results to relates_to link payloads.
+function silentToLinks(silent) {
+  return silent.map(r => ({
+    targetType: r.candidate_type,
+    targetId: r.candidate_internal_id,
+    relType: 'relates_to',
+    comment: r.relationship === 'contradicts'
+      ? `low-confidence contradiction: ${r.explanation}`
+      : `${r.relationship}: ${r.explanation}`,
+  }))
+}
 
 export default function RulesView({ search, fStatus, fCat, fProc, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile, plantId }) {
   const [rules, setRules] = useState([])
@@ -519,6 +558,8 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [], p
   const [stagedFiles, setStagedFiles] = useState([])  // { file, preview }
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [checking, setChecking] = useState(false)
+  const [modalState, setModalState] = useState(null)  // { modal, silent } when open
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
@@ -536,15 +577,13 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [], p
     })
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    if (!form.title.trim()) { setError('Title is required'); return }
-    setSaving(true)
-    setError(null)
+  // Actually save the rule — called either directly (no contradictions found)
+  // or from the modal action handlers with the appropriate postCreateLinks.
+  async function persist(postCreateLinks = []) {
+    setSaving(true); setError(null); setModalState(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-      // Create the rule first (without photos), then upload and update
-      const rule = await createRule({ ...form, tags, plantId })
+      const rule = await createRule({ ...form, tags, plantId, postCreateLinks })
       if (stagedFiles.length > 0) {
         const urls = await Promise.all(stagedFiles.map(s => uploadPhoto(s.file, 'rule', rule.id)))
         await updateRule(rule.id, { title: rule.title, category: rule.category, processArea: rule.processArea, scope: rule.scope, rationale: rule.rationale, status: rule.status, tags: rule.tags, photos: urls, changeNote: 'Added photos' })
@@ -558,8 +597,81 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [], p
     }
   }
 
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!form.title.trim()) { setError('Title is required'); return }
+    setError(null)
+    setChecking(true)
+    let check
+    try {
+      check = await runContradictionCheck({
+        plantId,
+        type: 'rule',
+        title: form.title,
+        scope: form.scope,
+        rationale: form.rationale,
+        processArea: form.processArea,
+        category: form.category,
+      })
+    } catch (err) {
+      // Soft-fail philosophy: never block a save on the check itself.
+      console.warn('[AddRuleForm] check failed, saving anyway:', err.message)
+      check = { results: [] }
+    }
+    setChecking(false)
+
+    const { modal, silent } = partitionContradictionResults(check.results || [])
+    if (modal.length === 0) {
+      // No user-facing flags — save with whatever silent links we collected
+      await persist(silentToLinks(silent))
+      return
+    }
+    // Open the modal — it will call back into onSaveAsRelatesTo or onSaveAsContradicting
+    setModalState({ modal, silent })
+  }
+
+  // Modal callbacks
+  function handleSaveAsRelatesTo() {
+    const { modal, silent } = modalState
+    const links = [
+      ...modal.map(r => ({
+        targetType: r.candidate_type,
+        targetId: r.candidate_internal_id,
+        relType: 'relates_to',
+        comment: `${r.relationship} (saved as related): ${r.explanation}`,
+      })),
+      ...silentToLinks(silent),
+    ]
+    persist(links)
+  }
+  function handleSaveAsContradicting() {
+    const { modal, silent } = modalState
+    const links = [
+      ...modal.map(r => ({
+        targetType: r.candidate_type,
+        targetId: r.candidate_internal_id,
+        // Only actual contradictions in the modal get a contradicts link.
+        // Refines/complements (which never reach the modal in the current
+        // partition logic) and near-duplicate would fall through as relates_to.
+        relType: r.relationship === 'contradicts' ? 'contradicts' : 'relates_to',
+        comment: r.explanation || '',
+      })),
+      ...silentToLinks(silent),
+    ]
+    persist(links)
+  }
+
   return (
     <form onSubmit={handleSubmit}>
+      {modalState && (
+        <ContradictionCheckModal
+          results={modalState.modal}
+          newTitle={form.title}
+          onCancel={() => setModalState(null)}
+          onSaveAsRelatesTo={handleSaveAsRelatesTo}
+          onSaveAsContradicting={handleSaveAsContradicting}
+        />
+      )}
       <Field label="Title *">
         <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Limit non-standard input to 40% of batch…" style={iS} autoFocus />
       </Field>
@@ -602,8 +714,8 @@ function AddRuleForm({ onClose, onCreated, processAreas = [], categories = [], p
         <button type="button" onClick={onClose} style={{ padding: '8px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer', fontFamily: FNT }}>
           Cancel
         </button>
-        <button type="submit" disabled={saving} style={{ padding: '8px 22px', borderRadius: 3, fontSize: 12, background: saving ? 'var(--md1-border)' : 'var(--md1-primary)', border: 'none', color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700 }}>
-          {saving ? 'Saving…' : 'Add Rule'}
+        <button type="submit" disabled={saving || checking} style={{ padding: '8px 22px', borderRadius: 3, fontSize: 12, background: (saving || checking) ? 'var(--md1-border)' : 'var(--md1-primary)', border: 'none', color: '#fff', cursor: (saving || checking) ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700 }}>
+          {checking ? 'Checking for contradictions…' : saving ? 'Saving…' : 'Add Rule'}
         </button>
       </div>
     </form>

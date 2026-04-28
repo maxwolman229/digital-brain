@@ -53,6 +53,74 @@ async function notifyUser(userId, plantId, text, targetView, targetId, excludeUs
   })
 }
 
+// ─── Plant settings ─────────────────────────────────────────────────────────
+
+// Read per-plant settings (default-on for everything if no row exists).
+export async function fetchPlantSettings(plantId) {
+  const pid = plantId || PLANT_ID()
+  if (!pid) return { contradictionCheckEnabled: true }
+  const { data } = await supabase
+    .from('plant_settings')
+    .select('contradiction_check_enabled')
+    .eq('plant_id', pid)
+    .maybeSingle()
+  return {
+    contradictionCheckEnabled: data ? !!data.contradiction_check_enabled : true,
+  }
+}
+
+export async function updatePlantSettings(plantId, patch) {
+  const row = {}
+  if ('contradictionCheckEnabled' in patch) {
+    row.contradiction_check_enabled = !!patch.contradictionCheckEnabled
+  }
+  const { error } = await supabase
+    .from('plant_settings')
+    .upsert({ plant_id: plantId, ...row }, { onConflict: 'plant_id' })
+  if (error) throw new Error(error.message)
+}
+
+// ─── Contradiction check ────────────────────────────────────────────────────
+
+const CONTRADICTION_CHECK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/contradiction-check`
+
+// Calls the contradiction-check edge function. Returns the same shape the
+// function returns: { results, candidates_considered, retrieval_mode }.
+// Soft-fails: on any network or function error, returns empty results so
+// the caller can proceed with save (matches the function's own philosophy).
+export async function runContradictionCheck({ plantId, type, title, scope, rationale, processArea, category }) {
+  const pid = plantId || PLANT_ID()
+  if (!pid) return { results: [], candidates_considered: 0, retrieval_mode: 'none' }
+
+  // Honour the per-plant toggle.
+  const settings = await fetchPlantSettings(pid).catch(() => ({ contradictionCheckEnabled: true }))
+  if (!settings.contradictionCheckEnabled) {
+    return { results: [], candidates_considered: 0, retrieval_mode: 'disabled' }
+  }
+
+  try {
+    const jwt = (await import('./supabase.js')).getStoredJwt?.()
+    const resp = await fetch(CONTRADICTION_CHECK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+      },
+      body: JSON.stringify({ plant_id: pid, type, title, scope, rationale, process_area: processArea, category }),
+    })
+    const data = await resp.json().catch(() => ({}))
+    if (!resp.ok) {
+      console.warn('[runContradictionCheck] non-2xx:', resp.status, data?.error)
+      return { results: [], candidates_considered: 0, retrieval_mode: 'error' }
+    }
+    return data
+  } catch (err) {
+    console.warn('[runContradictionCheck] failed:', err.message)
+    return { results: [], candidates_considered: 0, retrieval_mode: 'error' }
+  }
+}
+
 // Notify every user mentioned in `rawText` (which contains @[Name](user-uuid)
 // tokens). Skips the author. Silently ignores rows if notifications.plant_id
 // doesn't exist yet or other table errors occur.
@@ -1065,8 +1133,40 @@ export async function addRuleFromExtraction(rule) {
       text: source, date: data.created_at.split('T')[0], source: userId,
     }),
   ])
+
+  // Run contradiction check silently (no modal in extraction batch flow).
+  // Any 'contradicts' result auto-creates a link + flips both items to
+  // 'Contradicted' status. User reviews on HealthDashboard.
+  await autoLinkContradictionsForExtraction('rule', id, {
+    type: 'rule',
+    title: rule.title,
+    scope: '',
+    rationale: rule.rationale || '',
+    processArea: rule.processArea,
+    category: rule.category || 'Process',
+  })
+
   const resolve = await makeNameResolver([userId])
   return normaliseRule(data, [], [], [], resolve)
+}
+
+// Helper: extraction-path silent contradiction handling. If the check
+// surfaces any contradictions, create the link + flip both statuses. The
+// user sees the result in HealthDashboard rather than a modal.
+async function autoLinkContradictionsForExtraction(sourceType, sourceId, payload) {
+  try {
+    const check = await runContradictionCheck(payload)
+    const hits = (check.results || []).filter(r => r.relationship === 'contradicts')
+    if (!hits.length) return
+    await applyPostCreateLinks(sourceType, sourceId, hits.map(h => ({
+      targetType: h.candidate_type,
+      targetId: h.candidate_internal_id,
+      relType: 'contradicts',
+      comment: h.explanation || '',
+    })))
+  } catch (e) {
+    console.warn('[autoLinkContradictionsForExtraction] failed:', e.message)
+  }
 }
 
 export async function addAssertionFromExtraction(assertion) {
@@ -1104,6 +1204,16 @@ export async function addAssertionFromExtraction(assertion) {
       text: source, date: data.created_at.split('T')[0], source: userId,
     }),
   ])
+
+  await autoLinkContradictionsForExtraction('assertion', id, {
+    type: 'assertion',
+    title: assertion.title,
+    scope: '',
+    rationale: '',
+    processArea: assertion.processArea,
+    category: assertion.category || 'Process',
+  })
+
   const resolve = await makeNameResolver([userId])
   return normaliseAssertion(data, [], [], [], resolve)
 }
@@ -1130,7 +1240,7 @@ function randomId(prefix) {
   return `${prefix}-${suffix}`
 }
 
-export async function createRule({ title, category, processArea, scope, rationale, status, tags, evidenceText, captureSource, photos, plantId: explicitPlantId }) {
+export async function createRule({ title, category, processArea, scope, rationale, status, tags, evidenceText, captureSource, photos, plantId: explicitPlantId, postCreateLinks }) {
   const pid = explicitPlantId || PLANT_ID()
   if (!pid) throw new Error('No active plant — cannot create rule')
   const id = randomId('R')
@@ -1172,11 +1282,38 @@ export async function createRule({ title, category, processArea, scope, rational
     supabase.from('evidence').insert(evidenceInserts),
   ])
 
+  // Apply any post-create links the caller asked for (contradicts/relates_to
+  // from the contradiction-check modal).
+  await applyPostCreateLinks('rule', id, postCreateLinks)
+
   const resolve = await makeNameResolver([userId])
   return normaliseRule(data, evidenceInserts.map(e => ({ ...e, parent_id: id })), [{ ...versionRow, target_id: id }], [], resolve)
 }
 
-export async function createAssertion({ title, category, processArea, scope, status, tags, evidenceText, captureSource, photos, plantId: explicitPlantId }) {
+// Helper: create the links the contradiction-check modal asked for, and
+// flip statuses to 'Contradicted' on both items when the relationship is
+// 'contradicts'. Soft-fails on any individual link error.
+async function applyPostCreateLinks(sourceType, sourceId, links) {
+  if (!Array.isArray(links) || !links.length) return
+  for (const l of links) {
+    if (!l?.targetType || !l?.targetId || !l?.relType) continue
+    try {
+      await saveLink(sourceType, sourceId, l.targetType, l.targetId, l.relType, l.comment || '')
+      if (l.relType === 'contradicts') {
+        const sTbl = sourceType === 'rule' ? 'rules' : 'assertions'
+        const tTbl = l.targetType === 'rule' ? 'rules' : 'assertions'
+        await Promise.all([
+          supabase.from(sTbl).update({ status: 'Contradicted' }).eq('id', sourceId),
+          supabase.from(tTbl).update({ status: 'Contradicted' }).eq('id', l.targetId),
+        ])
+      }
+    } catch (e) {
+      console.warn('[applyPostCreateLinks] link failed:', e.message)
+    }
+  }
+}
+
+export async function createAssertion({ title, category, processArea, scope, status, tags, evidenceText, captureSource, photos, plantId: explicitPlantId, postCreateLinks }) {
   const pid = explicitPlantId || PLANT_ID()
   if (!pid) throw new Error('No active plant — cannot create assertion')
   const id = randomId('A')
@@ -1216,6 +1353,8 @@ export async function createAssertion({ title, category, processArea, scope, sta
     supabase.from('versions').insert({ target_type: 'assertion', ...versionRow }),
     supabase.from('evidence').insert(evidenceInserts),
   ])
+
+  await applyPostCreateLinks('assertion', id, postCreateLinks)
 
   const resolve = await makeNameResolver([userId])
   return normaliseAssertion(data, evidenceInserts.map(e => ({ ...e, parent_id: id })), [{ ...versionRow, target_id: id }], [], resolve)

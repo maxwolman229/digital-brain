@@ -1,7 +1,39 @@
 import { useState, useEffect } from 'react'
 import { FNT, FNTM, iS, STATUSES, formatDate, statusColor } from '../lib/constants.js'
 import { Badge, Tag, Modal, Field, TypeaheadInput } from './shared.jsx'
-import { fetchAssertions, fetchComments, fetchVerifications, fetchItemById, createAssertion, updateAssertion, uploadPhoto, deletePhoto, requestArchive, confirmArchive, rejectArchive } from '../lib/db.js'
+import { fetchAssertions, fetchComments, fetchVerifications, fetchItemById, createAssertion, updateAssertion, uploadPhoto, deletePhoto, requestArchive, confirmArchive, rejectArchive, runContradictionCheck } from '../lib/db.js'
+import ContradictionCheckModal from './ContradictionCheckModal.jsx'
+
+// Same partition logic as RulesView — duplicated rather than extracted to a
+// shared module to avoid an unnecessary indirection for two callers. Refactor
+// when a third caller appears.
+function partitionContradictionResults(results) {
+  const modal = []
+  const silent = []
+  for (const r of results || []) {
+    if (!r) continue
+    if (r.relationship === 'unrelated') {
+      if (/^near-duplicate of/i.test(r.explanation || '')) modal.push(r)
+      continue
+    }
+    if (r.relationship === 'contradicts') {
+      if (r.confidence === 'low') silent.push(r); else modal.push(r)
+    } else {
+      silent.push(r)
+    }
+  }
+  return { modal, silent }
+}
+function silentToLinks(silent) {
+  return silent.map(r => ({
+    targetType: r.candidate_type,
+    targetId: r.candidate_internal_id,
+    relType: 'relates_to',
+    comment: r.relationship === 'contradicts'
+      ? `low-confidence contradiction: ${r.explanation}`
+      : `${r.relationship}: ${r.explanation}`,
+  }))
+}
 import { getUserId } from '../lib/userContext.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
@@ -502,6 +534,8 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
   const [stagedFiles, setStagedFiles] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [checking, setChecking] = useState(false)
+  const [modalState, setModalState] = useState(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
@@ -519,14 +553,11 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
     })
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    if (!form.title.trim()) { setError('Title is required'); return }
-    setSaving(true)
-    setError(null)
+  async function persist(postCreateLinks = []) {
+    setSaving(true); setError(null); setModalState(null)
     try {
       const tags = form.tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-      const assertion = await createAssertion({ ...form, tags, plantId })
+      const assertion = await createAssertion({ ...form, tags, plantId, postCreateLinks })
       if (stagedFiles.length > 0) {
         const urls = await Promise.all(stagedFiles.map(s => uploadPhoto(s.file, 'assertion', assertion.id)))
         await updateAssertion(assertion.id, { title: assertion.title, category: assertion.category, processArea: assertion.processArea, scope: assertion.scope, status: assertion.status, tags: assertion.tags, photos: urls, changeNote: 'Added photos' })
@@ -540,8 +571,72 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
     }
   }
 
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!form.title.trim()) { setError('Title is required'); return }
+    setError(null)
+    setChecking(true)
+    let check
+    try {
+      check = await runContradictionCheck({
+        plantId,
+        type: 'assertion',
+        title: form.title,
+        scope: form.scope,
+        rationale: '',
+        processArea: form.processArea,
+        category: form.category,
+      })
+    } catch (err) {
+      console.warn('[AddAssertionForm] check failed, saving anyway:', err.message)
+      check = { results: [] }
+    }
+    setChecking(false)
+
+    const { modal, silent } = partitionContradictionResults(check.results || [])
+    if (modal.length === 0) {
+      await persist(silentToLinks(silent))
+      return
+    }
+    setModalState({ modal, silent })
+  }
+
+  function handleSaveAsRelatesTo() {
+    const { modal, silent } = modalState
+    persist([
+      ...modal.map(r => ({
+        targetType: r.candidate_type,
+        targetId: r.candidate_internal_id,
+        relType: 'relates_to',
+        comment: `${r.relationship} (saved as related): ${r.explanation}`,
+      })),
+      ...silentToLinks(silent),
+    ])
+  }
+  function handleSaveAsContradicting() {
+    const { modal, silent } = modalState
+    persist([
+      ...modal.map(r => ({
+        targetType: r.candidate_type,
+        targetId: r.candidate_internal_id,
+        relType: r.relationship === 'contradicts' ? 'contradicts' : 'relates_to',
+        comment: r.explanation || '',
+      })),
+      ...silentToLinks(silent),
+    ])
+  }
+
   return (
     <form onSubmit={handleSubmit}>
+      {modalState && (
+        <ContradictionCheckModal
+          results={modalState.modal}
+          newTitle={form.title}
+          onCancel={() => setModalState(null)}
+          onSaveAsRelatesTo={handleSaveAsRelatesTo}
+          onSaveAsContradicting={handleSaveAsContradicting}
+        />
+      )}
       <Field label="Title *">
         <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Non-standard input materials contain elevated contaminant levels…" style={iS} autoFocus />
       </Field>
@@ -580,8 +675,8 @@ function AddAssertionForm({ onClose, onCreated, processAreas = [], categories = 
         <button type="button" onClick={onClose} style={{ padding: '8px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: 'var(--md1-muted)', cursor: 'pointer', fontFamily: FNT }}>
           Cancel
         </button>
-        <button type="submit" disabled={saving} style={{ padding: '8px 22px', borderRadius: 3, fontSize: 12, background: saving ? 'var(--md1-border)' : 'var(--md1-primary)', border: 'none', color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700 }}>
-          {saving ? 'Saving…' : 'Add Assertion'}
+        <button type="submit" disabled={saving || checking} style={{ padding: '8px 22px', borderRadius: 3, fontSize: 12, background: (saving || checking) ? 'var(--md1-border)' : 'var(--md1-primary)', border: 'none', color: '#fff', cursor: (saving || checking) ? 'default' : 'pointer', fontFamily: FNT, fontWeight: 700 }}>
+          {checking ? 'Checking for contradictions…' : saving ? 'Saving…' : 'Add Assertion'}
         </button>
       </div>
     </form>

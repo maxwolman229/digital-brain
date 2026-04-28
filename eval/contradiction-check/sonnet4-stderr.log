@@ -1,0 +1,31 @@
+C01 contradicts  → contradicts  OK (2896ms)
+C02 contradicts  → contradicts  OK (9063ms)
+C03 contradicts  → contradicts  OK (3114ms)
+C04 contradicts  → contradicts  OK (3254ms)
+C05 contradicts  → contradicts  OK (2884ms)
+C06 contradicts  → contradicts  OK (3479ms)
+C07 contradicts  → contradicts  OK (2920ms)
+C08 contradicts  → contradicts  OK (2813ms)
+C09 contradicts  → contradicts  OK (3336ms)
+C10 contradicts  → contradicts  OK (3177ms)
+N01 complements  → complements  OK (2986ms)
+N02 refines      → refines      OK (3783ms)
+N03 complements  → complements  OK (3946ms)
+N04 complements  → complements  OK (3586ms)
+N05 unrelated    → unrelated    OK (2964ms)
+N06 complements  → complements  OK (3241ms)
+N07 unrelated    → unrelated    OK (3396ms)
+N08 complements  → complements  OK (3142ms)
+N09 refines      → refines      OK (3499ms)
+N10 unrelated    → unrelated    OK (3577ms)
+
+=== Summary ===
+{
+  "total": 20,
+  "correct": 20,
+  "accuracy": "1.00",
+  "contradiction_recall": "1.00",
+  "contradiction_false_positives": 0,
+  "avg_latency_ms": 3553,
+  "median_latency_ms": 3254
+}

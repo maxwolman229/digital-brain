@@ -1,0 +1,233 @@
+{
+  "summary": {
+    "total": 20,
+    "correct": 20,
+    "accuracy": "1.00",
+    "contradiction_recall": "1.00",
+    "contradiction_false_positives": 0,
+    "avg_latency_ms": 3553,
+    "median_latency_ms": 3254
+  },
+  "results": [
+    {
+      "id": "C01",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule says tap above 1620°C minimum, candidate says never tap above 1610°C. Same conditions, incompatible thresholds.",
+      "conditions_differ": false,
+      "shared_conditions": "Tap temperature on carbon steel grades, EAF process.",
+      "latency_ms": 2896
+    },
+    {
+      "id": "C02",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New statement says late Al addition raises tap temp 8-12°C, candidate says it lowers temp 5-10°C. Same conditions, opposite effects.",
+      "conditions_differ": false,
+      "shared_conditions": "Late aluminium addition effects on tap temperature with low-Si aim chemistry in EAF operations.",
+      "latency_ms": 9063
+    },
+    {
+      "id": "C03",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule says inject carbon during flat bath when FeO > 28%, candidate says stop all carbon injection once flat bath is established.",
+      "conditions_differ": false,
+      "shared_conditions": "Carbon injection timing during flat bath phase, EAF process area, all heats.",
+      "latency_ms": 3114
+    },
+    {
+      "id": "C04",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule says increase casting speed when oscillation exceeds 5mm, candidate says reduce speed. Same trigger condition, opposite actions.",
+      "conditions_differ": false,
+      "shared_conditions": "Slab caster on peritectic grades when mould level oscillation exceeds 5 mm.",
+      "latency_ms": 3254
+    },
+    {
+      "id": "C05",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule allows tapping at 0.020% P max, candidate forbids tapping above 0.015% P. Same grades, same conditions, conflicting thresholds.",
+      "conditions_differ": false,
+      "shared_conditions": "S355 and A572 structural grades on EAF route.",
+      "latency_ms": 2884
+    },
+    {
+      "id": "C06",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule says add FeMn before FeSi, candidate says add FeSi before FeMn. Same deoxidation sequence, opposite order.",
+      "conditions_differ": false,
+      "shared_conditions": "Deoxidation sequence for heats requiring both silicon and manganese alloying in EAF process.",
+      "latency_ms": 3479
+    },
+    {
+      "id": "C07",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule says charge light scrap on top, candidate says charge heavy scrap on top. Same bucket, opposite charging order.",
+      "conditions_differ": false,
+      "shared_conditions": "Two-bucket charging, first bucket scrap arrangement, EAF process area.",
+      "latency_ms": 2920
+    },
+    {
+      "id": "C08",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule says continue casting at 5% rise, candidate says intervene at 5% rise. Same trigger, opposite actions.",
+      "conditions_differ": false,
+      "shared_conditions": "SEN drive current 5% above baseline, all casts, drive current as clogging proxy.",
+      "latency_ms": 2813
+    },
+    {
+      "id": "C09",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule says reheat to 1180-1210°C, candidate says 1230-1260°C. Same operation, overlapping scope, incompatible temperature ranges.",
+      "conditions_differ": false,
+      "shared_conditions": "Reheat temperature before roughing stand entry for structural grades.",
+      "latency_ms": 3336
+    },
+    {
+      "id": "C10",
+      "expected": "contradicts",
+      "got": "contradicts",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule accepts cut-open pressure vessels, candidate rejects all pressure vessels with zero tolerance.",
+      "conditions_differ": false,
+      "shared_conditions": "All incoming scrap deliveries containing pressure vessels or sealed containers.",
+      "latency_ms": 3177
+    },
+    {
+      "id": "N01",
+      "expected": "complements",
+      "got": "complements",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "Both are scrap delivery rules but address different aspects - certificate verification vs physical inspection.",
+      "conditions_differ": false,
+      "shared_conditions": "",
+      "latency_ms": 2986
+    },
+    {
+      "id": "N02",
+      "expected": "refines",
+      "got": "refines",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New statement specifies the general 'bad scrap' rule with exact threshold (50% Sims) and speed reduction (15%).",
+      "conditions_differ": false,
+      "shared_conditions": "Slab casting when scrap quality is poor, targeting reduction of surface crack formation.",
+      "latency_ms": 3783
+    },
+    {
+      "id": "N03",
+      "expected": "complements",
+      "got": "complements",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule covers fresh lining (105 min total), candidate covers established lining (90 min). Different conditions, both valid.",
+      "conditions_differ": true,
+      "shared_conditions": "",
+      "latency_ms": 3946
+    },
+    {
+      "id": "N04",
+      "expected": "complements",
+      "got": "complements",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "Both about argon stirring but for different purposes - candidate for sampling prep, new rule for Ca injection prep.",
+      "conditions_differ": true,
+      "shared_conditions": "",
+      "latency_ms": 3586
+    },
+    {
+      "id": "N05",
+      "expected": "unrelated",
+      "got": "unrelated",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule is about roll surface inspection; candidate is about sample preparation for chemistry analysis.",
+      "conditions_differ": false,
+      "shared_conditions": "",
+      "latency_ms": 2964
+    },
+    {
+      "id": "N06",
+      "expected": "complements",
+      "got": "complements",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "Different speed ranges: candidate covers 1.2-1.6 m/min, new statement covers above 1.6 m/min. Both optimize negative strip time.",
+      "conditions_differ": true,
+      "shared_conditions": "",
+      "latency_ms": 3241
+    },
+    {
+      "id": "N07",
+      "expected": "unrelated",
+      "got": "unrelated",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New statement addresses EAF electrode consumption, candidate addresses hot strip mill coiler tension - different equipment and process areas.",
+      "conditions_differ": false,
+      "shared_conditions": "",
+      "latency_ms": 3396
+    },
+    {
+      "id": "N08",
+      "expected": "complements",
+      "got": "complements",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New rule about soft-bubble rinse timing and existing rule about stirring gas choice address different aspects of ladle treatment.",
+      "conditions_differ": false,
+      "shared_conditions": "",
+      "latency_ms": 3142
+    },
+    {
+      "id": "N09",
+      "expected": "refines",
+      "got": "refines",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "New statement specifies the exact friction threshold (15 kN) for the general 'abnormal friction' rule in the candidate.",
+      "conditions_differ": false,
+      "shared_conditions": "All grades during casting operations when mould friction monitoring is active.",
+      "latency_ms": 3499
+    },
+    {
+      "id": "N10",
+      "expected": "unrelated",
+      "got": "unrelated",
+      "correct": true,
+      "confidence": "high",
+      "explanation": "Near-duplicate of R-EAF-028: identical temperature range, scope, and core rationale for reheat temperature control.",
+      "conditions_differ": false,
+      "shared_conditions": "",
+      "latency_ms": 3577
+    }
+  ]
+}

@@ -1,0 +1,382 @@
+[
+  {
+    "id": "C01",
+    "expected": "contradicts",
+    "rationale": "Same metric (tap temp), opposing thresholds, same conditions.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Tap heat once bath reaches 1620°C minimum",
+      "scope": "All carbon-steel grades on EAF",
+      "rationale": "Below 1620°C the ladle skulls and the caster start-up suffers."
+    },
+    "candidate": {
+      "display_id": "R-EAF-014",
+      "type": "rule",
+      "status": "Established",
+      "title": "Never tap above 1610°C",
+      "scope": "Standard carbon grades on EAF",
+      "rationale": "Above 1610°C accelerates refractory wear and risks a runaway."
+    }
+  },
+  {
+    "id": "C02",
+    "expected": "contradicts",
+    "rationale": "Both rules govern aluminium addition timing for tap-temperature control with opposite claims.",
+    "newStatement": {
+      "type": "assertion",
+      "title": "Late aluminium addition raises tap temperature by 8-12°C",
+      "scope": "Observed across 30 heats with low-Si aim chemistry",
+      "rationale": ""
+    },
+    "candidate": {
+      "display_id": "A-EAF-003",
+      "type": "assertion",
+      "status": "Active",
+      "title": "Late aluminium addition lowers tap temperature 5-10°C",
+      "scope": "Low-Si aim chemistry",
+      "rationale": ""
+    }
+  },
+  {
+    "id": "C03",
+    "expected": "contradicts",
+    "rationale": "Same operation, mutually exclusive directives.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Inject carbon at 35 kg/min during slag foaming",
+      "scope": "Once flat bath is established and FeO climbs above 28%",
+      "rationale": "Sustains foam coverage so the arc is shielded."
+    },
+    "candidate": {
+      "display_id": "R-EAF-005",
+      "type": "rule",
+      "status": "Verified",
+      "title": "Stop carbon injection once flat bath is established",
+      "scope": "All EAF heats",
+      "rationale": "Continuing carbon injection in flat bath wastes carbon and overheats the slag."
+    }
+  },
+  {
+    "id": "C04",
+    "expected": "contradicts",
+    "rationale": "Same metric (mould level oscillation), opposing actions on the same trigger.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Increase casting speed when mould level oscillation exceeds 5 mm",
+      "scope": "Slab caster on peritectic grades",
+      "rationale": "Higher speed pulls more uniformly and dampens the oscillation."
+    },
+    "candidate": {
+      "display_id": "R-EAF-019",
+      "type": "rule",
+      "status": "Active",
+      "title": "Reduce casting speed by 0.2 m/min when oscillation exceeds 5 mm",
+      "scope": "Slab caster on peritectic grades",
+      "rationale": "Oscillation above 5 mm precedes sticker breakouts; slowing the cast lets the shell catch up."
+    }
+  },
+  {
+    "id": "C05",
+    "expected": "contradicts",
+    "rationale": "One forbids what the other prescribes for identical chemistry.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Tap structural grades at phosphorus 0.020% maximum",
+      "scope": "S355, A572 structural grades, EAF route",
+      "rationale": "Above 0.020% the customer rejects on cold-bend testing."
+    },
+    "candidate": {
+      "display_id": "R-EAF-006",
+      "type": "rule",
+      "status": "Established",
+      "title": "Do not tap structural grades above 0.015% phosphorus",
+      "scope": "S355, A572 structural grades, EAF route",
+      "rationale": "Phosphorus above 0.015% causes cold embrittlement."
+    }
+  },
+  {
+    "id": "C06",
+    "expected": "contradicts",
+    "rationale": "Direct logical conflict on alloy-addition order.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Add FeMn before FeSi during deoxidation",
+      "scope": "All alloyed heats requiring Si and Mn",
+      "rationale": "Manganese first protects against oxide loss."
+    },
+    "candidate": {
+      "display_id": "R-EAF-009",
+      "type": "rule",
+      "status": "Established",
+      "title": "Add FeSi before FeMn during deoxidation sequence",
+      "scope": "All heats requiring silicon and manganese alloying",
+      "rationale": "FeSi first deoxidises the bath. Adding FeMn into an oxidised bath wastes 30-40% of the manganese to slag as MnO."
+    }
+  },
+  {
+    "id": "C07",
+    "expected": "contradicts",
+    "rationale": "Mutually exclusive directives about scrap charging order.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Charge light scrap on top of heavy scrap in the first bucket",
+      "scope": "Two-bucket charging",
+      "rationale": "Light scrap on top melts faster and protects the electrodes from arc strikes on heavy bundles."
+    },
+    "candidate": {
+      "display_id": "R-EAF-001",
+      "type": "rule",
+      "status": "Established",
+      "title": "Charge heavy scrap on top of light scrap in the first bucket",
+      "scope": "Two-bucket charging, first bucket only",
+      "rationale": "Heavy scrap on top creates a solid bore-down path for the arc."
+    }
+  },
+  {
+    "id": "C08",
+    "expected": "contradicts",
+    "rationale": "Same threshold, opposing decisions.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Continue casting when SEN drive current rises 5% above baseline",
+      "scope": "All slab grades",
+      "rationale": "5% rise is within normal variation; intervening early causes more breakouts."
+    },
+    "candidate": {
+      "display_id": "R-EAF-018",
+      "type": "rule",
+      "status": "Active",
+      "title": "Intervene on SEN clogging once drive current climbs 5% above baseline",
+      "scope": "All casts; drive current as proxy for clogging",
+      "rationale": "Drive current climbing 5% above baseline means the SEN is partially blocked and needs swapping."
+    }
+  },
+  {
+    "id": "C09",
+    "expected": "contradicts",
+    "rationale": "Direct numeric/threshold conflict on the same metric.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Reheat slabs to 1180-1210°C before roughing",
+      "scope": "All structural grades",
+      "rationale": "Lower discharge temperature reduces scale formation and edge cracking."
+    },
+    "candidate": {
+      "display_id": "R-EAF-028",
+      "type": "rule",
+      "status": "Established",
+      "title": "Reheat slabs to 1230-1260°C before entry to roughing stand",
+      "scope": "Structural and commercial grades; tolerance ±15°C across slab",
+      "rationale": "Below 1230°C the slab is too stiff, causing mill motor overload."
+    }
+  },
+  {
+    "id": "C10",
+    "expected": "contradicts",
+    "rationale": "Two rules give incompatible verdicts on the same scrap input under the same conditions.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Accept scrap bundles containing sealed pressure vessels",
+      "scope": "All incoming scrap deliveries",
+      "rationale": "If the vessels are visually inspected as 'cut open', they pose no explosion risk."
+    },
+    "candidate": {
+      "display_id": "R-EAF-025",
+      "type": "rule",
+      "status": "Established",
+      "title": "Reject any scrap bundle containing sealed containers or pressure vessels",
+      "scope": "All incoming scrap deliveries; visual + X-ray where available",
+      "rationale": "Sealed containers in the charge bucket cause explosions during meltdown that damage the roof and risk operator injury. Zero tolerance."
+    }
+  },
+  {
+    "id": "N01",
+    "expected": "complements",
+    "rationale": "Both about scrap quality but address different aspects (composition vs procurement).",
+    "newStatement": {
+      "type": "rule",
+      "title": "Verify supplier certificates within 2 hours of delivery",
+      "scope": "All incoming scrap deliveries",
+      "rationale": "Late certificate logging creates traceability gaps if a heat fails downstream."
+    },
+    "candidate": {
+      "display_id": "R-EAF-008",
+      "type": "rule",
+      "status": "Established",
+      "title": "Inspect scrap for moisture and sealed containers before charging",
+      "scope": "All incoming scrap deliveries",
+      "rationale": "Moisture and sealed containers cause explosions during meltdown."
+    }
+  },
+  {
+    "id": "N02",
+    "expected": "refines",
+    "rationale": "New rule narrows scope of existing rule (specific number on a vague threshold).",
+    "newStatement": {
+      "type": "rule",
+      "title": "Reduce casting speed by 15% when Sims scrap exceeds 50% of charge mix",
+      "scope": "Slab caster on peritectic grades",
+      "rationale": "Above 50% Sims, residual copper drives surface cracks at standard speed."
+    },
+    "candidate": {
+      "display_id": "R-EAF-003",
+      "type": "rule",
+      "status": "Active",
+      "title": "Slow casting on bad scrap mixes",
+      "scope": "When scrap quality degrades",
+      "rationale": "Bad scrap means more residuals; slowing the cast reduces crack formation."
+    }
+  },
+  {
+    "id": "N03",
+    "expected": "complements",
+    "rationale": "Different conditions (fresh tundish vs after lining change) — both true under their respective scopes.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Increase tundish preheat by 15 minutes after lining change",
+      "scope": "Fresh tundish lining",
+      "rationale": "New lining sheds moisture and needs longer preheat to avoid cracking."
+    },
+    "candidate": {
+      "display_id": "R-EAF-011",
+      "type": "rule",
+      "status": "Active",
+      "title": "Standard tundish preheat is 90 minutes",
+      "scope": "Established tundish lining (>10 sequences)",
+      "rationale": "90 minutes is sufficient for a settled lining."
+    }
+  },
+  {
+    "id": "N04",
+    "expected": "complements",
+    "rationale": "Both about argon stirring but address different stages (pre-sample vs pre-Ca).",
+    "newStatement": {
+      "type": "rule",
+      "title": "Reduce argon stirring to soft bubble before calcium wire injection",
+      "scope": "All Ca-treated heats",
+      "rationale": "Aggressive stirring during Ca injection causes reoxidation."
+    },
+    "candidate": {
+      "display_id": "R-EAF-010",
+      "type": "rule",
+      "status": "Active",
+      "title": "Stir with argon at minimum 80 Nl/min for 3 minutes before sampling",
+      "scope": "Pre-sample stirring",
+      "rationale": "Insufficient stirring gives unrepresentative samples."
+    }
+  },
+  {
+    "id": "N05",
+    "expected": "unrelated",
+    "rationale": "Different process areas (Rolling vs Quality Lab) despite both touching 'samples'.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Sample roll surface after every coil change",
+      "scope": "Finishing stands F4-F7",
+      "rationale": "Surface scuffing after a coil change is the leading indicator of roll wear."
+    },
+    "candidate": {
+      "display_id": "R-EAF-033",
+      "type": "rule",
+      "status": "Active",
+      "title": "Dry pin samples 10 minutes at 105°C before spectrometer analysis",
+      "scope": "All chemistry samples; applies before OES analysis",
+      "rationale": "Residual moisture causes erroneous low readings for C and S."
+    }
+  },
+  {
+    "id": "N06",
+    "expected": "complements",
+    "rationale": "Both about caster mould oscillation but at different setpoints for different speeds.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Run mould oscillation at 220 strokes/min for casting speeds above 1.6 m/min",
+      "scope": "Slab caster, high-speed casting",
+      "rationale": "Higher frequency keeps negative-strip-time correct at high speeds."
+    },
+    "candidate": {
+      "display_id": "R-EAF-015",
+      "type": "rule",
+      "status": "Active",
+      "title": "Run mould oscillation at 180 strokes/min for casting speeds 1.2-1.6 m/min",
+      "scope": "Slab caster, standard speed range",
+      "rationale": "Negative strip time correct at this frequency for the standard range."
+    }
+  },
+  {
+    "id": "N07",
+    "expected": "unrelated",
+    "rationale": "Surface keyword overlap (electrode) but completely different equipment and concerns.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Keep electrode consumption below 1.3 kg/t",
+      "scope": "All EAF heats",
+      "rationale": "Excessive consumption signals oxidation losses."
+    },
+    "candidate": {
+      "display_id": "R-EAF-031",
+      "type": "rule",
+      "status": "Active",
+      "title": "Set coiler tension at 15% of strip yield strength below 3 mm gauge",
+      "scope": "Hot strip mill, thin gauge coiling",
+      "rationale": "Below 15% causes telescoping."
+    }
+  },
+  {
+    "id": "N08",
+    "expected": "complements",
+    "rationale": "Both about ladle furnace argon but for different purposes (stirring intensity vs. timing).",
+    "newStatement": {
+      "type": "rule",
+      "title": "Allow 5-minute soft-bubble rinse after final alloy addition",
+      "scope": "All heats; before sending to caster",
+      "rationale": "Lets alumina inclusions float to slag."
+    },
+    "candidate": {
+      "display_id": "R-EAF-013",
+      "type": "rule",
+      "status": "Reference",
+      "title": "Use argon stirring instead of nitrogen for low-N grades",
+      "scope": "Low-nitrogen grades only",
+      "rationale": "Nitrogen stirring adds 15-25 ppm N pickup per ladle treatment."
+    }
+  },
+  {
+    "id": "N09",
+    "expected": "refines",
+    "rationale": "New rule adds a specific numeric threshold to a more general existing rule.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Stop casting when mould friction exceeds 15 kN",
+      "scope": "All grades; monitored in real time via load cells",
+      "rationale": "Friction above 15 kN means inadequate lubrication or shell sticking."
+    },
+    "candidate": {
+      "display_id": "R-EAF-020",
+      "type": "rule",
+      "status": "Active",
+      "title": "Stop casting on abnormal mould friction",
+      "scope": "All grades",
+      "rationale": "Abnormal friction precedes breakouts."
+    }
+  },
+  {
+    "id": "N10",
+    "expected": "unrelated",
+    "rationale": "Pure near-duplicate test — should be classified 'unrelated' with 'Near-duplicate of...' prefix.",
+    "newStatement": {
+      "type": "rule",
+      "title": "Reheat slabs to 1230-1260°C prior to entering the roughing stand",
+      "scope": "Structural and commercial grades, tolerance ±15°C across slab thickness",
+      "rationale": "Below 1230°C the slab is too stiff and causes mill motor overload; above 1260°C the surface scales."
+    },
+    "candidate": {
+      "display_id": "R-EAF-028",
+      "type": "rule",
+      "status": "Established",
+      "title": "Reheat slabs to 1230-1260°C before entry to roughing stand",
+      "scope": "Structural and commercial grades; tolerance ±15°C across slab",
+      "rationale": "Below 1230°C the slab is too stiff, causing mill motor overload and edge cracks. Above 1260°C scale formation and grain growth degrade surface quality."
+    }
+  }
+]

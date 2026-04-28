@@ -4,7 +4,7 @@ import {
   sendPlantInvite, fetchPlantInvites, fetchOwnPendingInvites,
   approveInvite, rejectInvite,
 } from '../lib/auth.js'
-import { deletePlant } from '../lib/db.js'
+import { deletePlant, fetchPlantSettings, updatePlantSettings } from '../lib/db.js'
 
 const FNT = 'var(--md1-font-sans)'
 
@@ -259,6 +259,79 @@ function MembersList({ plantId, isAdmin }) {
   )
 }
 
+// ── KNOWLEDGE GOVERNANCE (admin only) ─────────────────────────────────────────
+
+function GovernancePanel({ plantId }) {
+  const [enabled, setEnabled] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchPlantSettings(plantId)
+      .then(s => { if (!cancelled) { setEnabled(s.contradictionCheckEnabled); setLoading(false) } })
+      .catch(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [plantId])
+
+  async function handleToggle() {
+    const next = !enabled
+    setEnabled(next); setError(null); setSaving(true)
+    try {
+      await updatePlantSettings(plantId, { contradictionCheckEnabled: next })
+    } catch (e) {
+      setError(e.message)
+      setEnabled(!next) // revert
+    }
+    setSaving(false)
+  }
+
+  if (loading) return null
+
+  return (
+    <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid #f0eeec' }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, fontFamily: FNT }}>
+        Knowledge Governance
+      </div>
+      <div style={{ padding: '12px 14px', border: '1px solid var(--md1-border)', borderRadius: 3, background: 'var(--md1-section-bg)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--md1-text)', fontFamily: FNT }}>
+              Auto-detect contradictions
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, marginTop: 4, lineHeight: 1.5 }}>
+              Before each new rule or assertion is saved, check it against existing knowledge and flag potential contradictions. Disable during initial bulk imports.
+            </div>
+          </div>
+          <button
+            onClick={handleToggle}
+            disabled={saving}
+            style={{
+              flexShrink: 0,
+              width: 44, height: 24, borderRadius: 12,
+              background: enabled ? 'var(--md1-accent)' : 'var(--md1-border)',
+              border: 'none', cursor: saving ? 'default' : 'pointer',
+              position: 'relative', transition: 'background 0.15s',
+            }}
+            aria-pressed={enabled}
+            title={enabled ? 'Disable contradiction checks' : 'Enable contradiction checks'}
+          >
+            <span style={{
+              position: 'absolute', top: 2, left: enabled ? 22 : 2,
+              width: 20, height: 20, borderRadius: '50%', background: '#fff',
+              transition: 'left 0.15s',
+            }} />
+          </button>
+        </div>
+        {error && (
+          <div style={{ marginTop: 8, fontSize: 11, color: '#c0392b', fontFamily: FNT }}>{error}</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── PENDING INVITES (admin only) ──────────────────────────────────────────────
 
 function PendingInvites({ plantId, onCountChange }) {
@@ -479,6 +552,9 @@ export default function PlantSettings({ membership, onClose, onPendingCountChang
               onCountChange={handleCountChange}
             />
           )}
+
+          {/* Knowledge Governance — admins only */}
+          {isAdmin && <GovernancePanel plantId={membership.plantId} />}
 
           {/* Danger Zone — admins only */}
           {isAdmin && (
