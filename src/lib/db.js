@@ -938,6 +938,20 @@ export async function fetchContradictions() {
   ;(rulesRes.data || []).forEach(r => { itemMap[r.id] = { id: r.id, displayId: r.display_id || r.id, type: 'rule', title: r.title, processArea: r.process_area, status: r.status } })
   ;(assertRes.data || []).forEach(a => { itemMap[a.id] = { id: a.id, displayId: a.display_id || a.id, type: 'assertion', title: a.title, processArea: a.process_area, status: a.status } })
 
+  // Resolve `flaggedBy` user IDs to display names. Anything that isn't a UUID
+  // (legacy strings) passes through unchanged; UUIDs that don't resolve to a
+  // profile (e.g. service-role auto-creates from extraction) become "M/D/1 system".
+  const flaggerIds = [...new Set(links.map(l => l.created_by).filter(Boolean))]
+  const resolve = await makeNameResolver(flaggerIds)
+  const flaggerLabel = (raw) => {
+    if (!raw) return 'M/D/1 system'
+    const resolved = resolve(raw)
+    // makeNameResolver returns the input unchanged when nothing matches.
+    // For UUIDs with no profile, that's the raw UUID — replace with system label.
+    if (isUUID(raw) && resolved === raw) return 'M/D/1 system'
+    return resolved
+  }
+
   // Only return pairs where both items belong to this plant
   return links
     .filter(l => itemMap[l.source_id] && itemMap[l.target_id])
@@ -945,7 +959,7 @@ export async function fetchContradictions() {
       id: l.id,
       itemA: itemMap[l.source_id],
       itemB: itemMap[l.target_id],
-      flaggedBy: l.created_by,
+      flaggedBy: flaggerLabel(l.created_by),
       flaggedAt: l.created_at,
     }))
 }
@@ -1290,23 +1304,17 @@ export async function createRule({ title, category, processArea, scope, rational
   return normaliseRule(data, evidenceInserts.map(e => ({ ...e, parent_id: id })), [{ ...versionRow, target_id: id }], [], resolve)
 }
 
-// Helper: create the links the contradiction-check modal asked for, and
-// flip statuses to 'Contradicted' on both items when the relationship is
-// 'contradicts'. Soft-fails on any individual link error.
+// Helper: create the links the contradiction-check modal asked for. The
+// 'isContradicted' flag is computed at fetch time from the links table, so
+// the lifecycle status (Proposed/Active/Verified/etc.) is left alone — the
+// red "Contradicted" badge in the UI comes from the link presence, not from
+// overwriting the rule's actual status. Soft-fails on any individual link error.
 async function applyPostCreateLinks(sourceType, sourceId, links) {
   if (!Array.isArray(links) || !links.length) return
   for (const l of links) {
     if (!l?.targetType || !l?.targetId || !l?.relType) continue
     try {
       await saveLink(sourceType, sourceId, l.targetType, l.targetId, l.relType, l.comment || '')
-      if (l.relType === 'contradicts') {
-        const sTbl = sourceType === 'rule' ? 'rules' : 'assertions'
-        const tTbl = l.targetType === 'rule' ? 'rules' : 'assertions'
-        await Promise.all([
-          supabase.from(sTbl).update({ status: 'Contradicted' }).eq('id', sourceId),
-          supabase.from(tTbl).update({ status: 'Contradicted' }).eq('id', l.targetId),
-        ])
-      }
     } catch (e) {
       console.warn('[applyPostCreateLinks] link failed:', e.message)
     }
