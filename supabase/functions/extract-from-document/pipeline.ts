@@ -1,25 +1,21 @@
 // =============================================================================
-// extract-from-document — full-mode pipeline
+// extract-from-document — pipeline (self-chaining, per-chunk checkpointed)
 //
-// Steps:
-//   1. Download the file from Supabase Storage (plant-documents bucket).
-//   2. Extract text → an array of { pageNum, text } pages.
-//      • PDF  → npm:unpdf (pure JS, edge-compatible, page-aware)
-//      • TXT  → native decode; pageNum=null
-//      • DOCX → not supported in v1 (mammoth has Node deps that fail in Deno);
-//               returns a clear error so the UI can surface "convert to PDF".
-//   3. Chunk at 4000 chars with 500-char overlap, tracking which page each
-//      chunk's start offset falls on.
-//   4. For each chunk: call Claude with the prompt+tool, with exponential
-//      backoff + jitter on 429, max 3 retries per chunk. Failed chunks are
-//      counted but do not abort the run.
-//   5. Dedupe across all chunks:
-//        Tier 1 — exact source_excerpt match → drop later occurrences.
-//        Tier 2 — (type + normalised title + first 60 chars of content) →
-//                 keep higher confidence; on tie, keep the first; preserve
-//                 first occurrence's source_excerpt + source_page.
-//   6. Insert candidates into extraction_candidates.
-//   7. Update the document row with final status + counters.
+// The Anthropic 4k-output-tokens/min ceiling forces serial chunking; combined
+// with the Supabase edge function wall-clock budget (~150s free / ~400s paid),
+// a single invocation cannot process arbitrarily many chunks. So:
+//
+//   • Each invocation processes up to BATCH_PER_INVOCATION chunks (2).
+//   • Candidates from each chunk are inserted IMMEDIATELY (per-chunk
+//     checkpoint) so a worker recycle cannot lose completed work.
+//   • Progress is tracked in documents.extraction_progress.
+//   • If chunks remain, the function self-triggers via HTTP fire-and-forget.
+//   • The final invocation runs the dedup pass and finalises the document.
+//
+// Public API used by index.ts:
+//   extractText, chunkPages, dedupe — used in the smoke path
+//   processNextBatch(...)           — per-invocation worker
+//   finalize(...)                   — runs dedup + flips status
 // =============================================================================
 
 import {
@@ -29,12 +25,15 @@ import {
   type ExtractMeta,
 } from './prompt.ts'
 
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 // ── Constants ───────────────────────────────────────────────────────────────
 
 export const CHUNK_SIZE = 4000
 export const CHUNK_OVERLAP = 500
-export const MAX_CHUNKS_V1 = 25
-export const RETRY_MAX = 3
+export const MAX_CHUNKS_V1 = 50           // hard upper bound; with batching we can support more docs
+export const BATCH_PER_INVOCATION = 2     // chunks per edge function invocation
+export const RETRY_MAX = 3                // attempts per chunk on 429
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -54,52 +53,40 @@ export type Candidate = {
   rationale: string | null
   source_excerpt: string
   confidence: 'high' | 'medium' | 'low'
-  // Added by the pipeline:
   source_page?: number | null
   source_section?: string | null
-  _chunk?: number
 }
-export type ExtractionResult = {
-  candidates: Candidate[]
-  raw_count: number
-  deduped_count: number
+export type ExtractionProgress = {
   total_chunks: number
-  failed_chunks: number
-  total_ms: number
+  processed: number[]    // chunk indices successfully processed
+  failed: number[]       // chunk indices that exhausted retries
+  started_at: string
 }
 
 // ── Text extraction ────────────────────────────────────────────────────────
 
 export async function extractText(buffer: ArrayBuffer, mimeType: string): Promise<Page[]> {
-  if (mimeType === 'application/pdf') {
-    return extractPdf(buffer)
-  }
-  if (mimeType === 'text/plain') {
-    return [{ pageNum: null, text: new TextDecoder().decode(buffer) }]
-  }
+  if (mimeType === 'application/pdf') return extractPdf(buffer)
+  if (mimeType === 'text/plain')      return [{ pageNum: null, text: new TextDecoder().decode(buffer) }]
   if (
     mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     || mimeType === 'application/msword'
   ) {
-    throw new Error('DOCX is not supported in v1. Save the document as PDF and re-upload.')
+    throw new Error('DOCX is not supported in v1. Save as PDF and re-upload.')
   }
   throw new Error(`Unsupported MIME type: ${mimeType}. Supported: application/pdf, text/plain.`)
 }
 
 async function extractPdf(buffer: ArrayBuffer): Promise<Page[]> {
-  // unpdf is a pure-JS PDF text extractor designed for serverless/edge runtimes.
   const { extractText, getDocumentProxy } = await import('npm:unpdf@0.12.1')
   const pdf = await getDocumentProxy(new Uint8Array(buffer))
   const { text } = await extractText(pdf, { mergePages: false })
-  // text is string[] when mergePages: false
-  const pages = (text as string[]).map((t, i) => ({ pageNum: i + 1, text: t || '' }))
-  return pages
+  return (text as string[]).map((t, i) => ({ pageNum: i + 1, text: t || '' }))
 }
 
 // ── Chunker w/ page tracking ────────────────────────────────────────────────
 
 export function chunkPages(pages: Page[]): { chunks: Chunk[]; totalChars: number } {
-  // Concatenate pages with explicit boundaries; remember each page's start offset.
   let fullText = ''
   const offsets: { pageNum: number | null; start: number; end: number }[] = []
   for (const p of pages) {
@@ -110,12 +97,10 @@ export function chunkPages(pages: Page[]): { chunks: Chunk[]; totalChars: number
   fullText = fullText.trimEnd()
 
   const chunks: Chunk[] = []
-  let i = 0
-  let idx = 0
+  let i = 0, idx = 0
   while (i < fullText.length) {
     const end = Math.min(i + CHUNK_SIZE, fullText.length)
-    const text = fullText.slice(i, end)
-    chunks.push({ index: idx, start: i, end, text, page: pageForOffset(offsets, i) })
+    chunks.push({ index: idx, start: i, end, text: fullText.slice(i, end), page: pageForOffset(offsets, i) })
     if (end === fullText.length) break
     i = end - CHUNK_OVERLAP
     idx++
@@ -127,15 +112,15 @@ function pageForOffset(
   offsets: { pageNum: number | null; start: number; end: number }[],
   off: number,
 ): number | null {
-  for (const o of offsets) {
-    if (off >= o.start && off < o.end) return o.pageNum
-  }
+  for (const o of offsets) if (off >= o.start && off < o.end) return o.pageNum
   return offsets[offsets.length - 1]?.pageNum ?? null
 }
 
-// ── Claude call with retry ──────────────────────────────────────────────────
+// ── Claude call with exp-backoff + jitter retry ─────────────────────────────
 
-export async function callClaude(opts: {
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
+
+async function callClaude(opts: {
   chunk: string
   meta: ExtractMeta
   source_section?: string
@@ -182,21 +167,16 @@ export async function callClaude(opts: {
   return { candidates: toolUse.input?.candidates ?? [], usage: data.usage, ms }
 }
 
-const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
-
-export async function callClaudeWithRetry(opts: Parameters<typeof callClaude>[0]) {
+async function callClaudeWithRetry(opts: Parameters<typeof callClaude>[0]) {
   for (let attempt = 0; attempt <= RETRY_MAX; attempt++) {
     try {
       return await callClaude(opts)
     } catch (e: any) {
       const is429 = e.status === 429 || /rate_limit|429/i.test(e.body || e.message || '')
       if (!is429 || attempt >= RETRY_MAX) throw e
-      // Exponential backoff with jitter: 30s, 60s, 120s base + ~0–10s jitter.
       const base = 30_000 * Math.pow(2, attempt)
       const jitter = Math.floor(Math.random() * 10_000)
-      const wait = base + jitter
-      console.log(`[extract] 429 on attempt ${attempt + 1}, waiting ${wait}ms`)
-      await sleep(wait)
+      await sleep(base + jitter)
     }
   }
   throw new Error('unreachable')
@@ -207,29 +187,21 @@ export async function callClaudeWithRetry(opts: Parameters<typeof callClaude>[0]
 const CONF_RANK: Record<string, number> = { high: 3, medium: 2, low: 1 }
 
 function normalize(s: string | null | undefined): string {
-  return (s || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return (s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
-export function dedupe(candidates: Candidate[]): Candidate[] {
+export function dedupe<T extends Candidate & { id?: string }>(candidates: T[]): T[] {
   // Tier 1 — exact source_excerpt match. Keep first occurrence.
   const seen1 = new Set<string>()
-  const tier1: Candidate[] = []
+  const tier1: T[] = []
   for (const c of candidates) {
-    const key = c.source_excerpt
-    if (key && seen1.has(key)) continue
-    seen1.add(key)
+    if (c.source_excerpt && seen1.has(c.source_excerpt)) continue
+    seen1.add(c.source_excerpt)
     tier1.push(c)
   }
-
   // Tier 2 — (type + normalized title + first 60 chars of normalized content).
-  // On collision, keep the higher-confidence candidate's payload but preserve
-  // the first occurrence's source_excerpt + source_page (canonical citation).
-  const seen2 = new Map<string, Candidate>()
-  const tier2: Candidate[] = []
+  const seen2 = new Map<string, T>()
+  const tier2: T[] = []
   for (const c of tier1) {
     const key = `${c.type}::${normalize(c.title)}::${normalize(c.content).slice(0, 60)}`
     const existing = seen2.get(key)
@@ -241,7 +213,8 @@ export function dedupe(candidates: Candidate[]): Candidate[] {
     const newRank = CONF_RANK[c.confidence] ?? 0
     const oldRank = CONF_RANK[existing.confidence] ?? 0
     if (newRank > oldRank) {
-      const merged: Candidate = {
+      // Keep new payload but preserve first's source_excerpt + source_page.
+      const merged: T = {
         ...c,
         source_excerpt: existing.source_excerpt,
         source_page: existing.source_page,
@@ -250,79 +223,173 @@ export function dedupe(candidates: Candidate[]): Candidate[] {
       if (idx >= 0) tier2[idx] = merged
       seen2.set(key, merged)
     }
-    // else: tie or lower — keep existing, drop new.
   }
-
   return tier2
 }
 
-// ── Top-level pipeline ──────────────────────────────────────────────────────
+// ── Per-invocation worker ───────────────────────────────────────────────────
 
-export type RunPipelineOpts = {
-  buffer: ArrayBuffer
-  mimeType: string
-  meta: ExtractMeta
+export type WorkerOpts = {
+  supabase: SupabaseClient
+  doc: any
   apiKey: string
   model: string
-  log?: (msg: string) => void
+  selfTrigger: () => Promise<void>
+  log?: (m: string) => void
 }
 
-export async function runPipeline(opts: RunPipelineOpts): Promise<ExtractionResult> {
+export async function processNextBatch(opts: WorkerOpts): Promise<{
+  done: boolean
+  processedThisRun: number[]
+  failedThisRun: number[]
+  totalChunks: number
+}> {
   const log = opts.log || (() => {})
-  const t0 = Date.now()
+  const { supabase, doc } = opts
 
-  log(`[pipeline] extracting text (mime=${opts.mimeType})…`)
-  const pages = await extractText(opts.buffer, opts.mimeType)
+  // 1. Re-extract & re-chunk (cheap; PDF parse is sub-second for our sizes).
+  log(`download ${doc.file_path}`)
+  const { data: blob, error: dlErr } = await supabase.storage
+    .from('plant-documents').download(doc.file_path)
+  if (dlErr || !blob) throw new Error(`Storage download failed: ${dlErr?.message || 'no blob'}`)
+  const buffer = await blob.arrayBuffer()
+  const pages = await extractText(buffer, doc.mime_type)
+  const { chunks } = chunkPages(pages)
+  log(`pages=${pages.length} chunks=${chunks.length}`)
 
-  log(`[pipeline] ${pages.length} page(s) extracted; chunking…`)
-  const { chunks, totalChars } = chunkPages(pages)
-
-  log(`[pipeline] ${chunks.length} chunk(s), ${totalChars} chars total`)
   if (chunks.length > MAX_CHUNKS_V1) {
-    throw new Error(
-      `Document is too long for v1: ${chunks.length} chunks (max ${MAX_CHUNKS_V1}). `
-      + `Split the document and re-upload.`,
-    )
+    throw new Error(`Document too long: ${chunks.length} chunks (max ${MAX_CHUNKS_V1}).`)
   }
 
-  const allCandidates: Candidate[] = []
-  let failed = 0
-  for (const c of chunks) {
-    log(`[pipeline] chunk ${c.index + 1}/${chunks.length} (page ${c.page ?? '-'}, ${c.text.length} chars)`)
+  // 2. Determine progress.
+  const progress: ExtractionProgress = doc.extraction_progress || {
+    total_chunks: chunks.length,
+    processed: [],
+    failed: [],
+    started_at: new Date().toISOString(),
+  }
+  const remaining = chunks.filter(
+    c => !progress.processed.includes(c.index) && !progress.failed.includes(c.index)
+  )
+  log(`remaining chunks: ${remaining.length} of ${chunks.length}`)
+
+  if (remaining.length === 0) {
+    return { done: true, processedThisRun: [], failedThisRun: [], totalChunks: chunks.length }
+  }
+
+  // 3. Lookup plant for prompt context (once per invocation).
+  const { data: plant } = await supabase
+    .from('plants').select('name, industry').eq('id', doc.plant_id).single()
+  const meta: ExtractMeta = {
+    plant_name:    plant?.name,
+    industry:      plant?.industry,
+    document_type: doc.document_type,
+    process_area:  doc.process_area,
+  }
+
+  // 4. Process up to BATCH_PER_INVOCATION chunks.
+  const batch = remaining.slice(0, BATCH_PER_INVOCATION)
+  const processedThisRun: number[] = []
+  const failedThisRun: number[] = []
+
+  for (const c of batch) {
+    log(`chunk ${c.index + 1}/${chunks.length} (${c.text.length} chars, page ${c.page ?? '-'})`)
     try {
       const { candidates, ms, usage } = await callClaudeWithRetry({
-        chunk: c.text,
-        meta: opts.meta,
+        chunk: c.text, meta,
         source_section: c.page ? `Page ${c.page}` : `Chunk ${c.index + 1}`,
         source_page: c.page,
-        apiKey: opts.apiKey,
-        model: opts.model,
+        apiKey: opts.apiKey, model: opts.model,
       })
-      log(`[pipeline]   → ${candidates.length} cand, ${ms}ms, in=${usage?.input_tokens}/out=${usage?.output_tokens}`)
-      for (const cand of candidates) {
-        allCandidates.push({
-          ...cand,
-          source_page: c.page,
+      log(`  → ${candidates.length} cand, ${ms}ms (in=${usage?.input_tokens}/out=${usage?.output_tokens})`)
+
+      if (candidates.length > 0) {
+        const rows = candidates.map(cand => ({
+          document_id:    doc.id,
+          type:           cand.type,
+          title:          cand.title,
+          content:        cand.content,
+          scope:          cand.scope ?? null,
+          rationale:      cand.rationale ?? null,
+          source_excerpt: cand.source_excerpt,
+          source_page:    c.page ?? null,
           source_section: c.page ? `Page ${c.page}` : `Chunk ${c.index + 1}`,
-          _chunk: c.index + 1,
-        })
+          confidence:     cand.confidence,
+          status:         'pending_review',
+        }))
+        const { error } = await supabase.from('extraction_candidates').insert(rows)
+        if (error) throw new Error(`Insert failed: ${error.message}`)
       }
+      processedThisRun.push(c.index)
     } catch (e: any) {
-      failed++
-      log(`[pipeline]   ✗ chunk ${c.index + 1} failed after retries: ${e?.message || e}`)
+      log(`  ✗ chunk ${c.index + 1} failed: ${e?.message || e}`)
+      failedThisRun.push(c.index)
+    }
+
+    // Checkpoint progress after each chunk.
+    progress.processed = [...progress.processed, ...processedThisRun.filter(i => !progress.processed.includes(i))]
+    progress.failed    = [...progress.failed,    ...failedThisRun.filter(i => !progress.failed.includes(i))]
+    await supabase.from('documents')
+      .update({ extraction_progress: progress })
+      .eq('id', doc.id)
+  }
+
+  const allDoneCount = progress.processed.length + progress.failed.length
+  return {
+    done: allDoneCount >= chunks.length,
+    processedThisRun, failedThisRun,
+    totalChunks: chunks.length,
+  }
+}
+
+// ── Finalize: dedup + flip status ───────────────────────────────────────────
+
+export async function finalize(supabase: SupabaseClient, doc: any, log?: (m: string) => void) {
+  const l = log || (() => {})
+  const { data: rows, error } = await supabase
+    .from('extraction_candidates')
+    .select('id, type, title, content, scope, rationale, source_excerpt, source_page, source_section, confidence, status, created_at')
+    .eq('document_id', doc.id)
+    .neq('status', 'promoted')   // never touch promoted candidates
+    .order('created_at', { ascending: true })
+  if (error) throw new Error(`Final fetch failed: ${error.message}`)
+
+  const raw = (rows || []) as any[]
+  const deduped = dedupe(raw as any)
+  const dropIds = raw.filter(r => !deduped.some((d: any) => d.id === r.id)).map(r => r.id)
+  l(`finalize: ${raw.length} raw → ${deduped.length} kept (${dropIds.length} dropped)`)
+
+  if (dropIds.length > 0) {
+    // Delete in batches of 200 to stay under URL/payload limits.
+    for (let i = 0; i < dropIds.length; i += 200) {
+      const batch = dropIds.slice(i, i + 200)
+      const { error: delErr } = await supabase
+        .from('extraction_candidates').delete().in('id', batch)
+      if (delErr) throw new Error(`Delete failed: ${delErr.message}`)
     }
   }
 
-  log(`[pipeline] dedup: ${allCandidates.length} raw…`)
-  const deduped = dedupe(allCandidates)
-  log(`[pipeline] dedup: ${deduped.length} kept (${allCandidates.length - deduped.length} dropped)`)
+  const progress: ExtractionProgress | null = doc.extraction_progress || null
+  const total = progress?.total_chunks ?? 0
+  const failed = progress?.failed?.length ?? 0
 
-  return {
-    candidates: deduped,
-    raw_count: allCandidates.length,
-    deduped_count: deduped.length,
-    total_chunks: chunks.length,
-    failed_chunks: failed,
-    total_ms: Date.now() - t0,
+  let status: string
+  let warning: string | null = null
+  if (total > 0 && failed === total) {
+    status = 'failed'
+    warning = `All ${total} chunks failed.`
+  } else if (deduped.length === 0 && failed === 0) {
+    status = 'review_complete'
+  } else {
+    status = 'ready_for_review'
+    if (failed > 0) warning = `${failed} of ${total} chunks failed after retries.`
   }
+
+  await supabase.from('documents').update({
+    status,
+    candidate_count:     deduped.length,
+    extraction_error:    warning,
+    extraction_progress: null,
+  }).eq('id', doc.id)
+  l(`finalize: status=${status}`)
 }
