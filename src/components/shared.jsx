@@ -40,7 +40,10 @@ export const PillFilter = ({ options, selected, onToggle, colorFn, label, scroll
             data-active={a}
             style={{
               padding: "3px 10px", borderRadius: 3, fontSize: 11, fontWeight: a ? 700 : 400,
-              background: a ? c.bg : "transparent", color: a ? c.text : "var(--md1-muted)",
+              // Inline background only when active. Inactive pills inherit
+              // the transparent default so .md1-hoverable-strong:hover wins.
+              background: a ? c.bg : undefined,
+              color: a ? c.text : "var(--md1-muted)",
               border: a ? `1px solid ${c.text}44` : "1px solid var(--md1-border)",
               cursor: "pointer", fontFamily: FNT, flexShrink: 0,
               minHeight: 32,

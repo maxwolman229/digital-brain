@@ -433,7 +433,11 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     width: '100%', padding: '8px 12px', marginBottom: 2,
                     borderRadius: 3, fontSize: 12, fontWeight: view === tab.id ? 700 : 400,
-                    background: view === tab.id ? '#f0eeec' : 'transparent',
+                    // Inline background only when active. Inactive items get
+                    // their hover bg from .md1-hoverable-strong:hover; setting
+                    // 'transparent' inline would beat the CSS class on
+                    // specificity and suppress the hover.
+                    background: view === tab.id ? '#f0eeec' : undefined,
                     color: view === tab.id ? 'var(--md1-primary)' : '#555',
                     border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FNT,
                     boxSizing: 'border-box',
@@ -743,7 +747,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       width: '100%', padding: '12px 20px', minHeight: 52,
-                      background: view === tab.id ? '#f0eeec' : 'transparent',
+                      background: view === tab.id ? '#f0eeec' : undefined,
                       border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FNT,
                       fontSize: 14, fontWeight: view === tab.id ? 700 : 400,
                       color: view === tab.id ? 'var(--md1-primary)' : '#333',
