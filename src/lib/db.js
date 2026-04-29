@@ -224,6 +224,7 @@ function normaliseAssertion(a, evidence = [], versions = [], linkedRules = [], r
     category: a.category,
     processArea: a.process_area,
     scope: a.scope,
+    rationale: a.rationale,
     tags: a.tags || [],
     photos: a.photos || [],
     createdBy: resolve(a.created_by),

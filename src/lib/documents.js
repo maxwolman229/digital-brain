@@ -454,7 +454,8 @@ async function promoteCandidate({ candidate, doc, plantId, userId, dedupIndex })
       source_extraction_candidate_id: candidate.id,
       was_edited_from_source:         !!candidate.hasEdits,
     }
-    if (candidate.type === 'rule') row.rationale = rationaleCombined
+    // rules + assertions both store rationale (assertions column added in 038).
+    row.rationale = rationaleCombined
 
     const insTable = candidate.type === 'rule' ? 'rules' : 'assertions'
     const ins = await supabase.from(insTable).insert(row)
