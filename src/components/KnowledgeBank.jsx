@@ -613,7 +613,9 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             <DocumentIngestionView
               key={activePlantId}
               plantId={activePlantId}
+              plantName={activeMembership?.plantName || user?.plantName}
               processAreas={vocabulary.processAreas}
+              onNavigate={switchView}
             />
           )}
 

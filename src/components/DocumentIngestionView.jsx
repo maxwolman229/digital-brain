@@ -8,6 +8,7 @@ import {
   ACCEPTED_MIME, MAX_UPLOAD_BYTES, DOCUMENT_TYPES, STATUS_DISPLAY,
 } from '../lib/documents.js'
 import DocumentReviewView from './DocumentReviewView.jsx'
+import DocumentPromoteView from './DocumentPromoteView.jsx'
 
 // =============================================================================
 // Document Ingestion (admin-only).
@@ -24,14 +25,27 @@ import DocumentReviewView from './DocumentReviewView.jsx'
 const POLL_INTERVAL_MS = 8000
 const STALL_POLLS = 2
 
-export default function DocumentIngestionView({ plantId, processAreas }) {
+export default function DocumentIngestionView({ plantId, plantName, processAreas, onNavigate }) {
   const [reviewingDocId, setReviewingDocId] = useState(null)
+  const [promoting, setPromoting] = useState(false)
+
+  if (promoting) {
+    return (
+      <DocumentPromoteView
+        plantId={plantId}
+        plantName={plantName}
+        onBack={() => setPromoting(false)}
+        onViewPromotedRules={() => { setPromoting(false); onNavigate?.('rules') }}
+      />
+    )
+  }
   if (reviewingDocId) {
     return (
       <DocumentReviewView
         docId={reviewingDocId}
         plantId={plantId}
         onBack={() => setReviewingDocId(null)}
+        onPromote={() => { setReviewingDocId(null); setPromoting(true) }}
       />
     )
   }
@@ -40,13 +54,14 @@ export default function DocumentIngestionView({ plantId, processAreas }) {
       plantId={plantId}
       processAreas={processAreas}
       onOpenDoc={setReviewingDocId}
+      onPromote={() => setPromoting(true)}
     />
   )
 }
 
 // ── Landing ─────────────────────────────────────────────────────────────────
 
-function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc }) {
+function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc, onPromote }) {
   const [docs, setDocs] = useState([])
   const [counts, setCounts] = useState({})
   const [loading, setLoading] = useState(true)
@@ -172,7 +187,7 @@ function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc }) {
         <PromotionCallout
           approved={promotionReady.approved}
           docs={promotionReady.docs}
-          onClick={() => alert('Promote screen — coming soon')}
+          onClick={onPromote}
         />
       )}
       {removing && (

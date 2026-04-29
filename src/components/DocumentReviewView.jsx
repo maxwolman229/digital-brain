@@ -29,7 +29,7 @@ const DEFAULT_FILTERS = {
 
 const CONF_RANK = { high: 3, medium: 2, low: 1 }
 
-export default function DocumentReviewView({ docId, plantId, onBack }) {
+export default function DocumentReviewView({ docId, plantId, onBack, onPromote }) {
   const [doc,        setDoc]        = useState(null)
   const [cands,      setCands]      = useState([])
   const [editsByCand,setEditsByCand]= useState({})  // candId -> [edits]
@@ -232,6 +232,31 @@ export default function DocumentReviewView({ docId, plantId, onBack }) {
 
       {/* Scrollable candidate list */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 24px 24px', WebkitOverflowScrolling: 'touch' }}>
+        {/* All-reviewed banner: surfaces when there's nothing pending and at
+            least one approved candidate ready to promote. */}
+        {stats.pending === 0 && stats.approved > 0 && onPromote && (
+          <div style={{
+            marginBottom: 14, padding: '12px 16px',
+            background: '#dff2ed', border: '1px solid var(--md1-accent)',
+            borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 12, flexWrap: 'wrap', fontFamily: FNT,
+          }}>
+            <div style={{ fontSize: 12, color: '#1a4a3a', lineHeight: 1.5 }}>
+              <strong>All candidates reviewed for this document.</strong>{' '}
+              {stats.approved} approved candidate{stats.approved === 1 ? '' : 's'} ready to promote.
+            </div>
+            <button
+              onClick={onPromote}
+              style={{
+                padding: '7px 14px', fontSize: 12, fontWeight: 700,
+                background: 'var(--md1-accent-deep)', color: '#fff',
+                border: 'none', borderRadius: 3, cursor: 'pointer', fontFamily: FNT,
+              }}
+            >
+              Review and promote →
+            </button>
+          </div>
+        )}
         {visible.length === 0 ? (
           <EmptyState filters={filters} stats={stats} />
         ) : (
