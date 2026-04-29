@@ -204,7 +204,8 @@ export async function getSignedUrl(filePath, expiresIn = 300) {
   })
   const data = await res.json()
   if (!res.ok) throw new Error(`signed URL failed: ${data?.message || res.status}`)
-  // Storage returns either signedURL (legacy) or signedUrl (newer); both are relative.
+  // Storage returns either signedURL (legacy) or signedUrl (newer); both are
+  // relative to /storage/v1 (e.g. "/object/sign/<bucket>/<path>?token=…").
   const rel = data.signedURL || data.signedUrl
-  return rel.startsWith('http') ? rel : `${SUPABASE_URL}${rel}`
+  return rel.startsWith('http') ? rel : `${SUPABASE_URL}/storage/v1${rel}`
 }
