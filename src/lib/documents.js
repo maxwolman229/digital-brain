@@ -196,6 +196,106 @@ async function deleteStorageObject(path) {
 
 // ── Signed URL for "view original" ──────────────────────────────────────────
 
+// ── Candidates: read ────────────────────────────────────────────────────────
+
+export async function fetchCandidates(documentId) {
+  const r = await supabase
+    .from('extraction_candidates')
+    .select('*')
+    .eq('document_id', documentId)
+    .order('created_at', { ascending: true })
+  if (r.error) throw new Error(`fetchCandidates failed: ${r.error.message}`)
+  return r.data || []
+}
+
+export async function fetchCandidateEdits(candidateId) {
+  const r = await supabase
+    .from('extraction_candidate_edits')
+    .select('*')
+    .eq('candidate_id', candidateId)
+    .order('version_number', { ascending: true })
+  if (r.error) throw new Error(`fetchCandidateEdits failed: ${r.error.message}`)
+  return r.data || []
+}
+
+// ── Candidates: write ───────────────────────────────────────────────────────
+
+export async function updateCandidateStatus(id, nextStatus, reviewerUserId) {
+  if (!['pending_review', 'approved', 'rejected'].includes(nextStatus)) {
+    throw new Error(`Bad status: ${nextStatus}`)
+  }
+  const patch = {
+    status: nextStatus,
+    reviewed_by: nextStatus === 'pending_review' ? null : reviewerUserId,
+    reviewed_at: nextStatus === 'pending_review' ? null : new Date().toISOString(),
+  }
+  const r = await supabase.from('extraction_candidates').update(patch).eq('id', id)
+  if (r.error) throw new Error(`updateCandidateStatus failed: ${r.error.message}`)
+}
+
+export async function bulkUpdateCandidateStatus(ids, nextStatus, reviewerUserId) {
+  if (!ids?.length) return
+  if (!['approved', 'rejected'].includes(nextStatus)) throw new Error(`Bad bulk status: ${nextStatus}`)
+  const patch = {
+    status: nextStatus,
+    reviewed_by: reviewerUserId,
+    reviewed_at: new Date().toISOString(),
+  }
+  // PostgREST in() supports up to a few thousand IDs comfortably.
+  const r = await supabase.from('extraction_candidates').update(patch).in('id', ids)
+  if (r.error) throw new Error(`bulkUpdateCandidateStatus failed: ${r.error.message}`)
+}
+
+// Edit + approve atomically (best-effort: insert audit row, then update fields).
+// Diff is computed client-side from `before` vs `next`. If no fields changed,
+// just mark approved without writing an audit row.
+const EDITABLE_FIELDS = ['title', 'content', 'scope', 'rationale']
+
+export function diffCandidate(before, next) {
+  const changes = {}
+  for (const f of EDITABLE_FIELDS) {
+    const oldV = before[f] ?? null
+    const newV = next[f] ?? null
+    if ((oldV ?? '') !== (newV ?? '')) {
+      changes[f] = { old: oldV, new: newV }
+    }
+  }
+  return changes
+}
+
+export async function editAndApproveCandidate({
+  candidate, edits, reason, reviewerUserId,
+}) {
+  const changes = diffCandidate(candidate, edits)
+  // Insert audit row first (only if anything actually changed).
+  if (Object.keys(changes).length > 0) {
+    if (!reason || !reason.trim()) throw new Error('Reason required for edits')
+    const ins = await supabase.from('extraction_candidate_edits').insert({
+      candidate_id: candidate.id,
+      edited_by:    reviewerUserId,
+      field_changes: changes,
+      reason:       reason.trim(),
+      // version_number is auto-assigned by trigger
+    })
+    if (ins.error) throw new Error(`audit insert failed: ${ins.error.message}`)
+  }
+  // Apply edits + flip to approved.
+  const patch = {
+    title:       edits.title       ?? candidate.title,
+    content:     edits.content     ?? candidate.content,
+    scope:       edits.scope       ?? candidate.scope,
+    rationale:   edits.rationale   ?? candidate.rationale,
+    status:      'approved',
+    reviewed_by: reviewerUserId,
+    reviewed_at: new Date().toISOString(),
+  }
+  const upd = await supabase.from('extraction_candidates').update(patch).eq('id', candidate.id)
+  if (upd.error) throw new Error(`candidate update failed: ${upd.error.message}`)
+  return { changedFields: Object.keys(changes) }
+}
+
+// ── Signed URLs ─────────────────────────────────────────────────────────────
+
 export async function getSignedUrl(filePath, expiresIn = 300) {
   const res = await authFetch(`${STORAGE_URL}/object/sign/${BUCKET}/${encodeURI(filePath)}`, {
     method: 'POST',

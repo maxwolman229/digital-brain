@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { MoreVertical, Download, FileSearch, Trash2, ArrowLeft } from 'lucide-react'
+import { MoreVertical, Download, FileSearch, Trash2 } from 'lucide-react'
 import { FNT, FNTM } from '../lib/constants.js'
 import { getUserId } from '../lib/userContext.js'
 import {
@@ -7,6 +7,7 @@ import {
   deleteDocument, retryExtraction, continueExtraction, getSignedUrl,
   ACCEPTED_MIME, MAX_UPLOAD_BYTES, DOCUMENT_TYPES, STATUS_DISPLAY,
 } from '../lib/documents.js'
+import DocumentReviewView from './DocumentReviewView.jsx'
 
 // =============================================================================
 // Document Ingestion (admin-only).
@@ -27,7 +28,7 @@ export default function DocumentIngestionView({ plantId, processAreas }) {
   const [reviewingDocId, setReviewingDocId] = useState(null)
   if (reviewingDocId) {
     return (
-      <DocumentReviewScreen
+      <DocumentReviewView
         docId={reviewingDocId}
         plantId={plantId}
         onBack={() => setReviewingDocId(null)}
@@ -712,75 +713,6 @@ function RemoveConfirmModal({ title, busy, onCancel, onConfirm }) {
           >
             {busy ? 'Removing…' : 'Remove'}
           </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Stub Review Screen with back arrow ──────────────────────────────────────
-
-function DocumentReviewScreen({ docId, plantId, onBack }) {
-  const [doc, setDoc] = useState(null)
-  const [counts, setCounts] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const ds = await fetchDocuments(plantId)
-        const found = ds.find(d => d.id === docId)
-        const cs = await fetchCandidateCounts([docId])
-        if (!cancelled) { setDoc(found || null); setCounts(cs[docId] || null) }
-      } catch {}
-    })()
-    return () => { cancelled = true }
-  }, [docId, plantId])
-
-  // Escape closes
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onBack() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onBack])
-
-  return (
-    <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, fontFamily: FNT, color: 'var(--md1-text)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <button
-          onClick={onBack}
-          aria-label="Back to documents"
-          title="Back to documents"
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 32, height: 32, padding: 0, background: 'transparent',
-            border: '1px solid var(--md1-border)', borderRadius: 4,
-            color: 'var(--md1-primary)', cursor: 'pointer', fontFamily: FNT,
-          }}
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <div>
-          <div style={{ fontSize: 11, color: 'var(--md1-accent)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: FNT }}>
-            DOCUMENT REVIEW
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--md1-primary)', fontFamily: FNT }}>
-            {doc?.title || 'Loading…'}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ padding: 24, border: '1px dashed var(--md1-border)', borderRadius: 4, color: 'var(--md1-muted)', fontFamily: FNT }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--md1-primary)', marginBottom: 6, fontFamily: FNT }}>
-          Review screen coming next
-        </div>
-        <div style={{ fontSize: 12, lineHeight: 1.6, fontFamily: FNT }}>
-          {doc && counts
-            ? `${counts.total} candidate${counts.total === 1 ? '' : 's'} ready to review · ${counts.approved} approved · ${counts.rejected} rejected · ${counts.promoted} promoted`
-            : ''}
-          <br />
-          The detailed candidate-card review UI (filters, bulk actions, edit modal, audit history, source-citation linking)
-          is the next phase. For now, use this stub to verify navigation.
         </div>
       </div>
     </div>
