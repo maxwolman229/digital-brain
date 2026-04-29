@@ -159,7 +159,7 @@ export default function NarrativeInput({ open, onClose, onCreated, processAreas 
       {step === 'input' && (
         <div>
           <div style={{ fontSize: 12, color: '#5a5550', fontFamily: FNT, lineHeight: 1.7, marginBottom: 20, padding: '10px 14px', background: '#f8f6f4', borderRadius: 3, borderLeft: '3px solid var(--md1-accent)' }}>
-            Paste or type operator knowledge in plain language. Claude will extract structured rules and assertions that you can review before they're added to the knowledge bank.
+            Paste or type operator knowledge in plain language. System will extract structured rules and assertions that you can review before they're added to the knowledge bank.
           </div>
 
           <Field label="Narrative" hint="Speak naturally — include context, conditions, and consequences">
