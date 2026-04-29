@@ -614,7 +614,6 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               key={activePlantId}
               plantId={activePlantId}
               processAreas={vocabulary.processAreas}
-              onOpenDocument={(id) => console.log('TODO: open document', id)}
             />
           )}
 
