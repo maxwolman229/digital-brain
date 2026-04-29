@@ -427,6 +427,8 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                 <button
                   key={tab.id}
                   onClick={() => switchView(tab.id)}
+                  className="md1-hoverable-strong"
+                  data-active={view === tab.id}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     width: '100%', padding: '8px 12px', marginBottom: 2,
@@ -736,6 +738,8 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
                   <button
                     key={tab.id}
                     onClick={() => { switchView(tab.id); setMenuOpen(false) }}
+                    className="md1-hoverable-strong"
+                    data-active={view === tab.id}
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       width: '100%', padding: '12px 20px', minHeight: 52,

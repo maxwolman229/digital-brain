@@ -22,6 +22,35 @@
   --md1-accent-rgb: 79,168,154;
   --md1-font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
   --md1-font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* ── Hover treatment (single source of truth) ────────────────────────────
+     --md1-hover-bg          → for elements on white/card backgrounds
+     --md1-hover-bg-strong   → for elements on section-bg or muted backgrounds
+                              (sidebar, toolbars) where the lighter shade
+                              wouldn't read as a hover state
+     --md1-hover-transition  → standard timing for hover transitions */
+  --md1-hover-bg: #f8f6f4;
+  --md1-hover-bg-strong: #f0eeec;
+  --md1-hover-transition: background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
+}
+
+/* Generic hover utility. Elements opt in by adding className="md1-hoverable".
+   Active state is preserved by setting data-active="true" on the element —
+   the :not() selector skips applying the hover bg to active items. Disabled
+   buttons are also excluded. */
+.md1-hoverable {
+  transition: var(--md1-hover-transition);
+}
+.md1-hoverable:hover:not([data-active="true"]):not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--md1-hover-bg);
+}
+
+/* Variant for elements sitting on the section-bg (sidebars, toolbars). */
+.md1-hoverable-strong {
+  transition: var(--md1-hover-transition);
+}
+.md1-hoverable-strong:hover:not([data-active="true"]):not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--md1-hover-bg-strong);
 }
 
 * {

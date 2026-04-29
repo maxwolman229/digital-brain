@@ -211,8 +211,10 @@ export default function DocumentPromoteView({ plantId, plantName, onBack, onView
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: FNT, color: 'var(--md1-text)' }}>
       <style>{`
-        .md1-promote-card:hover { background: #fafaf8; }
-        .md1-tab-btn:hover { background: #f0eeec; }
+        .md1-promote-card { transition: var(--md1-hover-transition); }
+        .md1-promote-card:hover { background: var(--md1-hover-bg); }
+        .md1-tab-btn { transition: var(--md1-hover-transition); }
+        .md1-tab-btn:hover:not([data-active="true"]) { background: var(--md1-hover-bg-strong); }
       `}</style>
 
       {/* Sticky header */}

@@ -36,6 +36,8 @@ export const PillFilter = ({ options, selected, onToggle, colorFn, label, scroll
           <button
             key={o}
             onClick={() => onToggle(o)}
+            className="md1-hoverable-strong"
+            data-active={a}
             style={{
               padding: "3px 10px", borderRadius: 3, fontSize: 11, fontWeight: a ? 700 : 400,
               background: a ? c.bg : "transparent", color: a ? c.text : "var(--md1-muted)",

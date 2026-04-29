@@ -166,9 +166,11 @@ function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc, onPromote 
     <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, fontFamily: FNT, color: 'var(--md1-text)' }}>
       <style>{`
         @keyframes md1-spin { to { transform: rotate(360deg); } }
-        .md1-doc-row:hover { background: #f8f6f3 !important; }
+        .md1-doc-row { transition: var(--md1-hover-transition); }
+        .md1-doc-row:hover { background: var(--md1-hover-bg) !important; }
         .md1-doc-row .md1-title-link:hover { text-decoration: underline; }
-        .md1-menu-item:hover { background: #f0eeec; }
+        .md1-menu-item { transition: var(--md1-hover-transition); }
+        .md1-menu-item:hover { background: var(--md1-hover-bg-strong); }
       `}</style>
       <Header />
       <UploadSection plantId={plantId} processAreas={processAreas} onUploaded={refresh} />

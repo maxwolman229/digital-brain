@@ -194,11 +194,13 @@ export default function DocumentReviewView({ docId, plantId, onBack, onPromote }
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: FNT, color: 'var(--md1-text)' }}>
       <style>{`
-        .md1-card-row { transition: background 120ms ease; }
+        .md1-cand-card { transition: var(--md1-hover-transition); }
+        .md1-cand-card[data-status="pending"]:hover { background: var(--md1-hover-bg); }
         .md1-cand-card[data-status="approved"] { border-left: 3px solid #2d6b5e; background: #f6fbf8; }
         .md1-cand-card[data-status="rejected"] { opacity: 0.62; }
         .md1-cand-card[data-status="promoted"] { border-left: 3px solid var(--md1-primary); background: #f7f9fc; }
-        .md1-tab-btn:hover { background: #f0eeec; }
+        .md1-tab-btn { transition: var(--md1-hover-transition); }
+        .md1-tab-btn:hover:not([data-active="true"]) { background: var(--md1-hover-bg-strong); }
         .md1-tab-btn[data-active="true"] { background: var(--md1-primary); color: #fff; }
       `}</style>
 
