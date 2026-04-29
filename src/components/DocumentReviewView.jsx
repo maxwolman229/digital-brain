@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { ArrowLeft, ExternalLink, ChevronDown, ChevronRight, History } from 'lucide-react'
 import { FNT, FNTM } from '../lib/constants.js'
 import { getUserId } from '../lib/userContext.js'
@@ -40,11 +40,22 @@ export default function DocumentReviewView({ docId, plantId, onBack }) {
   const [selected,   setSelected]   = useState(new Set())
   const [bulkConfirm,setBulkConfirm]= useState(null)   // { ids, action: 'reject' }
   const [filters,    setFiltersRaw] = useState(() => loadFilters(docId))
+  const scrollRef = useRef(null)
 
   function setFilters(next) {
     const merged = typeof next === 'function' ? next(filters) : { ...filters, ...next }
+    const filtersChanged = (
+      merged.status !== filters.status
+      || merged.type !== filters.type
+      || merged.confidence !== filters.confidence
+    )
     setFiltersRaw(merged)
     saveFilters(docId, merged)
+    // Reset scroll on actual filter change so users start at the top of the
+    // new visible set. Same-filter no-ops preserve scroll naturally.
+    if (filtersChanged && scrollRef.current) {
+      scrollRef.current.scrollTop = 0
+    }
   }
 
   const refresh = useCallback(async () => {
@@ -181,7 +192,7 @@ export default function DocumentReviewView({ docId, plantId, onBack }) {
   const lowPendingIds  = cands.filter(c => c.status === 'pending_review' && c.confidence === 'low').map(c => c.id)
 
   return (
-    <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, fontFamily: FNT, color: 'var(--md1-text)' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: FNT, color: 'var(--md1-text)' }}>
       <style>{`
         .md1-card-row { transition: background 120ms ease; }
         .md1-cand-card[data-status="approved"] { border-left: 3px solid #2d6b5e; background: #f6fbf8; }
@@ -191,42 +202,56 @@ export default function DocumentReviewView({ docId, plantId, onBack }) {
         .md1-tab-btn[data-active="true"] { background: var(--md1-primary); color: #fff; }
       `}</style>
 
-      <Header doc={doc} onBack={onBack} onViewOriginal={handleViewOriginal} />
-      <StatsBar stats={stats} />
+      {/* Fixed header zone — does not scroll. Matches HealthDashboard's
+          sticky-chrome treatment: section-bg + 1px border-bottom + a soft
+          shadow so the scroll boundary is unambiguous. */}
+      <div style={{
+        flexShrink: 0,
+        padding: '20px 24px 12px',
+        borderBottom: '1px solid #e8e4e0',
+        background: 'var(--md1-section-bg)',
+        boxShadow: '0 2px 8px -6px rgba(0,0,0,0.18)',
+        zIndex: 1,
+      }}>
+        <Header doc={doc} onBack={onBack} onViewOriginal={handleViewOriginal} />
+        <StatsBar stats={stats} />
+        <FilterToolbar
+          filters={filters}
+          setFilters={setFilters}
+          stats={stats}
+          selectedCount={selected.size}
+          selectedPendingIds={selectedPendingIds}
+          highPendingIds={highPendingIds}
+          lowPendingIds={lowPendingIds}
+          onSelectAllPending={selectAllPending}
+          onClearSelection={clearSelection}
+          onBulkApprove={(ids) => bulkSetStatus(ids, 'approved')}
+          onBulkReject={(ids)  => setBulkConfirm({ ids, action: 'reject' })}
+        />
+      </div>
 
-      <FilterToolbar
-        filters={filters}
-        setFilters={setFilters}
-        stats={stats}
-        selectedCount={selected.size}
-        selectedPendingIds={selectedPendingIds}
-        highPendingIds={highPendingIds}
-        lowPendingIds={lowPendingIds}
-        onSelectAllPending={selectAllPending}
-        onClearSelection={clearSelection}
-        onBulkApprove={(ids) => bulkSetStatus(ids, 'approved')}
-        onBulkReject={(ids)  => setBulkConfirm({ ids, action: 'reject' })}
-      />
-
-      {visible.length === 0 ? (
-        <EmptyState filters={filters} stats={stats} />
-      ) : (
-        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {visible.map(c => (
-            <CandidateCard
-              key={c.id}
-              c={c}
-              selected={selected.has(c.id)}
-              onSelectToggle={() => toggleSelect(c.id)}
-              edits={editsByCand[c.id] || []}
-              onApprove={() => setOneStatus(c, 'approved')}
-              onReject={()  => setOneStatus(c, 'rejected')}
-              onEdit={()    => setEditing(c)}
-              onShowHistory={() => setShowHistory(c)}
-            />
-          ))}
-        </div>
-      )}
+      {/* Scrollable candidate list */}
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 24px 24px', WebkitOverflowScrolling: 'touch' }}>
+        {visible.length === 0 ? (
+          <EmptyState filters={filters} stats={stats} />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {visible.map(c => (
+              <CandidateCard
+                key={c.id}
+                c={c}
+                selected={selected.has(c.id)}
+                onSelectToggle={() => toggleSelect(c.id)}
+                edits={editsByCand[c.id] || []}
+                onApprove={() => setOneStatus(c, 'approved')}
+                onReject={()  => setOneStatus(c, 'rejected')}
+                onEdit={()    => setEditing(c)}
+                onShowHistory={() => setShowHistory(c)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {editing && (
         <CandidateEditModal
@@ -356,7 +381,7 @@ function FilterToolbar({
   return (
     <div style={{
       display: 'flex', flexWrap: 'wrap', gap: 12,
-      alignItems: 'center', marginBottom: 12, fontFamily: FNT,
+      alignItems: 'center', fontFamily: FNT,
       padding: '10px 12px', background: '#faf9f7',
       border: '1px solid var(--md1-border)', borderRadius: 4,
     }}>
