@@ -100,12 +100,31 @@ function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc }) {
     return { approved, docs: docsWithApproved }
   }, [docs, counts])
 
+  // Title click → preview in a new tab. Browser renders PDF/TXT inline based
+  // on the upload's Content-Type; DOCX falls back to the browser's normal
+  // download prompt since browsers don't render Word docs natively.
+  async function handlePreview(doc) {
+    try {
+      const url = await getSignedUrl(doc.file_path, 600)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch (e) {
+      alert(`Could not open document: ${e.message}`)
+    }
+  }
+
+  // Three-dot menu → explicit download to desktop. We append ?download=<name>
+  // to the signed URL so Supabase Storage adds Content-Disposition: attachment
+  // server-side; this is more reliable than the <a download> attribute, which
+  // browsers ignore for cross-origin responses.
   async function handleDownload(doc) {
     try {
       const url = await getSignedUrl(doc.file_path, 600)
+      const filename = doc.file_path.split('/').pop()
+      const sep = url.includes('?') ? '&' : '?'
+      const dlUrl = `${url}${sep}download=${encodeURIComponent(filename)}`
       const a = document.createElement('a')
-      a.href = url
-      a.download = doc.file_path.split('/').pop()
+      a.href = dlUrl
+      a.download = filename
       a.rel = 'noopener noreferrer'
       document.body.appendChild(a)
       a.click()
@@ -143,6 +162,7 @@ function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc }) {
         loading={loading}
         err={err}
         onOpenDoc={onOpenDoc}
+        onPreview={handlePreview}
         onDownload={handleDownload}
         onRequestRemove={(d) => setRemoving({ id: d.id, title: d.title })}
         onRefresh={refresh}
@@ -333,7 +353,7 @@ function UploadSection({ plantId, processAreas, onUploaded }) {
 
 const TABLE_COLS = '1.6fr 0.9fr 0.9fr 0.7fr 1fr 0.6fr 0.7fr 0.7fr 60px'
 
-function DocumentsTable({ docs, counts, loading, err, onOpenDoc, onDownload, onRequestRemove, onRefresh }) {
+function DocumentsTable({ docs, counts, loading, err, onOpenDoc, onPreview, onDownload, onRequestRemove, onRefresh }) {
   if (loading) return <div style={{ color: 'var(--md1-muted)', padding: 12, fontFamily: FNT }}>Loading documents…</div>
   if (err)     return <div style={{ color: '#a52a2a', padding: 12, fontFamily: FNT }}>Failed to load documents: {err}</div>
   if (docs.length === 0) {
@@ -371,6 +391,7 @@ function DocumentsTable({ docs, counts, loading, err, onOpenDoc, onDownload, onR
             doc={d}
             counts={counts[d.id]}
             onOpenDoc={onOpenDoc}
+            onPreview={onPreview}
             onDownload={onDownload}
             onRequestRemove={onRequestRemove}
             onRefresh={onRefresh}
@@ -381,7 +402,7 @@ function DocumentsTable({ docs, counts, loading, err, onOpenDoc, onDownload, onR
   )
 }
 
-function DocumentRow({ doc, counts, onOpenDoc, onDownload, onRequestRemove, onRefresh }) {
+function DocumentRow({ doc, counts, onOpenDoc, onPreview, onDownload, onRequestRemove, onRefresh }) {
   const total = counts?.total || 0
   const approved = counts?.approved || 0
   const promoted = counts?.promoted || 0
@@ -411,8 +432,8 @@ function DocumentRow({ doc, counts, onOpenDoc, onDownload, onRequestRemove, onRe
         fontFamily: FNT, transition: 'background 120ms ease',
       }}
     >
-      {/* Title cell — click downloads original */}
-      <div onClick={e => { e.stopPropagation(); onDownload(doc) }} style={{ cursor: 'pointer' }}>
+      {/* Title cell — click opens a native preview in a new tab */}
+      <div onClick={e => { e.stopPropagation(); onPreview(doc) }} style={{ cursor: 'pointer' }}>
         <span className="md1-title-link" style={{ fontWeight: 600, color: 'var(--md1-primary)', fontFamily: FNT, cursor: 'pointer' }}>
           {doc.title}
         </span>
