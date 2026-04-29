@@ -208,6 +208,12 @@ export async function fetchCandidates(documentId) {
   return r.data || []
 }
 
+export async function fetchCandidateById(id) {
+  const r = await supabase.from('extraction_candidates').select('*').eq('id', id).single()
+  if (r.error) throw new Error(`fetchCandidateById failed: ${r.error.message}`)
+  return r.data
+}
+
 export async function fetchCandidateEdits(candidateId) {
   const r = await supabase
     .from('extraction_candidate_edits')

@@ -37,6 +37,8 @@ function silentToLinks(silent) {
 import { getUserId } from '../lib/userContext.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
+import SourceSection from './SourceSection.jsx'
+import { FileText } from 'lucide-react'
 import LinkEditor from './LinkEditor.jsx'
 
 export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOpen, onAddFormClose, onViewInGraph, processAreas = [], categories = [], onItemSaved, onViewProfile, plantId }) {
@@ -320,6 +322,9 @@ export default function AssertionsView({ search, fStatus, fCat, fProc, addFormOp
                 </div>
               </DetailSection>
             )}
+
+            {/* Source citation (between assertion content and Comments) */}
+            <SourceSection item={sel} />
 
             {/* Footer meta */}
             <div style={{ padding: '10px 0', borderTop: '1px solid var(--md1-border)', marginTop: 12, fontSize: 10, color: 'var(--md1-border)', fontFamily: FNT, lineHeight: 1.8 }}>
@@ -778,10 +783,21 @@ function AssertionCard({ item, selected, commentCount, verificationCount, onClic
             </span>
           )}
         </div>
-        <span style={{ fontSize: 9, color: 'var(--md1-border)', fontFamily: FNT }}>
-          created {formatDate(item.createdAt)}
-          {item.versions?.length > 1 ? ` · edited ${formatDate(item.versions[item.versions.length - 1]?.date)}` : ''}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {item.sourceDocumentId && (
+            <span
+              title={item.sourceDocument?.title ? `Sourced from ${item.sourceDocument.title}` : 'Sourced from a document'}
+              style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--md1-muted)' }}
+              aria-label="Has source document"
+            >
+              <FileText size={14} />
+            </span>
+          )}
+          <span style={{ fontSize: 9, color: 'var(--md1-border)', fontFamily: FNT }}>
+            created {formatDate(item.createdAt)}
+            {item.versions?.length > 1 ? ` · edited ${formatDate(item.versions[item.versions.length - 1]?.date)}` : ''}
+          </span>
+        </div>
       </div>
 
       <div style={{ fontSize: 14, color: 'var(--md1-text)', fontWeight: 500, lineHeight: 1.4, marginBottom: 8 }}>

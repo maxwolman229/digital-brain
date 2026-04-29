@@ -203,6 +203,13 @@ function normaliseRule(r, evidence = [], versions = [], linkedAssertions = [], r
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     photos: r.photos || [],
+    // ── Source citation (migration 034) ──
+    sourceDocumentId:               r.source_document_id || null,
+    sourceExcerpt:                  r.source_excerpt || null,
+    sourceExtractionCandidateId:    r.source_extraction_candidate_id || null,
+    wasEditedFromSource:            !!r.was_edited_from_source,
+    sourceDocumentDeleted:          !!r.source_document_deleted,
+    sourceDocument:                 r.source_document || null,
     evidence: evidence
       .filter(e => e.parent_id === r.id)
       .map(e => ({ type: e.type, text: e.text, date: e.date })),
@@ -227,6 +234,13 @@ function normaliseAssertion(a, evidence = [], versions = [], linkedRules = [], r
     rationale: a.rationale,
     tags: a.tags || [],
     photos: a.photos || [],
+    // ── Source citation (migration 034) ──
+    sourceDocumentId:               a.source_document_id || null,
+    sourceExcerpt:                  a.source_excerpt || null,
+    sourceExtractionCandidateId:    a.source_extraction_candidate_id || null,
+    wasEditedFromSource:            !!a.was_edited_from_source,
+    sourceDocumentDeleted:          !!a.source_document_deleted,
+    sourceDocument:                 a.source_document || null,
     createdBy: resolve(a.created_by),
     createdById: a.created_by,
     createdAt: a.created_at,
@@ -248,7 +262,14 @@ export async function fetchRules() {
   const pid = PLANT_ID()
   const t0 = Date.now()
   console.log('[fetchRules] plant_id:', pid)
-  const rulesRes = await supabase.from('rules').select('*').eq('plant_id', pid).order('created_at', { ascending: false })
+  // PostgREST embed via the source_document_id FK (migration 034).
+  // Non-admin users hit RLS on documents and source_document comes back null;
+  // SourceSection handles that gracefully.
+  const rulesRes = await supabase
+    .from('rules')
+    .select('*, source_document:documents(id, title, file_path)')
+    .eq('plant_id', pid)
+    .order('created_at', { ascending: false })
   console.log('[fetchRules] main query:', Date.now() - t0, 'ms, rows:', rulesRes.data?.length ?? 0, rulesRes.error?.message ?? '')
   if (!rulesRes.data?.length) {
     if (pid === DEMO_PLANT_ID) {
@@ -297,7 +318,11 @@ export async function fetchRules() {
 export async function fetchAssertions() {
   const pid = PLANT_ID()
   console.log('[fetchAssertions] plant_id:', pid)
-  const assertRes = await supabase.from('assertions').select('*').eq('plant_id', pid).order('created_at', { ascending: false })
+  const assertRes = await supabase
+    .from('assertions')
+    .select('*, source_document:documents(id, title, file_path)')
+    .eq('plant_id', pid)
+    .order('created_at', { ascending: false })
   if (!assertRes.data?.length) {
     if (pid === DEMO_PLANT_ID) {
       console.warn('[fetchAssertions] EAF demo plant returned empty — using seed data fallback')
@@ -1087,7 +1112,7 @@ export async function searchKnowledge(query, excludeType, excludeId) {
 export async function fetchItemById(type, id) {
   if (type === 'rule') {
     const [itemRes, evidenceRes, versionsRes] = await Promise.all([
-      supabase.from('rules').select('*').eq('id', id).eq('plant_id', PLANT_ID()).single(),
+      supabase.from('rules').select('*, source_document:documents(id, title, file_path)').eq('id', id).eq('plant_id', PLANT_ID()).single(),
       supabase.from('evidence').select('*').eq('parent_type', 'rule').eq('parent_id', id),
       supabase.from('versions').select('*').eq('target_type', 'rule').eq('target_id', id),
     ])
@@ -1098,7 +1123,7 @@ export async function fetchItemById(type, id) {
   }
   if (type === 'assertion') {
     const [itemRes, evidenceRes, versionsRes] = await Promise.all([
-      supabase.from('assertions').select('*').eq('id', id).eq('plant_id', PLANT_ID()).single(),
+      supabase.from('assertions').select('*, source_document:documents(id, title, file_path)').eq('id', id).eq('plant_id', PLANT_ID()).single(),
       supabase.from('evidence').select('*').eq('parent_type', 'assertion').eq('parent_id', id),
       supabase.from('versions').select('*').eq('target_type', 'assertion').eq('target_id', id),
     ])
