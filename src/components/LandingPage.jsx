@@ -1,6 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { useIsMobile } from '../lib/hooks.js'
 
+// Feature flag — flip to true to restore the BevCan 1.0 CTA on the landing
+// page. The button + click handler + /bevcan route remain wired up; only
+// the visible element is gated. To restore: change to true and redeploy.
+const SHOW_BEVCAN_BUTTON = false
+
 export default function LandingPage({ loggedInAs, onLogout }) {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
@@ -146,45 +151,47 @@ export default function LandingPage({ loggedInAs, onLogout }) {
           >
             See Demo
           </button>
-          <button
-            onClick={() => navigate('/bevcan')}
-            style={{
-              position: 'relative',
-              padding: '16px 48px',
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: 2,
-              textTransform: 'uppercase',
-              color: 'var(--md1-primary)',
-              background: '#FFFFFF',
-              border: '1.5px solid #FFFFFF',
-              borderRadius: 2,
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              minHeight: 52,
-              width: isMobile ? '100%' : 'auto',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.88)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = '#FFFFFF'
-            }}
-          >
-            BevCan 1.0
-            <span style={{
-              position: 'absolute',
-              top: -8,
-              right: -8,
-              background: 'var(--md1-accent)',
-              color: '#FFFFFF',
-              fontSize: 8,
-              fontWeight: 700,
-              letterSpacing: 1.5,
-              padding: '2px 5px',
-              borderRadius: 2,
-            }}>BETA</span>
-          </button>
+          {SHOW_BEVCAN_BUTTON && (
+            <button
+              onClick={() => navigate('/bevcan')}
+              style={{
+                position: 'relative',
+                padding: '16px 48px',
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+                color: 'var(--md1-primary)',
+                background: '#FFFFFF',
+                border: '1.5px solid #FFFFFF',
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                minHeight: 52,
+                width: isMobile ? '100%' : 'auto',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.88)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = '#FFFFFF'
+              }}
+            >
+              BevCan 1.0
+              <span style={{
+                position: 'absolute',
+                top: -8,
+                right: -8,
+                background: 'var(--md1-accent)',
+                color: '#FFFFFF',
+                fontSize: 8,
+                fontWeight: 700,
+                letterSpacing: 1.5,
+                padding: '2px 5px',
+                borderRadius: 2,
+              }}>BETA</span>
+            </button>
+          )}
         </div>
       </div>
 
