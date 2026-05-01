@@ -249,49 +249,51 @@ async function retrieveByVector(
   }
 }
 
-// Full-text retrieval — uses Postgres tsvector ILIKE matching on title.
-// Always works, doesn't depend on embeddings. Less precise than vector but
-// good enough for most exact-keyword overlap cases.
+// Full-text retrieval — delegates to the hybrid_search_fulltext RPC
+// (migration 039). The RPC handles tokenisation (drops stopwords + tokens
+// shorter than 3 chars), OR-joins the remaining tokens, ranks by ts_rank,
+// thresholds out low-quality matches, and sorts same-process-area first.
+//
+// Why an RPC instead of PostgREST .textSearch:
+//   PostgREST .textSearch with type:'websearch' uses websearch_to_tsquery,
+//   which AND-joins whitespace-separated words. A new rule's title almost
+//   always contains at least one distinguishing word the existing rules
+//   don't share, and a single distinguishing word is enough to break AND →
+//   silent zero-candidate retrieval. The RPC uses OR + ts_rank instead so
+//   one extra word doesn't suppress every match. See migration 039 for
+//   the diagnostic that surfaced this.
 async function retrieveByFulltext(
   admin: ReturnType<typeof createClient>,
   plantId: string,
   title: string,
   processArea: string | null,
 ): Promise<Candidate[]> {
-  // Build a websearch tsquery from the title (lets Postgres handle stop words).
-  // Same-process-area items get a strong preference; cross-process-area only
-  // surface if no same-area matches exist.
-  const out: Candidate[] = []
-
-  for (const table of ['rules', 'assertions'] as const) {
-    const q = admin
-      .from(table)
-      .select('id, display_id, title, scope, ' + (table === 'rules' ? 'rationale, ' : '') + 'status, process_area')
-      .eq('plant_id', plantId)
-      .not('status', 'in', '("Retired","Superseded")')
-      .textSearch('search_vector', title, { type: 'websearch', config: 'english' })
-      .limit(5)
-
-    const { data } = await q
-    for (const r of (data || []) as Record<string, unknown>[]) {
-      out.push({
-        id: r.id as string,
-        display_id: (r.display_id as string) || (r.id as string),
-        type: table === 'rules' ? 'rule' : 'assertion',
-        title: r.title as string,
-        scope: (r.scope as string) || null,
-        rationale: (r.rationale as string) || null,
-        status: r.status as string,
-        process_area: (r.process_area as string) || null,
-      })
-    }
+  // p_min_rank tuned to 0.02: ts_rank on title-only matches typically lands
+  // in 0.04–0.07 for the cluster of meaningfully-related rules and 0.016–0.020
+  // for tangential single-word hits. 0.02 keeps the cluster, drops the noise.
+  // 0.05 (the obvious starting point) was too aggressive and dropped real
+  // contradiction candidates.
+  const { data, error } = await admin.rpc('hybrid_search_fulltext', {
+    p_plant_id:     plantId,
+    p_title:        title,
+    p_process_area: processArea,
+    p_limit:        5,
+    p_min_rank:     0.02,
+  })
+  if (error) {
+    console.warn('[contradiction-check] hybrid_search_fulltext RPC failed:', error.message)
+    return []
   }
-
-  // Sort: same-process-area first, then by raw similarity-of-title.
-  // Trim to 5.
-  const sameArea = out.filter(c => processArea && c.process_area === processArea)
-  const otherArea = out.filter(c => !processArea || c.process_area !== processArea)
-  return [...sameArea, ...otherArea].slice(0, 5)
+  return (data || []).map((r: Record<string, unknown>) => ({
+    id:           r.id as string,
+    display_id:   (r.display_id as string) || (r.id as string),
+    type:         r.type as 'rule' | 'assertion',
+    title:        r.title as string,
+    scope:        (r.scope as string) || null,
+    rationale:    (r.rationale as string) || null,
+    status:       r.status as string,
+    process_area: (r.process_area as string) || null,
+  }))
 }
 
 // ─── Prompt builder ─────────────────────────────────────────────────────────────
