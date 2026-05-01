@@ -53,6 +53,33 @@
   background-color: var(--md1-hover-bg-strong);
 }
 
+/* Variant for elements sitting on the navy header bar — translucent white
+   overlay so the hover reads against the dark surface. The light/primary
+   button (white background) gets a subtle grey-tint variant instead.
+   Header buttons set an inline default background (e.g. rgba(255,255,255,
+   0.08)) which has higher specificity than :hover, so these rules use
+   !important to win the cascade — a localised exception, only needed for
+   the on-dark variant where the default state is itself a tinted overlay. */
+.md1-hoverable-onDark {
+  transition: var(--md1-hover-transition);
+}
+.md1-hoverable-onDark:hover:not([data-active="true"]):not(:disabled):not([aria-disabled="true"]) {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+}
+.md1-hoverable-onDark:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: rgba(255, 255, 255, 0.24) !important;
+}
+
+.md1-hoverable-light {
+  transition: var(--md1-hover-transition);
+}
+.md1-hoverable-light:hover:not([data-active="true"]):not(:disabled):not([aria-disabled="true"]) {
+  background-color: #f0eeec !important;
+}
+.md1-hoverable-light:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: #e6e2dd !important;
+}
+
 * {
   margin: 0;
   padding: 0;

@@ -161,7 +161,8 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
         {/* Logo */}
         <div
           onClick={() => switchView('query')}
-          style={{ position: 'relative', flexShrink: 0, display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}
+          className="md1-hoverable-onDark"
+          style={{ position: 'relative', flexShrink: 0, display: 'inline-flex', alignItems: 'center', cursor: 'pointer', borderRadius: 3, padding: 2 }}
         >
           <div style={{ fontSize: 17, fontWeight: 700, color: '#FFFFFF', fontFamily: FNT, letterSpacing: 3, border: '1.5px solid rgba(255,255,255,0.85)', padding: '3px 9px 4px', lineHeight: 1 }}>
             M/D/1
@@ -181,10 +182,13 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
         {!isMobile && <div style={{ position: 'relative', flexShrink: 0 }}>
           <button
             onClick={() => { setShowPlantMenu(p => !p); setShowProfile(false); notifRef.current?.close() }}
+            className="md1-hoverable-onDark"
+            data-active={showPlantMenu}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '5px 10px', borderRadius: 3, fontSize: 11,
-              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+              background: showPlantMenu ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.2)',
               color: 'rgba(255,255,255,0.9)', cursor: 'pointer', fontFamily: FNT, fontWeight: 600,
               maxWidth: 200,
             }}
@@ -244,6 +248,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             <button
               onClick={() => { setShowPlantSettings(true); setShowPlantMenu(false) }}
               title="Members"
+              className="md1-hoverable-onDark"
               style={{
                 position: 'relative', padding: '5px 9px', borderRadius: 3, fontSize: 13,
                 background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
@@ -296,6 +301,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             {(view === 'rules' || view === 'assertions') && (
               <button
                 onClick={() => setAddFormOpen(true)}
+                className="md1-hoverable-light"
                 style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: '#FFFFFF', border: 'none', color: 'var(--md1-primary)', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
               >
                 + Add {view === 'assertions' ? 'Assertion' : 'Rule'}
@@ -303,12 +309,14 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             )}
             <button
               onClick={() => { switchView('events'); setReportEventOpen(true) }}
+              className="md1-hoverable-onDark"
               style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
             >
               + Report Event
             </button>
             <button
               onClick={() => setNarrativeOpen(true)}
+              className="md1-hoverable-onDark"
               style={{ padding: '6px 13px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid rgba(242,101,47,0.6)', color: '#F2652F', cursor: 'pointer', fontFamily: FNT, fontWeight: 700, letterSpacing: 0.4 }}
             >
               + Narrative Input
@@ -320,6 +328,7 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
               <button
                 onClick={() => navigate('/admin')}
                 title="Admin Dashboard"
+                className="md1-hoverable-onDark"
                 style={{ padding: '5px 10px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontFamily: FNT }}
               >
                 ⚙ Admin
@@ -338,7 +347,9 @@ export default function KnowledgeBank({ user, memberships, activePlantId, onSwit
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => { setShowProfile(p => !p); notifRef.current?.close() }}
-                style={{ padding: '5px 10px', borderRadius: 3, fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+                className="md1-hoverable-onDark"
+                data-active={showProfile}
+                style={{ padding: '5px 10px', borderRadius: 3, fontSize: 11, background: showProfile ? 'rgba(255,255,255,0.16)' : 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontFamily: FNT, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
               >
                 <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>
                   {initials(user?.displayName)}

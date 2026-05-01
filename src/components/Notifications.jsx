@@ -59,8 +59,11 @@ const Notifications = forwardRef(function Notifications({ onNavigate, onOpen, li
       <button
         onClick={toggle}
         aria-label="Notifications"
+        className={light ? 'md1-hoverable-onDark' : 'md1-hoverable-strong'}
+        data-active={open}
         style={{
-          padding: '7px 10px', borderRadius: 3, background: 'transparent',
+          padding: '7px 10px', borderRadius: 3,
+          background: open && light ? 'rgba(255,255,255,0.16)' : 'transparent',
           border: `1px solid ${light ? 'rgba(255,255,255,0.2)' : 'var(--md1-muted)40'}`, cursor: 'pointer',
           position: 'relative', display: 'flex', alignItems: 'center',
         }}
