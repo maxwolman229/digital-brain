@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { MoreVertical, Download, FileSearch, Trash2 } from 'lucide-react'
+import { MoreVertical, Download, FileSearch, Trash2, RefreshCw } from 'lucide-react'
 import { FNT, FNTM } from '../lib/constants.js'
 import { getUserId } from '../lib/userContext.js'
 import {
@@ -67,6 +67,7 @@ function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc, onPromote 
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
   const [removing, setRemoving] = useState(null)   // { id, title }
+  const [retrying, setRetrying] = useState(null)   // { id, title, hasReviewed }
   const stallTracker = useRef(new Map())
 
   const refresh = useCallback(async () => {
@@ -162,6 +163,18 @@ function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc, onPromote 
     }
   }
 
+  async function handleRetryConfirmed(doc) {
+    setRetrying(prev => ({ ...prev, busy: true }))
+    try {
+      await retryExtraction(doc.id)
+      setRetrying(null)
+      refresh()
+    } catch (e) {
+      alert(`Retry failed: ${e.message}`)
+      setRetrying(null)
+    }
+  }
+
   return (
     <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, fontFamily: FNT, color: 'var(--md1-text)' }}>
       <style>{`
@@ -183,6 +196,11 @@ function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc, onPromote 
         onPreview={handlePreview}
         onDownload={handleDownload}
         onRequestRemove={(d) => setRemoving({ id: d.id, title: d.title })}
+        onRequestRetry={(d) => {
+          const c = counts[d.id]
+          const reviewedCount = (c?.approved || 0) + (c?.rejected || 0)
+          setRetrying({ id: d.id, title: d.title, reviewedCount })
+        }}
         onRefresh={refresh}
       />
       {promotionReady.approved > 0 && (
@@ -200,6 +218,18 @@ function DocumentIngestionLanding({ plantId, processAreas, onOpenDoc, onPromote 
           onConfirm={() => {
             const doc = docs.find(d => d.id === removing.id)
             if (doc) handleRemoveConfirmed(doc)
+          }}
+        />
+      )}
+      {retrying && (
+        <RetryConfirmModal
+          title={retrying.title || ''}
+          reviewedCount={retrying.reviewedCount || 0}
+          busy={retrying.busy}
+          onCancel={() => setRetrying(null)}
+          onConfirm={() => {
+            const doc = docs.find(d => d.id === retrying.id)
+            if (doc) handleRetryConfirmed(doc)
           }}
         />
       )}
@@ -371,7 +401,7 @@ function UploadSection({ plantId, processAreas, onUploaded }) {
 
 const TABLE_COLS = '1.6fr 0.9fr 0.9fr 0.7fr 1fr 0.6fr 0.7fr 0.7fr 60px'
 
-function DocumentsTable({ docs, counts, loading, err, onOpenDoc, onPreview, onDownload, onRequestRemove, onRefresh }) {
+function DocumentsTable({ docs, counts, loading, err, onOpenDoc, onPreview, onDownload, onRequestRemove, onRequestRetry, onRefresh }) {
   if (loading) return <div style={{ color: 'var(--md1-muted)', padding: 12, fontFamily: FNT }}>Loading documents…</div>
   if (err)     return <div style={{ color: '#a52a2a', padding: 12, fontFamily: FNT }}>Failed to load documents: {err}</div>
   if (docs.length === 0) {
@@ -412,6 +442,7 @@ function DocumentsTable({ docs, counts, loading, err, onOpenDoc, onPreview, onDo
             onPreview={onPreview}
             onDownload={onDownload}
             onRequestRemove={onRequestRemove}
+            onRequestRetry={onRequestRetry}
             onRefresh={onRefresh}
           />
         ))}
@@ -420,7 +451,7 @@ function DocumentsTable({ docs, counts, loading, err, onOpenDoc, onPreview, onDo
   )
 }
 
-function DocumentRow({ doc, counts, onOpenDoc, onPreview, onDownload, onRequestRemove, onRefresh }) {
+function DocumentRow({ doc, counts, onOpenDoc, onPreview, onDownload, onRequestRemove, onRequestRetry, onRefresh }) {
   const total = counts?.total || 0
   const approved = counts?.approved || 0
   const promoted = counts?.promoted || 0
@@ -464,10 +495,7 @@ function DocumentRow({ doc, counts, onOpenDoc, onPreview, onDownload, onRequestR
       </div>
       <div style={{ color: 'var(--md1-muted)', fontFamily: FNT }}>{doc.process_area || '—'}</div>
       <div style={{ color: 'var(--md1-muted)', fontFamily: FNTM, fontSize: 11 }}>{relativeDate(doc.created_at)}</div>
-      <div><StatusBadge doc={doc} onRetry={async () => {
-        try { await retryExtraction(doc.id); onRefresh?.() }
-        catch (e) { alert(`Retry failed: ${e.message}`) }
-      }} /></div>
+      <div><StatusBadge doc={doc} /></div>
       <div style={{ textAlign: 'right', fontFamily: FNTM, color: 'var(--md1-muted)' }}>{total || '—'}</div>
       <div style={{ textAlign: 'right', fontFamily: FNTM, color: approved > 0 ? '#2d6b5e' : 'var(--md1-muted)' }}>
         {total > 0 ? `${approved}/${total}` : '—'}
@@ -476,8 +504,10 @@ function DocumentRow({ doc, counts, onOpenDoc, onPreview, onDownload, onRequestR
       <div style={{ display: 'flex', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
         <ActionMenu
           canReview={canReview}
+          canRetry={!['uploading', 'extracting'].includes(doc.status)}
           onReview={() => onOpenDoc(doc.id)}
           onDownload={() => onDownload(doc)}
+          onRetry={() => onRequestRetry(doc)}
           onRemove={() => onRequestRemove(doc)}
         />
       </div>
@@ -487,7 +517,7 @@ function DocumentRow({ doc, counts, onOpenDoc, onPreview, onDownload, onRequestR
 
 // ── ActionMenu (three-dot dropdown) ─────────────────────────────────────────
 
-function ActionMenu({ canReview, onReview, onDownload, onRemove }) {
+function ActionMenu({ canReview, canRetry, onReview, onDownload, onRetry, onRemove }) {
   const [open, setOpen] = useState(false)
   const [focusIdx, setFocusIdx] = useState(0)
   const wrapRef = useRef(null)
@@ -498,9 +528,10 @@ function ActionMenu({ canReview, onReview, onDownload, onRemove }) {
     const arr = []
     if (canReview) arr.push({ key: 'review', label: 'Go to review', icon: <FileSearch size={14} />, onClick: onReview })
     arr.push({ key: 'download', label: 'Download document', icon: <Download size={14} />, onClick: onDownload })
+    if (canRetry) arr.push({ key: 'retry', label: 'Re-extract', icon: <RefreshCw size={14} />, onClick: onRetry })
     arr.push({ key: 'remove', label: 'Remove', icon: <Trash2 size={14} />, onClick: onRemove, danger: true })
     return arr
-  }, [canReview, onReview, onDownload, onRemove])
+  }, [canReview, canRetry, onReview, onDownload, onRetry, onRemove])
 
   useEffect(() => {
     if (!open) return
@@ -585,7 +616,7 @@ function ActionMenu({ canReview, onReview, onDownload, onRemove }) {
 
 // ── Status badge ────────────────────────────────────────────────────────────
 
-function StatusBadge({ doc, onRetry }) {
+function StatusBadge({ doc }) {
   const meta = STATUS_DISPLAY[doc.status] || { label: doc.status, color: '#555', bg: '#eee' }
   if (doc.status === 'extracting') {
     const proc = doc.extraction_progress?.processed?.length ?? 0
@@ -607,14 +638,12 @@ function StatusBadge({ doc, onRetry }) {
     )
   }
   if (doc.status === 'failed') {
+    // Retry now lives in the three-dot menu (canRetry on ActionMenu).
     return (
       <div style={{ fontFamily: FNT }} title={doc.extraction_error || ''}>
         <span style={{ display: 'inline-block', padding: '3px 8px', background: meta.bg, color: meta.color, borderRadius: 2, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: FNT }}>
           ⚠ {meta.label}
         </span>
-        <button onClick={(e) => { e.stopPropagation(); onRetry?.() }} style={{ marginLeft: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, fontFamily: FNT, background: '#fff8e1', color: '#7a5800', border: '1px solid #f0d990', borderRadius: 3, cursor: 'pointer' }}>
-          Retry
-        </button>
         {doc.extraction_error && (
           <div style={{ marginTop: 3, fontSize: 10, color: '#a52a2a', maxWidth: 220, lineHeight: 1.4, fontFamily: FNT }}>
             {doc.extraction_error}
@@ -729,6 +758,93 @@ function RemoveConfirmModal({ title, busy, onCancel, onConfirm }) {
             }}
           >
             {busy ? 'Removing…' : 'Remove'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Re-extract confirmation modal ──────────────────────────────────────────
+
+function RetryConfirmModal({ title, reviewedCount, busy, onCancel, onConfirm }) {
+  const dialogRef = useRef(null)
+  const cancelRef = useRef(null)
+  useEffect(() => {
+    cancelRef.current?.focus()
+    const onKey = (e) => {
+      if (e.key === 'Escape') onCancel()
+      if (e.key === 'Tab') {
+        const nodes = dialogRef.current?.querySelectorAll('button') || []
+        if (nodes.length === 0) return
+        const first = nodes[0]
+        const last  = nodes[nodes.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onCancel])
+
+  return (
+    <div
+      onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel() }}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9500,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: FNT,
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog" aria-modal="true" aria-labelledby="retry-doc-title"
+        style={{
+          width: 480, maxWidth: '95vw', background: '#fff', borderRadius: 6,
+          padding: '20px 22px', boxShadow: '0 16px 48px rgba(0,0,0,0.28)', fontFamily: FNT,
+        }}
+      >
+        <div id="retry-doc-title" style={{ fontSize: 11, fontWeight: 700, color: '#7a5800', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+          RE-EXTRACT
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--md1-primary)', marginBottom: 10 }}>
+          Re-extract candidates from “{title}”?
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--md1-text)', lineHeight: 1.5, marginBottom: 16 }}>
+          This deletes all unpromoted candidates from this document and runs the extraction again. Promoted
+          rules and assertions are preserved.
+          {reviewedCount > 0 && (
+            <>
+              {' '}
+              <strong>{reviewedCount} reviewed candidate{reviewedCount === 1 ? '' : 's'}</strong>
+              {' '}
+              ({reviewedCount === 1 ? 'approval/rejection' : 'approvals/rejections'})
+              {' will be lost.'}
+            </>
+          )}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button
+            ref={cancelRef}
+            onClick={onCancel}
+            disabled={busy}
+            style={{
+              padding: '8px 14px', fontSize: 12, fontWeight: 600, fontFamily: FNT,
+              background: 'transparent', border: '1px solid var(--md1-border)',
+              color: 'var(--md1-muted)', borderRadius: 3, cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            style={{
+              padding: '8px 14px', fontSize: 12, fontWeight: 700, fontFamily: FNT,
+              background: '#7a5800', border: 'none', color: '#fff', borderRadius: 3,
+              cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.7 : 1,
+            }}
+          >
+            {busy ? 'Restarting…' : 'Re-extract'}
           </button>
         </div>
       </div>
