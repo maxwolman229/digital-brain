@@ -148,10 +148,16 @@ export default function CaptureView({ processAreas = [], industry, plantName, pl
 
   async function callCapture(history, context) {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    // Pass already-extracted titles so the capture function can show them to
+    // the model and prevent re-extraction across turns. Titles only — full
+    // payload would bloat the system prompt for no precision gain.
+    const extracted_so_far = (extracted || [])
+      .map(x => `[${x.type}] ${x.title}`)
+      .filter(Boolean)
     const resp = await authFetch(`${supabaseUrl}/functions/v1/capture`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ history, context }),
+      body: JSON.stringify({ history, context, extracted_so_far }),
       timeout: 60000,
     })
     if (!resp.ok) {

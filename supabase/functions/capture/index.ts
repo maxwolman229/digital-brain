@@ -45,6 +45,9 @@ EXISTING RULES ON THIS TOPIC:
 {{relevant_rules}}
 If no existing rules are listed, treat everything the operator says as new knowledge worth capturing.
 
+ALREADY EXTRACTED IN THIS SESSION — do NOT re-extract these:
+{{extracted_so_far}}
+
 HOW THIS PERSON SOUNDS — follow this voice exactly:
 
 Operator: "We usually slow the line down when we get that material."
@@ -107,7 +110,7 @@ EXTRACTION RULES:
 
 Extract rules and assertions ONLY when the operator has given enough specific detail to form a complete, actionable piece of knowledge. Do not extract vague or partial statements. If the answer is too general, ask a follow-up to get the specifics before extracting.
 
-Do not re-extract knowledge already visible in previous assistant messages.
+Each item must represent NEW knowledge from the operator's most recent answer that is NOT already in the "ALREADY EXTRACTED IN THIS SESSION" list above. If the operator just elaborated on something already extracted, do NOT create a duplicate — the elaboration will be captured implicitly through the conversation. If the operator's most recent answer contains zero net-new knowledge (e.g. they restated something, clarified terminology, or told a story without new operational specifics), return extracted: []. Returning duplicates is worse than returning nothing.
 
 DEFINITIONS:
 - Rule: an actionable directive — what to do, what not to do, when to do something, a step-by-step procedure, a threshold that triggers an action
@@ -121,29 +124,49 @@ Most interviews produce a mix of both. Do NOT default everything to rule.
 CATEGORY SELECTION:
 Use the best fit from: Material | Process | Equipment | People | Measurement | Environment. If none fit well, use the closest one. Do not force-fit.
 
-RESPONSE FORMAT — respond ONLY with valid JSON. No markdown, no prose, no explanation:
-{
-  "question": "Your next question as a plain string, or null if done",
-  "done": false,
-  "extracted": [
-    {
-      "type": "rule",
-      "title": "Concise actionable title — under 80 characters",
-      "category": "Material | Process | Equipment | People | Measurement | Environment",
-      "processArea": "specific process area from the conversation",
-      "rationale": "why this rule exists — the consequence of ignoring it",
-      "scope": "expanded detail, step-by-step instructions, conditions, context"
+RESPONSE FORMAT — return your output by calling the record_turn tool. Set
+question to your next question (string) or null if the session is done. Set
+done to true only after wrap-up. extracted is a (possibly empty) array of
+new knowledge items.`
+
+// Forced tool call — Anthropic's structured-output mechanism. Eliminates the
+// malformed-JSON failure mode the previous text-JSON parser would crash on.
+const RECORD_TOOL = {
+  name: 'record_turn',
+  description: 'Record the next interview question, completion flag, and any new knowledge items extracted from the operator\'s most recent answer.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      question: {
+        type: ['string', 'null'],
+        description: 'The next question to ask the operator, or null when the session is done.',
+      },
+      done: {
+        type: 'boolean',
+        description: 'True after the wrap-up exchange, otherwise false.',
+      },
+      extracted: {
+        type: 'array',
+        description: 'New knowledge items from the operator\'s most recent answer. Empty array if no net-new knowledge.',
+        items: {
+          type: 'object',
+          properties: {
+            type:        { type: 'string', enum: ['rule', 'assertion'] },
+            title:       { type: 'string', maxLength: 120 },
+            category:    { type: 'string', enum: ['Material', 'Process', 'Equipment', 'People', 'Measurement', 'Environment'] },
+            processArea: { type: 'string' },
+            rationale:   { type: 'string' },
+            scope:       { type: 'string' },
+          },
+          required: ['type', 'title', 'category', 'processArea', 'scope'],
+          additionalProperties: false,
+        },
+      },
     },
-    {
-      "type": "assertion",
-      "title": "Concise observational title — under 80 characters",
-      "category": "Material | Process | Equipment | People | Measurement | Environment",
-      "processArea": "specific process area from the conversation",
-      "rationale": "",
-      "scope": "expanded detail, conditions under which this is true, context"
-    }
-  ]
-}`
+    required: ['question', 'done', 'extracted'],
+    additionalProperties: false,
+  },
+}
 
 function fillTemplate(template: string, ctx: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => ctx[key] ?? `{{${key}}}`)
@@ -164,7 +187,11 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const { history, context = {} } = body
+    const { history, context = {}, extracted_so_far = [] } = body as {
+      history?: { role: string; content: string }[]
+      context?: Record<string, string>
+      extracted_so_far?: string[]
+    }
     if (!Array.isArray(history) || history.length === 0) {
       return new Response(JSON.stringify({ error: 'history array is required and must not be empty' }), {
         status: 400, headers: { ...CORS, 'Content-Type': 'application/json' },
@@ -178,6 +205,10 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    const extractedBlock = (extracted_so_far?.length ?? 0) > 0
+      ? extracted_so_far.map((t, i) => `  ${i + 1}. ${t}`).join('\n')
+      : 'Nothing extracted yet — every meaningful piece of operational knowledge in the operator\'s answer is fair game.'
+
     const ctx: Record<string, string> = {
       display_name: 'the operator',
       position: 'operator',
@@ -188,18 +219,21 @@ Deno.serve(async (req: Request) => {
       topic: 'operations',
       gaps_summary: 'No gap information available.',
       relevant_rules: 'No existing rules found for this topic.',
+      extracted_so_far: extractedBlock,
       ...context,
     }
 
     const systemPrompt = fillTemplate(SYSTEM_PROMPT_TEMPLATE, ctx)
 
-    console.log(`[capture] history length=${history.length} process_area="${ctx.process_area}" topic="${ctx.topic}"`)
+    console.log(`[capture] history length=${history.length} process_area="${ctx.process_area}" topic="${ctx.topic}" extracted_so_far=${extracted_so_far?.length ?? 0}`)
 
     const apiPayload = {
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1200,
+      max_tokens: 1500,
       system: systemPrompt,
       messages: history,
+      tools: [RECORD_TOOL],
+      tool_choice: { type: 'tool', name: RECORD_TOOL.name },
     }
 
     const apiHeaders = {
@@ -245,27 +279,19 @@ Deno.serve(async (req: Request) => {
     }
 
     const data = await res.json()
-    const txt = (data.content ?? [])
-      .map((b: { type: string; text?: string }) => b.type === 'text' ? b.text : '')
-      .join('')
-
-    let parsed: { question?: string | null; done?: boolean; extracted?: unknown[] }
-    try {
-      let clean = txt.trim()
-      clean = clean.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '')
-      const start = clean.indexOf('{')
-      const end = clean.lastIndexOf('}')
-      if (start === -1 || end === -1) throw new Error('No JSON object found in response')
-      parsed = JSON.parse(clean.slice(start, end + 1))
-    } catch (e) {
-      console.error('[capture] Failed to parse Claude response:', txt.slice(0, 500))
-      throw new Error('Claude returned invalid JSON: ' + (e as Error).message)
+    // Forced tool call → response always contains a tool_use block. No more
+    // text-JSON parsing, no more malformed-JSON failures.
+    const toolUse = (data.content ?? []).find(
+      (b: { type: string }) => b.type === 'tool_use'
+    ) as { type: string; input?: { question?: string | null; done?: boolean; extracted?: unknown[] } } | undefined
+    if (!toolUse?.input) {
+      console.error('[capture] No tool_use block in response:', JSON.stringify(data).slice(0, 500))
+      throw new Error('Claude did not call record_turn — response missing tool_use block')
     }
-
     const result = {
-      question: parsed.question ?? null,
-      done: parsed.done ?? false,
-      extracted: parsed.extracted ?? [],
+      question: toolUse.input.question ?? null,
+      done: toolUse.input.done ?? false,
+      extracted: toolUse.input.extracted ?? [],
     }
 
     console.log(`[capture] turn done=${result.done} extracted=${(result.extracted as unknown[]).length} question=${result.question ? 'yes' : 'null'}`)

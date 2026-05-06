@@ -1,0 +1,86 @@
+[
+  {
+    "role": "assistant",
+    "content": "Tell me about casting operations on the MiDa rebar line — what's the first thing someone needs to understand?"
+  },
+  {
+    "role": "user",
+    "content": "Right. Mould level. On standard low-carbon rebar we run 80 to 100mm above the SEN tip. If you let it drop below 60mm you'll get slag entrainment because the steel surface gets too close to the powder layer — that gets pulled into the meniscus and you see longitudinal cracks halfway down the strand on the macro etch. We had a real breakout back in February 2023 because the second caster operator let level drop to 40mm during a tundish change. Above 130mm you start getting splash on the meniscus and the radar sensor reads garbage — looks like noise but it's actually droplets. For peritectic grades, anything in the 0.10 to 0.16 carbon range, we run a tighter window, 70 to 85mm, because those grades are sensitive on hook depth and you want less play. Our oscillator runs 8mm peak-to-peak at 200 strokes per minute on normal grades, but we drop to 6mm at 180 strokes for peritectics. The oscillation mark depth is the tell — anything over 0.4mm and you've got too much amplitude or your stroke rate's wrong."
+  },
+  {
+    "role": "assistant",
+    "content": "You mentioned the radar sensor reads garbage above 130mm. How do you tell the difference between real level changes and splash noise?"
+  },
+  {
+    "role": "user",
+    "content": "Casting speed is married to the heat balance, you can't just pick a number. For 130x130 billets on 0.20 to 0.30 carbon rebar grades we're running 4.2 to 4.8 metres per minute. Below 4.0 you start getting transverse cracks at the corners because the shell's thickening unevenly — too much time in the mould. Above 5.0 the metallurgical length pushes past the bender entry point and you risk internal cracking when you try to straighten a strand that's still got liquid core. Rule of thumb I learned from the old Italian commissioning crew: speed times section size shouldn't exceed about 650 if you want clean billets — that's a metallurgical-length proxy. For high-Mn grades, anything over 1.4 percent manganese, drop the speed by 0.3 to 0.4 metres per minute because Mn segregates hard at the centerline and slow casting gives the columnar dendrites a chance to reach centre. We had a stretch last summer where we pushed 5.2 on standard rebar to make tonnage targets and got cracking complaints on three heats — never again."
+  },
+  {
+    "role": "assistant",
+    "content": "You said speed times section size shouldn't exceed 650. That's a neat rule — where'd that number come from? What happens when you go over it?"
+  },
+  {
+    "role": "user",
+    "content": "Secondary cooling is where most operators don't pay enough attention. The water flow per zone matters but what really matters is the WATER-TO-STEEL ratio. We target 0.9 to 1.1 litres per kilogram for standard grades. Below 0.7 the strand runs too hot, the surface temperature overshoots 1100 Celsius at the unbender, and you get reheat cracking. Above 1.3 the surface chills too fast and you get internal cracking from the thermal gradient. For zone 2 specifically — the segment right after the mould — flow rate should be in the 240 to 280 litres per minute range for our 130mm sections, and the spray pattern matters: any clogged nozzle and you get a hot spot that shows up as a longitudinal score line, you'll see it on the descaler entry camera. We check nozzles every shift change. If a zone-2 nozzle is more than 30 percent reduced in flow, replace it that shift, don't wait. Honestly, half the breakouts I've seen in my career trace back to either bad mould level or a clogged secondary spray, those are the two big ones."
+  },
+  {
+    "role": "assistant",
+    "content": "You mentioned half the breakouts trace back to bad mould level or clogged secondary spray. What are the early warning signs that tell you a breakout might be coming?"
+  },
+  {
+    "role": "user",
+    "content": "Breakouts. Two main types we deal with. Sticker breakouts in the mould — that's friction-driven, almost always a flux issue. Sticker comes from poor lubrication: either the powder isn't melting fast enough because your meniscus is too cold, or the powder's wrong for the grade. For low-carbon we use a basic flux around 1.1 basicity, low viscosity around 1.5 poise at 1300C; for higher-carbon grades we go more acidic, basicity around 0.9, viscosity 2.0 to 2.5. Mismatched flux is a classic rookie error. The other type is bleed breakouts past the mould exit — that's a shell thickness problem, almost always speed too high or coolant too low. The early warning is mould thermocouple disturbance: the inlet/outlet delta-T jumps 4 to 5 degrees on the affected face, you've got 30 to 60 seconds before steel breaks through. Our automation system flags this but the operator should also be watching the strip chart. If you see a thermocouple delta-T spike on the south face stand by your speed reduction button. Never been wrong about it in 27 years."
+  },
+  {
+    "role": "assistant",
+    "content": "You mentioned the mould thermocouple delta-T spike — south face specifically. Walk me through the last time you caught one early. What exactly do you do when you see that spike?"
+  },
+  {
+    "role": "user",
+    "content": "Grade transitions are the dangerous part of the day. Going from low-carbon to high-carbon is more forgiving than the other way. Low to high: just bring the carbon up, you'll get a transition zone of mixed material maybe 4 to 6 metres long that we cut out at the runout and put in scrap. High to low: this is where you have to be careful because residual carbon in the tundish takes time to wash out — you'll get carbon contamination in what's supposed to be a clean grade for 8 to 12 metres after the change. We tag the transition pieces with paint and put them in a dedicated bin. For peritectic transitions specifically, never go directly from peritectic to peritectic without dropping the speed by 0.5 metres per minute for the first heat after the change — the mould has hot spots from the prior peritectic that haven't normalized and you'll get cracking on the new strand. Wait one full heat at reduced speed before going back to nominal."
+  },
+  {
+    "role": "assistant",
+    "content": "You mentioned hot spots in the mould after peritectic casting. How do you know when the mould has normalized and it's safe to bring the speed back up?"
+  },
+  {
+    "role": "user",
+    "content": "On tundish life, normal practice is 12 heats per tundish for standard grades, 8 heats for peritectics because the slag attack is more aggressive. We measure remaining tundish life by acoustic — if you tap the tundish and the sound goes from a clear ring to a dull thud, the lining is approaching end of life. Visual cracks on the tundish wear surface mean change it now even if you're only at 6 heats. Last year we had a tundish that looked fine but failed mid-cast at heat 9 because there was a hidden crack behind a slag patch — now we do borescope inspection at heat 6 on every tundish, no exceptions, even if the visual is clean. SEN nozzle life depends on the grade. Aluminium-killed steels eat SENs through alumina deposition: maximum 6 heats on Al-killed, maybe 8 on calcium-treated. Silicon-killed grades you can run 10 heats on the same SEN no problem."
+  },
+  {
+    "role": "assistant",
+    "content": "You mentioned borescope inspection at heat 6 after that tundish failure. What exactly are you looking for with the borescope that you can't see from visual inspection?"
+  },
+  {
+    "role": "user",
+    "content": "Mould powder feed rate. This is one nobody trains operators on properly. We feed continuously from auto-feeders, target consumption is 0.45 to 0.55 kg per square metre of strand surface for standard grades. If your consumption drops below 0.35 you've got either a stuck feeder or the powder is sintering on top of the meniscus instead of melting through — both lead to insufficient lubrication and increased oscillation marks. We check consumption every 30 minutes and compare it against the calculated rate based on speed and section. Variance over 15 percent is a flag. Powder layer thickness on the meniscus should be 30 to 50mm — you can dip-test with a steel rod every couple of hours, but only do that on a stable cast, never during a transition or speed change because you'll disturb the meniscus."
+  },
+  {
+    "role": "assistant",
+    "content": "You mentioned dip-testing the powder layer thickness with a steel rod. Walk me through how you do that safely without messing up the meniscus."
+  },
+  {
+    "role": "user",
+    "content": "Argon shrouding on the ladle to tundish stream. We run 50 to 80 litres per minute of argon in the protective tube, not too much because excess argon makes turbulence and you'll get tundish slag entrainment. The bubbling dwell in the tundish — what we call the residence time — should be at least 5 minutes for inclusion flotation, longer for cleaner grades. For special bar quality steel we go 8 minutes minimum, and we use a turbulent inhibitor pad in the tundish to break up the incoming stream. Without the pad you get short-circuiting and inclusions reach the SEN before they have time to float out. The pad gets eaten — typical life is 4 to 6 heats — and when it cracks you'll see a sudden change in tundish temperature stratification, that's your signal to change it."
+  },
+  {
+    "role": "assistant",
+    "content": "You mentioned the turbulent inhibitor pad gets eaten in 4 to 6 heats. How do you spot the temperature stratification change that tells you it's time to replace it?"
+  },
+  {
+    "role": "user",
+    "content": "Surface defects on the billet — there's a whole language for them. Longitudinal corner cracks come from over-cooling in zone 2. Star cracks come from copper pickup, usually because someone didn't change the mould tube within its life — typical mould life is 800 to 1200 heats and you should retire it on heat count not visual condition. Transverse face cracks are mould oscillation marks that propagated. Centre cracks are speed-too-high. Sub-surface inclusions are tundish shroud problems or insufficient residence time. We have a defect chart on the wall in the operator pulpit but most of the senior guys can identify the cause by sight in 5 seconds. If a junior operator brings you a sample and they don't know the cause, walk them through it — that's how you build the next generation. Lost knowledge is more expensive than lost steel."
+  },
+  {
+    "role": "assistant",
+    "content": "You said mould life is 800 to 1200 heats and you retire on heat count, not visual condition. What happens if you push a mould past its heat count but it still looks good?"
+  },
+  {
+    "role": "user",
+    "content": "If I had to give one warning to a new caster operator, it's this: the mould tells you everything. The thermocouple readouts, the level signal, the oscillator current draw — those four indicators tell you 80 percent of what's happening downstream. New operators stare at the speed setpoint and the cast length counter; those are outputs. The mould is the input. Watch the mould. The other thing is don't be a hero on tonnage. If something feels off, slow the line down — 2 minutes of reduced speed is cheap insurance. A breakout costs you 6 hours minimum, plus tundish, plus segment damage. Speed targets are not worth your life or anyone else's. We had a kid almost get hit by a steel jet from a bleed breakout in 2019 because he tried to push through a thermocouple alarm. He got out of the way. Could have been worse."
+  },
+  {
+    "role": "assistant",
+    "content": "Got it. Those are the fundamentals. Let me ask about something we haven't covered much — what's the trickiest part of running peritectic grades that most operators don't realize until they've been burned by it?"
+  }
+]

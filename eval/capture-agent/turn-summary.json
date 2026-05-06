@@ -1,0 +1,62 @@
+[
+  {
+    "turn": 1,
+    "question": "You mentioned the radar sensor reads garbage above 130mm. How do you tell the difference between real level changes and splash noise?",
+    "extractedCount": 7,
+    "done": false
+  },
+  {
+    "turn": 2,
+    "question": "You said speed times section size shouldn't exceed 650. That's a neat rule — where'd that number come from? What happens when you go over it?",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 3,
+    "question": "You mentioned half the breakouts trace back to bad mould level or clogged secondary spray. What are the early warning signs that tell you a breakout might be coming?",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 4,
+    "question": "You mentioned the mould thermocouple delta-T spike — south face specifically. Walk me through the last time you caught one early. What exactly do you do when you see that spike?",
+    "extractedCount": 5,
+    "done": false
+  },
+  {
+    "turn": 5,
+    "question": "You mentioned hot spots in the mould after peritectic casting. How do you know when the mould has normalized and it's safe to bring the speed back up?",
+    "extractedCount": 4,
+    "done": false
+  },
+  {
+    "turn": 6,
+    "question": "You mentioned borescope inspection at heat 6 after that tundish failure. What exactly are you looking for with the borescope that you can't see from visual inspection?",
+    "extractedCount": 7,
+    "done": false
+  },
+  {
+    "turn": 7,
+    "question": "You mentioned dip-testing the powder layer thickness with a steel rod. Walk me through how you do that safely without messing up the meniscus.",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 8,
+    "question": "You mentioned the turbulent inhibitor pad gets eaten in 4 to 6 heats. How do you spot the temperature stratification change that tells you it's time to replace it?",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 9,
+    "question": "You said mould life is 800 to 1200 heats and you retire on heat count, not visual condition. What happens if you push a mould past its heat count but it still looks good?",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 10,
+    "question": "Got it. Those are the fundamentals. Let me ask about something we haven't covered much — what's the trickiest part of running peritectic grades that most operators don't realize until they've been burned by it?",
+    "extractedCount": 0,
+    "done": false
+  }
+]

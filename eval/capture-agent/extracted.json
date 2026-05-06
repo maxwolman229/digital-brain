@@ -1,0 +1,445 @@
+[
+  {
+    "type": "rule",
+    "title": "Maintain mould level 80-100mm above SEN tip for standard low-carbon rebar",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line standard grades",
+    "_turn": 1
+  },
+  {
+    "type": "assertion",
+    "title": "Mould level below 60mm causes slag entrainment and longitudinal strand cracks",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line",
+    "rationale": "Steel surface gets too close to powder layer, gets pulled into meniscus",
+    "_turn": 1
+  },
+  {
+    "type": "assertion",
+    "title": "Mould level above 130mm causes splash on meniscus and false radar readings",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Run tighter mould level window 70-85mm for peritectic grades (0.10-0.16% carbon)",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line peritectic grades",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Use 8mm peak-to-peak oscillation at 200 strokes/min for normal grades",
+    "category": "Equipment",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line oscillator settings",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Reduce to 6mm oscillation at 180 strokes/min for peritectic grades",
+    "category": "Equipment",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line peritectic grades",
+    "_turn": 1
+  },
+  {
+    "type": "assertion",
+    "title": "Oscillation mark depth over 0.4mm indicates wrong amplitude or stroke rate",
+    "category": "Measurement",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line quality control",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Run casting speed 4.2-4.8 m/min for 130x130 billets on 0.20-0.30% carbon rebar grades",
+    "category": "Process",
+    "processArea": "Continuous casting",
+    "scope": "130x130 billets, 0.20-0.30% carbon rebar grades",
+    "_turn": 2
+  },
+  {
+    "type": "assertion",
+    "title": "Casting speed below 4.0 m/min causes transverse corner cracks from uneven shell thickening",
+    "category": "Process",
+    "processArea": "Continuous casting",
+    "scope": "130x130 billets, slow casting conditions",
+    "_turn": 2
+  },
+  {
+    "type": "assertion",
+    "title": "Casting speed above 5.0 m/min pushes metallurgical length past bender entry causing internal cracks during straightening",
+    "category": "Process",
+    "processArea": "Continuous casting",
+    "scope": "130x130 billets, high casting speeds",
+    "_turn": 2
+  },
+  {
+    "type": "rule",
+    "title": "Keep speed × section size below 650 for clean billets (metallurgical length proxy)",
+    "category": "Process",
+    "processArea": "Continuous casting",
+    "scope": "All billet casting operations",
+    "_turn": 2
+  },
+  {
+    "type": "rule",
+    "title": "Reduce casting speed by 0.3-0.4 m/min for high-Mn grades (over 1.4% manganese)",
+    "category": "Process",
+    "processArea": "Continuous casting",
+    "scope": "High-manganese steel grades >1.4% Mn",
+    "_turn": 2
+  },
+  {
+    "type": "assertion",
+    "title": "High-Mn grades segregate hard at centerline requiring slower casting for columnar dendrites to reach center",
+    "category": "Material",
+    "processArea": "Continuous casting",
+    "scope": "High-manganese steel grades >1.4% Mn",
+    "_turn": 2
+  },
+  {
+    "type": "rule",
+    "title": "Target water-to-steel ratio 0.9-1.1 litres per kg for standard grades in secondary cooling",
+    "category": "Process",
+    "processArea": "Secondary Cooling",
+    "scope": "Standard rebar grades",
+    "rationale": "Ensures proper cooling profile to avoid reheat cracking and thermal gradient issues",
+    "_turn": 3
+  },
+  {
+    "type": "assertion",
+    "title": "Water-to-steel ratio below 0.7 causes surface temperature overshoot above 1100°C leading to reheat cracking",
+    "category": "Process",
+    "processArea": "Secondary Cooling",
+    "scope": "All grades",
+    "rationale": "Insufficient cooling allows surface temperature to exceed reheat cracking threshold",
+    "_turn": 3
+  },
+  {
+    "type": "assertion",
+    "title": "Water-to-steel ratio above 1.3 causes internal cracking from excessive thermal gradient",
+    "category": "Process",
+    "processArea": "Secondary Cooling",
+    "scope": "All grades",
+    "rationale": "Excessive cooling creates thermal stress between surface and core",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Maintain zone-2 flow rate 240-280 litres per minute for 130mm sections",
+    "category": "Process",
+    "processArea": "Secondary Cooling",
+    "scope": "130mm billet sections",
+    "rationale": "Critical flow rate for proper cooling in first secondary cooling zone",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Replace zone-2 nozzles when flow reduced by more than 30%",
+    "category": "Equipment",
+    "processArea": "Secondary Cooling",
+    "scope": "Zone-2 nozzles",
+    "rationale": "Prevents hot spots that cause longitudinal score lines visible on descaler entry camera",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Check secondary cooling nozzles every shift change",
+    "category": "Equipment",
+    "processArea": "Secondary Cooling",
+    "scope": "All secondary cooling nozzles",
+    "rationale": "Early detection prevents clogged nozzle hot spots leading to breakouts",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Use basic flux (basicity 1.1, viscosity 1.5 poise at 1300°C) for low-carbon grades",
+    "category": "Material",
+    "processArea": "Casting",
+    "scope": "MiDa Rebar Mill - mould flux selection",
+    "_turn": 4
+  },
+  {
+    "type": "rule",
+    "title": "Use acidic flux (basicity 0.9, viscosity 2.0-2.5 poise at 1300°C) for higher-carbon grades",
+    "category": "Material",
+    "processArea": "Casting",
+    "scope": "MiDa Rebar Mill - mould flux selection",
+    "_turn": 4
+  },
+  {
+    "type": "assertion",
+    "title": "Sticker breakouts caused by poor lubrication from wrong flux or cold meniscus preventing powder melt",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "MiDa Rebar Mill - breakout prevention",
+    "_turn": 4
+  },
+  {
+    "type": "assertion",
+    "title": "Bleed breakouts past mould exit caused by insufficient shell thickness from high speed or low cooling",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "MiDa Rebar Mill - breakout prevention",
+    "_turn": 4
+  },
+  {
+    "type": "assertion",
+    "title": "Mould thermocouple delta-T spike of 4-5°C indicates impending breakout with 30-60 seconds warning",
+    "category": "Measurement",
+    "processArea": "Casting",
+    "scope": "MiDa Rebar Mill - breakout early detection",
+    "_turn": 4
+  },
+  {
+    "type": "assertion",
+    "title": "Low-to-high carbon transitions create 4-6 meter transition zone that must be cut at runout",
+    "category": "Process",
+    "processArea": "Grade transitions",
+    "scope": "MiDa rebar line continuous casting",
+    "rationale": "Mixed material zone occurs during carbon increase transition",
+    "_turn": 5
+  },
+  {
+    "type": "assertion",
+    "title": "High-to-low carbon transitions contaminate 8-12 meters with residual carbon from tundish washout",
+    "category": "Process",
+    "processArea": "Grade transitions",
+    "scope": "MiDa rebar line continuous casting",
+    "rationale": "Residual carbon takes time to wash out of tundish",
+    "_turn": 5
+  },
+  {
+    "type": "rule",
+    "title": "Tag transition pieces with paint and segregate to dedicated scrap bin",
+    "category": "Process",
+    "processArea": "Grade transitions",
+    "scope": "MiDa rebar line continuous casting",
+    "rationale": "Prevents contaminated material from entering quality stream",
+    "_turn": 5
+  },
+  {
+    "type": "rule",
+    "title": "Reduce speed by 0.5 m/min for first heat after peritectic-to-peritectic transitions",
+    "category": "Process",
+    "processArea": "Grade transitions",
+    "scope": "MiDa rebar line continuous casting",
+    "rationale": "Mould hot spots from prior peritectic haven't normalized causing new strand cracking",
+    "_turn": 5
+  },
+  {
+    "type": "rule",
+    "title": "Run 12 heats per tundish for standard grades, 8 heats for peritectic grades",
+    "category": "Equipment",
+    "processArea": "Casting operations",
+    "scope": "MiDa rebar line tundish operations",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Use acoustic test to check tundish life - change when sound goes from clear ring to dull thud",
+    "category": "Measurement",
+    "processArea": "Casting operations",
+    "scope": "MiDa rebar line tundish life assessment",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Change tundish immediately if visual cracks appear on wear surface regardless of heat count",
+    "category": "Equipment",
+    "processArea": "Casting operations",
+    "scope": "MiDa rebar line tundish safety",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Perform borescope inspection at heat 6 on every tundish even if visual inspection is clean",
+    "category": "Measurement",
+    "processArea": "Casting operations",
+    "scope": "MiDa rebar line tundish inspection protocol",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Limit SEN nozzle to maximum 6 heats on aluminium-killed steels, 8 heats on calcium-treated",
+    "category": "Equipment",
+    "processArea": "Casting operations",
+    "scope": "MiDa rebar line SEN nozzle life management",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Run silicon-killed grades up to 10 heats on same SEN nozzle",
+    "category": "Equipment",
+    "processArea": "Casting operations",
+    "scope": "MiDa rebar line SEN nozzle life management",
+    "_turn": 6
+  },
+  {
+    "type": "assertion",
+    "title": "Aluminium-killed steels cause SEN nozzle wear through alumina deposition",
+    "category": "Material",
+    "processArea": "Casting operations",
+    "scope": "MiDa rebar line metallurgy effects on equipment",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Target mould powder consumption 0.45-0.55 kg per square metre of strand surface for standard grades",
+    "category": "Material",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line",
+    "_turn": 7
+  },
+  {
+    "type": "assertion",
+    "title": "Powder consumption below 0.35 kg/m² indicates stuck feeder or powder sintering on meniscus causing insufficient lubrication",
+    "category": "Material",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line",
+    "_turn": 7
+  },
+  {
+    "type": "rule",
+    "title": "Check powder consumption every 30 minutes comparing against calculated rate based on speed and section",
+    "category": "Measurement",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line",
+    "_turn": 7
+  },
+  {
+    "type": "assertion",
+    "title": "Powder consumption variance over 15% from calculated rate is a warning flag",
+    "category": "Measurement",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line",
+    "_turn": 7
+  },
+  {
+    "type": "rule",
+    "title": "Maintain powder layer thickness 30-50mm on meniscus",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line",
+    "_turn": 7
+  },
+  {
+    "type": "rule",
+    "title": "Dip-test powder layer thickness with steel rod only during stable casting, never during transitions or speed changes",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "MiDa rebar line",
+    "_turn": 7
+  },
+  {
+    "type": "rule",
+    "title": "Run argon shrouding at 50-80 litres per minute in protective tube during ladle to tundish pour",
+    "category": "Process",
+    "processArea": "Casting operations on the MiDa rebar line",
+    "scope": "Argon shrouding for ladle to tundish transfer",
+    "rationale": "Excess argon creates turbulence causing tundish slag entrainment",
+    "_turn": 8
+  },
+  {
+    "type": "rule",
+    "title": "Maintain minimum 5 minutes residence time in tundish for inclusion flotation, 8 minutes for special bar quality steel",
+    "category": "Process",
+    "processArea": "Casting operations on the MiDa rebar line",
+    "scope": "Tundish residence time control",
+    "rationale": "Shorter residence time prevents inclusions from floating out before reaching SEN",
+    "_turn": 8
+  },
+  {
+    "type": "rule",
+    "title": "Use turbulent inhibitor pad in tundish to break up incoming stream for special bar quality steel",
+    "category": "Equipment",
+    "processArea": "Casting operations on the MiDa rebar line",
+    "scope": "Tundish turbulent inhibitor pad usage",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "Without turbulent inhibitor pad, short-circuiting occurs and inclusions reach SEN before floating out",
+    "category": "Process",
+    "processArea": "Casting operations on the MiDa rebar line",
+    "scope": "Tundish inclusion removal mechanism",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "Turbulent inhibitor pad typical life is 4-6 heats before cracking",
+    "category": "Equipment",
+    "processArea": "Casting operations on the MiDa rebar line",
+    "scope": "Tundish turbulent inhibitor pad lifecycle",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "Cracked turbulent inhibitor pad causes sudden change in tundish temperature stratification",
+    "category": "Equipment",
+    "processArea": "Casting operations on the MiDa rebar line",
+    "scope": "Tundish turbulent inhibitor pad failure indicator",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "Longitudinal corner cracks caused by over-cooling in zone 2",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "Secondary cooling",
+    "rationale": "Operator directly explained defect cause-and-effect relationship",
+    "_turn": 9
+  },
+  {
+    "type": "assertion",
+    "title": "Star cracks caused by copper pickup from mould tube past service life",
+    "category": "Equipment",
+    "processArea": "Casting",
+    "scope": "Mould maintenance",
+    "rationale": "Specific defect-to-cause relationship with equipment reference",
+    "_turn": 9
+  },
+  {
+    "type": "rule",
+    "title": "Retire mould tube at 800-1200 heats based on heat count not visual condition",
+    "category": "Equipment",
+    "processArea": "Casting",
+    "scope": "Mould maintenance",
+    "rationale": "Clear maintenance rule with specific heat count criteria",
+    "_turn": 9
+  },
+  {
+    "type": "assertion",
+    "title": "Transverse face cracks are mould oscillation marks that propagated",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "Mould oscillation",
+    "rationale": "Defect mechanism explanation",
+    "_turn": 9
+  },
+  {
+    "type": "assertion",
+    "title": "Centre cracks caused by casting speed too high",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "Speed control",
+    "rationale": "Direct defect-to-cause relationship",
+    "_turn": 9
+  },
+  {
+    "type": "assertion",
+    "title": "Sub-surface inclusions caused by tundish shroud problems or insufficient residence time",
+    "category": "Process",
+    "processArea": "Casting",
+    "scope": "Tundish operations",
+    "rationale": "Multi-cause defect explanation with process parameters",
+    "_turn": 9
+  }
+]
