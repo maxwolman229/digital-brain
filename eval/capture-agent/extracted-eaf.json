@@ -1,0 +1,520 @@
+[
+  {
+    "type": "rule",
+    "title": "Use three-bucket charging sequence on 80-tonne EAF, never four buckets",
+    "category": "Process",
+    "processArea": "EAF charging",
+    "scope": "80-tonne furnace operations",
+    "rationale": "Four-bucket charges create too much dead time and lose hot heel benefit",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "First bucket composition: 60% shred, 30% #1 heavy melt, 10% low-residual prime at bottom",
+    "category": "Material",
+    "processArea": "EAF charging",
+    "scope": "First bucket charging on 80-tonne furnace",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Place low-residual prime bridge layer at bottom of first bucket over hot heel",
+    "category": "Process",
+    "processArea": "EAF charging",
+    "scope": "First bucket charging preparation",
+    "rationale": "Prevents electrodes from punching through into heel and causing arc flash",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Second bucket: 80% shred with pig iron layer on top",
+    "category": "Material",
+    "processArea": "EAF charging",
+    "scope": "Second bucket charging on 80-tonne furnace",
+    "rationale": "Pig iron layer feeds bath chemistry",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Never put turnings or borings in first bucket",
+    "category": "Material",
+    "processArea": "EAF charging",
+    "scope": "First bucket material selection",
+    "rationale": "Turnings and borings pack down and choke hot heel mixing",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Limit borings to maximum 5% of total weight in third bucket only",
+    "category": "Material",
+    "processArea": "EAF charging",
+    "scope": "Third bucket material limits",
+    "_turn": 1
+  },
+  {
+    "type": "rule",
+    "title": "Run bore-in at 70-80% secondary voltage on tap 7, low impedance for short arc",
+    "category": "Process",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF power profile during bore-in stage",
+    "_turn": 2
+  },
+  {
+    "type": "rule",
+    "title": "Switch to tap 12-13 at full secondary (~950V) after flat bath achieved",
+    "category": "Process",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF power profile transition timing",
+    "_turn": 2
+  },
+  {
+    "type": "assertion",
+    "title": "Flat bath achieved at 25 min cold start or 18 min hot heel start",
+    "category": "Process",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF melting timeline",
+    "_turn": 2
+  },
+  {
+    "type": "rule",
+    "title": "Increase power 5-10% for every 100mm of foamy slag above arc tip",
+    "category": "Process",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF power optimization with slag coverage",
+    "_turn": 2
+  },
+  {
+    "type": "rule",
+    "title": "Throttle back power if foamy slag not covering arc",
+    "category": "Process",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF power control for roof protection",
+    "_turn": 2
+  },
+  {
+    "type": "rule",
+    "title": "Maintain electrode regulator response time under 200 milliseconds",
+    "category": "Equipment",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF electrode control system",
+    "_turn": 2
+  },
+  {
+    "type": "assertion",
+    "title": "Grid flicker complaints indicate arc too short, check regulator response",
+    "category": "Process",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF electrical troubleshooting",
+    "_turn": 2
+  },
+  {
+    "type": "rule",
+    "title": "Target basicity 1.8-2.2 for low-carbon plain rebar grades",
+    "category": "Process",
+    "processArea": "EAF refining",
+    "scope": "80-tonne EAF",
+    "rationale": "Proper basicity range for effective refining of low-carbon steel",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Target basicity 2.4-2.6 for higher-carbon and HSLA grades",
+    "category": "Process",
+    "processArea": "EAF refining",
+    "scope": "80-tonne EAF",
+    "rationale": "Higher basicity needed for better phosphorus and sulphur partitioning",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Target FeO content 18-25% during EAF refining",
+    "category": "Process",
+    "processArea": "EAF refining",
+    "scope": "80-tonne EAF",
+    "rationale": "Optimal oxidation potential range for phosphorus oxidation without yield loss",
+    "_turn": 3
+  },
+  {
+    "type": "assertion",
+    "title": "FeO below 15% prevents phosphorus oxidation and causes reversion",
+    "category": "Process",
+    "processArea": "EAF refining",
+    "scope": "80-tonne EAF",
+    "rationale": "Insufficient oxidation potential at low FeO levels",
+    "_turn": 3
+  },
+  {
+    "type": "assertion",
+    "title": "FeO above 30% causes iron loss and yield drop",
+    "category": "Process",
+    "processArea": "EAF refining",
+    "scope": "80-tonne EAF",
+    "rationale": "Excessive oxidation leads to iron units lost to slag",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Sample slag at slag door every 10 minutes during refining for FeO measurement",
+    "category": "Measurement",
+    "processArea": "EAF refining",
+    "scope": "80-tonne EAF",
+    "rationale": "Regular monitoring needed to control oxidation potential",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Add lime in 200-300 kg charges, never dump full tonne at once",
+    "category": "Material",
+    "processArea": "EAF refining",
+    "scope": "80-tonne EAF",
+    "rationale": "Large lime additions form unmelted clumps that take 15 minutes to dissolve",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Always inject carbon under slag, not on surface",
+    "category": "Process",
+    "processArea": "EAF refining",
+    "scope": "80-tonne EAF",
+    "rationale": "Surface injection burns off uselessly without benefit",
+    "_turn": 3
+  },
+  {
+    "type": "rule",
+    "title": "Maintain 400-600 mm foamy slag coverage over arc during flat bath stage",
+    "category": "Process",
+    "processArea": "EAF melting",
+    "scope": "80-tonne EAF operations",
+    "rationale": "Without foam, arc radiates heat into sidewall instead of bath, electrode tip wears 30% faster, and refractory life drops by half",
+    "_turn": 4
+  },
+  {
+    "type": "rule",
+    "title": "Inject carbon at 1.5-2 kg/tonne at 8-12 bar pressure for slag foaming",
+    "category": "Process",
+    "processArea": "EAF melting",
+    "scope": "80-tonne EAF operations",
+    "_turn": 4
+  },
+  {
+    "type": "rule",
+    "title": "Position carbon injection lance 30-45 degrees below horizontal pointed at slag-metal interface",
+    "category": "Equipment",
+    "processArea": "EAF melting",
+    "scope": "80-tonne EAF operations",
+    "_turn": 4
+  },
+  {
+    "type": "rule",
+    "title": "Check FeO level, slag basicity, and carbon delivery rate in order when foaming fails",
+    "category": "Process",
+    "processArea": "EAF melting",
+    "scope": "80-tonne EAF operations",
+    "_turn": 4
+  },
+  {
+    "type": "assertion",
+    "title": "Carbon reduces FeO to iron and CO bubbles which foams the slag",
+    "category": "Process",
+    "processArea": "EAF melting",
+    "scope": "80-tonne EAF operations",
+    "_turn": 4
+  },
+  {
+    "type": "rule",
+    "title": "Tap carbon injection lance with steel rod every 4 hours to check for clogs",
+    "category": "Equipment",
+    "processArea": "EAF melting",
+    "scope": "80-tonne EAF operations",
+    "_turn": 4
+  },
+  {
+    "type": "rule",
+    "title": "Tap temperature range 1610-1640°C for low-carbon rebar based on tundish distance and treatments",
+    "category": "Process",
+    "processArea": "EAF tapping",
+    "scope": "80-tonne EAF plain low-carbon rebar",
+    "_turn": 5
+  },
+  {
+    "type": "rule",
+    "title": "Measure tap temperature with disposable thermocouple before tap, never trust bath reading alone",
+    "category": "Measurement",
+    "processArea": "EAF temperature control",
+    "scope": "80-tonne EAF tapping procedure",
+    "_turn": 5
+  },
+  {
+    "type": "assertion",
+    "title": "Bath meniscus temperature 15-25°C colder than bulk metal temperature",
+    "category": "Process",
+    "processArea": "EAF temperature measurement",
+    "scope": "80-tonne EAF temperature differential",
+    "_turn": 5
+  },
+  {
+    "type": "rule",
+    "title": "Tap at maximum 80% flow rate through EBT, never full open to prevent slag entrainment",
+    "category": "Process",
+    "processArea": "EAF tapping",
+    "scope": "80-tonne EAF tap stream control",
+    "_turn": 5
+  },
+  {
+    "type": "rule",
+    "title": "Use argon shroud 60-100 Nm3/hr through refractory tube around tap stream",
+    "category": "Process",
+    "processArea": "EAF tapping",
+    "scope": "80-tonne EAF argon protection",
+    "_turn": 5
+  },
+  {
+    "type": "assertion",
+    "title": "Tapping without argon shroud increases nitrogen from 40 ppm to over 100 ppm causing age cracking",
+    "category": "Process",
+    "processArea": "EAF tapping",
+    "scope": "80-tonne EAF nitrogen pickup effects",
+    "_turn": 5
+  },
+  {
+    "type": "rule",
+    "title": "Target tap weight 75-78 tonnes maintaining 2-4 tonnes hot heel for next heat",
+    "category": "Process",
+    "processArea": "EAF tapping",
+    "scope": "80-tonne EAF heel management",
+    "_turn": 5
+  },
+  {
+    "type": "assertion",
+    "title": "Below 1.5 tonnes heel causes rough bore-in, above 5 tonnes loses capacity",
+    "category": "Process",
+    "processArea": "EAF heel management",
+    "scope": "80-tonne EAF heel weight effects",
+    "_turn": 5
+  },
+  {
+    "type": "rule",
+    "title": "Check heel composition every shift by lance sampling for carbon drift monitoring",
+    "category": "Measurement",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Monitors slag performance and prevents carbon reversion",
+    "_turn": 6
+  },
+  {
+    "type": "assertion",
+    "title": "Carbon drift over 0.05% between heats indicates slag not performing and carbon reverting from heel",
+    "category": "Process",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Process diagnostic indicator",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Maintain heel temperature 1500-1530°C at start of next charge",
+    "category": "Process",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Prevents scrap freezing below 1500°C and energy waste above 1530°C",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Apply 50mm basic powder slag cover on heel during turnaround",
+    "category": "Material",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Slows heat loss and prevents oxidation",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Add 50-80 kg carbon to heel if not charging within 15 minutes of tap",
+    "category": "Material",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Prevents heel surface oxidation and energy losses",
+    "_turn": 6
+  },
+  {
+    "type": "rule",
+    "title": "Run secondary oxygen at 8-12 Nm3/min during CO evolution for post-combustion",
+    "category": "Process",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Burns CO to CO2 releasing 280 MJ/kg CO for energy recovery",
+    "_turn": 7
+  },
+  {
+    "type": "rule",
+    "title": "Target freeboard temperature 1600-1700°C during post-combustion",
+    "category": "Process",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF off-gas system",
+    "rationale": "Indicates optimal CO combustion - colder means missing CO, hotter damages duct refractory",
+    "_turn": 7
+  },
+  {
+    "type": "rule",
+    "title": "Monitor freeboard temperature with thermocouples 2 metres downstream of post-combustion zone",
+    "category": "Measurement",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF off-gas system",
+    "rationale": "Cleanest measurement point for post-combustion temperature control",
+    "_turn": 7
+  },
+  {
+    "type": "assertion",
+    "title": "Post-combustion system saves 25-30 kWh/tonne (2.4 MWh per 80-tonne heat)",
+    "category": "Process",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF energy recovery",
+    "rationale": "Energy savings from capturing CO combustion heat instead of losing it",
+    "_turn": 7
+  },
+  {
+    "type": "assertion",
+    "title": "EAF bottom refractory is shotcreted MgO-C with carbon binder lasting 8000-12000 heats",
+    "category": "Equipment",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF",
+    "rationale": "Specific material composition and expected lifetime range for bottom refractory",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "EAF sidewall refractory above slag line lasts 800-1200 heats",
+    "category": "Equipment",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF",
+    "rationale": "Specific lifetime range for sidewall refractory between water-cooled panels",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "EAF roof refractory life is 200-400 heats depending on naked arc frequency",
+    "category": "Equipment",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF",
+    "rationale": "Roof refractory lifetime range and primary wear factor",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "EAF roof hot spots are at 4 and 8 o'clock positions in electrode triangle",
+    "category": "Equipment",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF",
+    "rationale": "Specific locations that receive most arc radiation when foam coverage is inadequate",
+    "_turn": 8
+  },
+  {
+    "type": "rule",
+    "title": "Apply hot fettling patches with 5-10 kg MgO gunite in 30 seconds followed by water spray",
+    "category": "Equipment",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF",
+    "rationale": "Standard hot patching procedure for roof refractory repair during turnaround",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "More than 3 refractory patches per shift indicates faulty foam practice",
+    "category": "Process",
+    "processArea": "EAF melt shop",
+    "scope": "80-tonne EAF",
+    "rationale": "Diagnostic threshold indicating foam coverage problems rather than normal refractory wear",
+    "_turn": 8
+  },
+  {
+    "type": "assertion",
+    "title": "Standard graphite electrodes cost $4000-5000 per tonne",
+    "category": "Material",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Cost structure data for electrode consumption economics",
+    "_turn": 9
+  },
+  {
+    "type": "assertion",
+    "title": "EAF electrode consumption is 1.6-2.0 kg per tonne of liquid steel (130-160 kg per 80-tonne heat)",
+    "category": "Material",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Consumption rate benchmark for electrode usage",
+    "_turn": 9
+  },
+  {
+    "type": "assertion",
+    "title": "Electrode consumption breakdown: 60% sidewall oxidation, 30% tip wear from arc, 10% stub-end loss",
+    "category": "Material",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Root cause analysis for electrode consumption management",
+    "_turn": 9
+  },
+  {
+    "type": "rule",
+    "title": "Inject argon through electrode cooling collar at 5-8 Nm3/hr per electrode to reduce sidewall oxidation",
+    "category": "Process",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Specific procedure to reduce 60% of electrode consumption from sidewall oxidation",
+    "_turn": 9
+  },
+  {
+    "type": "rule",
+    "title": "Change electrodes only when remaining length below 800mm to minimize stub loss",
+    "category": "Process",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Procedure to minimize 10% of electrode consumption from premature changes",
+    "_turn": 9
+  },
+  {
+    "type": "rule",
+    "title": "Monitor electrode regulator for movements exceeding 6 times per minute indicating excessive regulator gain",
+    "category": "Equipment",
+    "processArea": "EAF Operations",
+    "scope": "80-tonne EAF",
+    "rationale": "Diagnostic indicator for electrode wear rate optimization",
+    "_turn": 9
+  },
+  {
+    "type": "assertion",
+    "title": "Slag indicators are leading, all other EAF measurements are lagging indicators",
+    "category": "Measurement",
+    "processArea": "EAF Operations",
+    "scope": "General EAF operation philosophy",
+    "rationale": "Operator emphasized slag as real-time feedback versus temperature, current, voltage, and power being lagging indicators",
+    "_turn": 10
+  },
+  {
+    "type": "assertion",
+    "title": "Senior melters can visually determine FeO content within 2% accuracy by slag color",
+    "category": "People",
+    "processArea": "EAF Operations",
+    "scope": "Operator skill development",
+    "rationale": "Operator stated experienced melters achieve 2% accuracy on FeO estimation through visual slag assessment",
+    "_turn": 10
+  },
+  {
+    "type": "rule",
+    "title": "Prioritize refractory life over short-term productivity gains on EAF",
+    "category": "Process",
+    "processArea": "EAF Operations",
+    "scope": "Operating philosophy and economics",
+    "rationale": "Operator explained 90 seconds saved per heat by pushing power on thin foam costs 50 heats of roof life, making the economics unfavorable",
+    "_turn": 10
+  },
+  {
+    "type": "assertion",
+    "title": "EAF roof patch costs $8000, full roof rebuild costs $200000",
+    "category": "Equipment",
+    "processArea": "EAF Operations",
+    "scope": "Refractory maintenance costs",
+    "rationale": "Operator provided specific cost figures for roof refractory maintenance and replacement",
+    "_turn": 10
+  }
+]

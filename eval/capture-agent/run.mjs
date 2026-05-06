@@ -20,7 +20,11 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const script = JSON.parse(readFileSync(join(here, 'sme-script.json'), 'utf8'))
+// Optional CLI args: <script-path> <output-suffix>. Default keeps the
+// original casting transcript output paths.
+const scriptPath = process.argv[2] || join(here, 'sme-script.json')
+const outSuffix  = process.argv[3] || ''
+const script = JSON.parse(readFileSync(scriptPath, 'utf8'))
 
 const env = Object.fromEntries(
   readFileSync(join(here, '..', '..', '.env.local'), 'utf8')
@@ -50,10 +54,11 @@ async function callCapture(history, context, extractedSoFar, attempt = 0) {
   return data
 }
 
-function persist(here, transcript, allExtracted, turnSummary) {
-  writeFileSync(join(here, 'transcript.json'), JSON.stringify(transcript, null, 2))
-  writeFileSync(join(here, 'extracted.json'), JSON.stringify(allExtracted, null, 2))
-  writeFileSync(join(here, 'turn-summary.json'), JSON.stringify(turnSummary, null, 2))
+function persist(here, transcript, allExtracted, turnSummary, suffix = '') {
+  const tag = suffix ? `-${suffix}` : ''
+  writeFileSync(join(here, `transcript${tag}.json`), JSON.stringify(transcript, null, 2))
+  writeFileSync(join(here, `extracted${tag}.json`), JSON.stringify(allExtracted, null, 2))
+  writeFileSync(join(here, `turn-summary${tag}.json`), JSON.stringify(turnSummary, null, 2))
 }
 
 const transcript = []           // for the transcript file
@@ -88,7 +93,7 @@ for (let i = 0; i < script.answers.length; i++) {
   } catch (e) {
     console.log(`  ✗ turn ${i + 1} hard-failed: ${e.message}`)
     turnSummary.push({ turn: i + 1, question: null, extractedCount: 0, done: false, error: e.message })
-    persist(here, transcript, allExtracted, turnSummary)
+    persist(here, transcript, allExtracted, turnSummary, outSuffix)
     // Pop the failed user message so the next turn doesn't re-send it
     history.pop()
     transcript.pop()
@@ -103,12 +108,12 @@ for (let i = 0; i < script.answers.length; i++) {
     transcript.push({ role: 'assistant', content: resp.question })
     history.push({ role: 'assistant', content: resp.question })
   }
-  persist(here, transcript, allExtracted, turnSummary)
+  persist(here, transcript, allExtracted, turnSummary, outSuffix)
   if (resp.done) { console.log(`  ✓ session complete`); break }
 }
 
 const totalSec = ((Date.now() - t0) / 1000).toFixed(1)
-persist(here, transcript, allExtracted, turnSummary)
+persist(here, transcript, allExtracted, turnSummary, outSuffix)
 
 // ── Summary report ──────────────────────────────────────────────────────────
 

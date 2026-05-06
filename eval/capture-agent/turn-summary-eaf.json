@@ -1,0 +1,62 @@
+[
+  {
+    "turn": 1,
+    "question": "You mentioned the bridge layer over the hot heel — what's the exact weight or thickness you need? How do you know if you got it right?",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 2,
+    "question": "You said foamy slag coverage lets you push more power — how do you actually measure those 100 millimetre layers? Is it visual or do you have instruments?",
+    "extractedCount": 7,
+    "done": false
+  },
+  {
+    "turn": 3,
+    "question": "You mentioned sampling at the slag door every 10 minutes for FeO — what's the actual sampling procedure? How much slag do you pull and where exactly?",
+    "extractedCount": 8,
+    "done": false
+  },
+  {
+    "turn": 4,
+    "question": "You said tap the lance with a steel rod every 4 hours — what exactly are you listening or feeling for? How do you know the difference between clear and clogged?",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 5,
+    "question": "You mentioned the thermocouple gives different readings than bath temperature — what causes that 15 to 25 degree difference? Is it always predictable?",
+    "extractedCount": 8,
+    "done": false
+  },
+  {
+    "turn": 6,
+    "question": "You said check heel composition every shift for carbon drift — walk me through that lance sampling. Where do you sample and what's the procedure?",
+    "extractedCount": 5,
+    "done": false
+  },
+  {
+    "turn": 7,
+    "question": "You mentioned secondary oxygen at 8 to 12 normal cubic metres per minute — how do you actually adjust that rate during the heat? What tells you to go up or down?",
+    "extractedCount": 4,
+    "done": false
+  },
+  {
+    "turn": 8,
+    "question": "You mentioned bottom life of 8000 to 12000 heats — what's the difference between the high and low end? What chemistry abuse kills it faster?",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 9,
+    "question": "You mentioned sidewall oxidation is 60% of electrode loss — how exactly does the argon cooling collar work? Is it through the electrode body itself or around it?",
+    "extractedCount": 6,
+    "done": false
+  },
+  {
+    "turn": 10,
+    "question": "You said senior melters can tell FeO within 2 percent by slag color — walk me through what they're looking for. What does 15% FeO look like versus 25%?",
+    "extractedCount": 4,
+    "done": false
+  }
+]

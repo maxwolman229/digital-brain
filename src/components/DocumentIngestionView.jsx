@@ -368,11 +368,12 @@ function UploadSection({ plantId, processAreas, onUploaded }) {
                 {DOCUMENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </Field>
-            <Field label="Process area">
-              <select value={processArea} onChange={e => setProcessArea(e.target.value)} style={inputStyle()}>
-                <option value="">— General —</option>
-                {(processAreas || []).map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
+            <Field label="Process area" hint="Pick from existing or type a new one. Leave blank for General.">
+              <ProcessAreaCombobox
+                value={processArea}
+                onChange={setProcessArea}
+                options={processAreas || []}
+              />
             </Field>
             <Field label="Equipment reference (optional)">
               <input value={equipment} onChange={e => setEquipment(e.target.value)} placeholder="e.g. EAF #2" style={inputStyle()} />
@@ -858,12 +859,85 @@ function FormGrid({ children }) {
   return <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>{children}</div>
 }
 
-function Field({ label, children }) {
+function Field({ label, hint, children }) {
   return (
     <label style={{ display: 'block', fontFamily: FNT }}>
       <div style={{ fontSize: 10, color: 'var(--md1-muted)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4, fontWeight: 700, fontFamily: FNT }}>{label}</div>
       {children}
+      {hint && <div style={{ marginTop: 3, fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT }}>{hint}</div>}
     </label>
+  )
+}
+
+// Combobox: free-text input with a dropdown of existing process areas.
+// User can pick an existing option OR type a brand-new one. Leaving the
+// field empty saves null (= General).
+function ProcessAreaCombobox({ value, onChange, options }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef(null)
+  // Close on outside click.
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => { if (!wrapRef.current?.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  const filtered = (options || []).filter(o =>
+    !value || o.toLowerCase().includes(value.toLowerCase())
+  )
+  const exactMatch = (options || []).some(o => o.toLowerCase() === (value || '').toLowerCase())
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative' }}>
+      <input
+        type="text"
+        value={value || ''}
+        onChange={e => { onChange(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={e => { if (e.key === 'Escape') setOpen(false) }}
+        placeholder="e.g. Casting, Rolling, Steelmaking…"
+        autoComplete="off"
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        style={inputStyle()}
+      />
+      {open && filtered.length > 0 && (
+        <div role="listbox" style={{
+          position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0,
+          background: '#fff', border: '1px solid var(--md1-border)', borderRadius: 3,
+          boxShadow: '0 6px 18px rgba(0,0,0,0.10)', zIndex: 50, maxHeight: 200, overflowY: 'auto',
+        }}>
+          {filtered.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              role="option"
+              aria-selected={opt === value}
+              className="md1-menu-item"
+              onClick={() => { onChange(opt); setOpen(false) }}
+              style={{
+                display: 'block', width: '100%', textAlign: 'left',
+                padding: '7px 10px', fontSize: 12, fontFamily: FNT,
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: 'var(--md1-text)',
+              }}
+            >
+              {opt}
+            </button>
+          ))}
+          {value && !exactMatch && (
+            <div style={{
+              padding: '6px 10px', fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT,
+              borderTop: '1px solid #f0eeec', fontStyle: 'italic',
+            }}>
+              Press Tab/Enter to use “{value}” as a new process area
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
