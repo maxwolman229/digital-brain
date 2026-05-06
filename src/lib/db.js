@@ -1132,6 +1132,12 @@ export async function fetchItemById(type, id) {
     const resolve = await makeNameResolver([itemRes.data.created_by, ...versionAuthors])
     return normaliseAssertion(itemRes.data, evidenceRes.data || [], versionsRes.data || [], [], resolve)
   }
+  if (type === 'event') {
+    const itemRes = await supabase.from('events').select('*').eq('id', id).eq('plant_id', PLANT_ID()).single()
+    if (!itemRes.data) return null
+    const resolve = await makeNameResolver([itemRes.data.reported_by])
+    return normaliseEvent(itemRes.data, resolve)
+  }
   return null
 }
 

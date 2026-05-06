@@ -20,6 +20,9 @@ const QUICK_PROMPTS = [
 // ── Full item detail shown in the query citation modal ─────────────────────────
 
 function QueryItemDetail({ item, onCiteClick, onViewProfile }) {
+  if (item.type === 'event') {
+    return <QueryEventDetail item={item} onCiteClick={onCiteClick} onViewProfile={onViewProfile} />
+  }
   return (
     <div>
       {/* Badges */}
@@ -92,6 +95,106 @@ function QueryItemDetail({ item, onCiteClick, onViewProfile }) {
 
       {/* Comments */}
       <Comments targetType={item.type} targetId={item.id} onViewProfile={onViewProfile} />
+    </div>
+  )
+}
+
+// Event detail in the Query side-pane. Events have a different shape than
+// rules/assertions (date, outcome, impact, root_cause Ishikawa map,
+// description, resolution) so they need a tailored render — but they share
+// Comments + LinkEditor + onViewProfile wiring.
+function QueryEventDetail({ item, onCiteClick, onViewProfile }) {
+  const outcomeColor = item.outcome === 'Positive' ? '#2d6b5e' : '#a52a2a'
+  const ishikawa = item.ishikawa || {}
+  const rootCauseEntries = Object.entries(ishikawa).filter(([_, v]) => Array.isArray(v) && v.length > 0)
+
+  return (
+    <div>
+      {/* Badges */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{
+          padding: '2px 8px', borderRadius: 2,
+          background: outcomeColor === '#2d6b5e' ? '#dff2ed' : '#fde8e5',
+          color: outcomeColor, fontSize: 10, fontWeight: 700,
+          textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: FNT,
+        }}>EVENT · {item.outcome || 'Unknown'}</span>
+        {item.impact && <Tag label={`Impact: ${item.impact}`} />}
+        {item.status && <Tag label={item.status} />}
+        {item.processArea && <Tag label={item.processArea} />}
+      </div>
+
+      {/* Title */}
+      <h3 style={{ fontSize: 16, color: 'var(--md1-primary)', fontWeight: 700, lineHeight: 1.4, marginBottom: 6, fontFamily: FNT }}>
+        {item.title}
+      </h3>
+      {item.date && (
+        <div style={{ fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNTM, marginBottom: 18 }}>
+          {formatDate(item.date)}
+        </div>
+      )}
+
+      {/* Description */}
+      {item.description && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>What happened</div>
+          <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{item.description}</div>
+        </div>
+      )}
+
+      {/* Root cause (Ishikawa) */}
+      {rootCauseEntries.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Root cause analysis</div>
+          {rootCauseEntries.map(([branch, items]) => (
+            <div key={branch} style={{ marginBottom: 6, padding: '6px 10px', background: '#f8f6f4', borderRadius: 3, border: '1px solid var(--md1-border)' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--md1-primary)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3, fontFamily: FNT }}>{branch}</div>
+              {items.map((line, i) => (
+                <div key={i} style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.5, fontFamily: FNT }}>· {line}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Resolution */}
+      {item.resolution && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Resolution</div>
+          <div style={{ fontSize: 12, color: '#5a5550', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{item.resolution}</div>
+        </div>
+      )}
+
+      {/* Linked rules / assertions */}
+      <div style={{ marginBottom: 18 }}>
+        <LinkEditor sourceType="event" sourceId={item.id} onOpenItem={(type, id) => onCiteClick(id, id[0])} />
+      </div>
+
+      {/* Tags */}
+      {(item.tags || []).length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 10, color: 'var(--md1-muted-light)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: FNT }}>Tags</div>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {item.tags.map(t => <Tag key={t} label={t} />)}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ padding: '10px 0', borderTop: '1px solid var(--md1-border)', marginTop: 4, fontSize: 10, color: 'var(--md1-border)', fontFamily: FNT, lineHeight: 1.8 }}>
+        {item.reportedBy && (
+          <div>
+            Reported by:{' '}
+            <span
+              onClick={() => onViewProfile?.(item.reportedBy)}
+              style={{ cursor: onViewProfile ? 'pointer' : 'default', color: onViewProfile ? 'var(--md1-accent)' : 'var(--md1-border)', textDecoration: onViewProfile ? 'underline' : 'none' }}
+            >{item.reportedBy}</span>
+          </div>
+        )}
+        {item.createdAt && <div>Created: {formatDate(item.createdAt)}</div>}
+      </div>
+
+      {/* Comments — events support comments via target_type='event' */}
+      <Comments targetType="event" targetId={item.id} onViewProfile={onViewProfile} />
     </div>
   )
 }
@@ -220,8 +323,11 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
   }
 
   async function openItem(id, typePrefix, setItem, setLoad) {
-    if (typePrefix === 'E') { onNavigate?.('events'); return }
-    const type = typePrefix === 'R' ? 'rule' : 'assertion'
+    const type = typePrefix === 'R' ? 'rule'
+               : typePrefix === 'A' ? 'assertion'
+               : typePrefix === 'E' ? 'event'
+               : null
+    if (!type) return
     setLoad(true)
     setItem(null)
     const data = await fetchItemById(type, id)
