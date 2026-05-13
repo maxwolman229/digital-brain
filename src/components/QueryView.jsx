@@ -8,7 +8,12 @@ import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
 
-const FALLBACK_PLANT_ID = import.meta.env.VITE_PLANT_ID || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+// NOTE: a hardcoded fallback used to live here. It silently routed queries
+// to MD1 EAF Plant whenever the plantId prop arrived falsy (e.g. brief
+// race between mount and plant-context restoration). That produced
+// "no rules in the knowledge bank cover this situation" responses from
+// the wrong plant when the rule actually existed in the user's active
+// plant. Removed — see the guard in send() below.
 
 const QUICK_PROMPTS = [
   'What are the key checks before starting a new batch?',
@@ -250,7 +255,9 @@ function SourceChips({ sources, onCiteClick }) {
 }
 
 export default function QueryView({ onNavigate, industry, plantId, onViewProfile }) {
-  const PLANT_ID = plantId || FALLBACK_PLANT_ID
+  // No fallback — if plantId is missing the user shouldn't be able to query
+  // (would silently hit the wrong plant). send() guards against this.
+  const PLANT_ID = plantId
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -277,6 +284,13 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
   async function send(text = input) {
     const q = text.trim()
     if (!q || loading) return
+    // Guard: if plant context hasn't restored yet, fail loudly instead of
+    // silently querying the wrong plant. The previous code defaulted to
+    // MD1 EAF and produced misleading "no rules" responses.
+    if (!PLANT_ID) {
+      setError('Plant context is still loading. Try again in a moment.')
+      return
+    }
     setInput('')
     setError(null)
     setMessages(prev => [...prev, { role: 'user', text: q, time: new Date().toISOString() }])
@@ -287,6 +301,7 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
       const jwt = getStoredJwt()
 
+      console.log('[query] sending with plant_id=', PLANT_ID, 'industry=', industry, 'question=', q.slice(0, 60))
       const resp = await fetch(`${supabaseUrl}/functions/v1/query`, {
         method: 'POST',
         headers: {
