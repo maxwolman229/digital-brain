@@ -88,7 +88,7 @@ export default function CandidateEditModal({ candidate, onCancel, onSaved }) {
         <div id="edit-cand-title" style={{ fontSize: 11, fontWeight: 700, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
           EDIT CANDIDATE
         </div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--md1-primary)', marginBottom: 18 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--md1-primary)', marginBottom: 18 }}>
           {candidate.type === 'rule' ? 'Rule' : 'Assertion'} — adjust before approving
         </div>
 

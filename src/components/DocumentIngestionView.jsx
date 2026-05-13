@@ -245,7 +245,7 @@ function Header() {
       <div style={{ fontSize: 11, color: 'var(--md1-accent)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>
         ADMIN · DOCUMENT INGESTION
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--md1-primary)', marginBottom: 4 }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--md1-primary)', marginBottom: 4 }}>
         Extract knowledge from documents
       </div>
       <div style={{ fontSize: 12, color: 'var(--md1-muted)', maxWidth: 700, lineHeight: 1.6 }}>

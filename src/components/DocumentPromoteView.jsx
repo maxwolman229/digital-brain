@@ -234,7 +234,7 @@ export default function DocumentPromoteView({ plantId, plantName, onBack, onView
             <div style={{ fontSize: 11, color: 'var(--md1-accent)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase' }}>
               ADMIN · BULK PROMOTION
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--md1-primary)', lineHeight: 1.2 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--md1-primary)', lineHeight: 1.2 }}>
               Promote candidates to Knowledge Bank
             </div>
             <div style={{ marginTop: 4, fontSize: 12, color: 'var(--md1-muted)' }}>
@@ -481,7 +481,7 @@ function ConfirmModal({ count, plantName, onCancel, onConfirm }) {
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
           PROMOTION
         </div>
-        <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--md1-primary)', marginBottom: 10 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--md1-primary)', marginBottom: 10 }}>
           Promote {count} candidate{count === 1 ? '' : 's'} to the Knowledge Bank?
         </div>
         <div style={{ fontSize: 13, color: 'var(--md1-text)', lineHeight: 1.55, marginBottom: 18 }}>
@@ -548,7 +548,7 @@ function PromotionSuccess({ results, plantName, onRetryFailed, onBackToIngestion
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
           <CheckCircle2 size={56} color="#2d6b5e" />
         </div>
-        <h1 ref={headlineRef} tabIndex={-1} style={{ fontSize: 22, fontWeight: 800, color: 'var(--md1-primary)', margin: 0, fontFamily: FNT }}>
+        <h1 ref={headlineRef} tabIndex={-1} style={{ fontSize: 22, fontWeight: 700, color: 'var(--md1-primary)', margin: 0, fontFamily: FNT }}>
           Promotion complete
         </h1>
         <div style={{ marginTop: 14, fontSize: 14, color: 'var(--md1-text)', lineHeight: 1.6 }}>

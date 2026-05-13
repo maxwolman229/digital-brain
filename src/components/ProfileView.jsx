@@ -33,7 +33,7 @@ function StatCard({ value, label, sub }) {
       background: '#fff', border: '1px solid #e8e4e0', borderRadius: 4,
       padding: '14px 18px', textAlign: 'center',
     }}>
-      <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--md1-text)', fontFamily: FNT, marginTop: 4 }}>{label}</div>
       {sub && <div style={{ fontSize: 9, color: 'var(--md1-muted-light)', fontFamily: FNT, marginTop: 2 }}>{sub}</div>}
     </div>
@@ -176,7 +176,7 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
 
           {/* Name + meta */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: FNT, lineHeight: 1 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', fontFamily: FNT, lineHeight: 1 }}>
               {displayName}
             </div>
             <div style={{ marginTop: 6, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -205,7 +205,7 @@ export default function ProfileView({ user, plantId, memberships, onNavigate }) 
           {/* XP badge + Edit button */}
           <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: '#F2652F', fontFamily: FNT, lineHeight: 1 }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: '#F2652F', fontFamily: FNT, lineHeight: 1 }}>
                 {xp.toLocaleString()}
               </div>
               <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.45)', fontFamily: FNT, textTransform: 'uppercase', letterSpacing: 1 }}>

@@ -97,7 +97,7 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
             {initials(displayName)}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', fontFamily: FNT }}>{displayName}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', fontFamily: FNT }}>{displayName}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: FNT, marginTop: 2 }}>
               {xp > 0 ? `${xp.toLocaleString()} XP` : 'Plant member'}
             </div>
@@ -128,7 +128,7 @@ export default function UserProfileModal({ displayName, plantId, onClose, onNavi
                     background: '#f8f6f4', border: '1px solid #e8e4e0', borderRadius: 4,
                     padding: '10px 12px', textAlign: 'center',
                   }}>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1 }}>{stats[key] || 0}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1 }}>{stats[key] || 0}</div>
                     <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, marginTop: 3 }}>{label}</div>
                   </div>
                 ))}

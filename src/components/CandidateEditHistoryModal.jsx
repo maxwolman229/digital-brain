@@ -53,7 +53,7 @@ export default function CandidateEditHistoryModal({ candidate, onClose }) {
         <div id="edit-history-title" style={{ fontSize: 11, fontWeight: 700, color: 'var(--md1-accent)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
           AUDIT TRAIL
         </div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--md1-primary)', marginBottom: 16 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--md1-primary)', marginBottom: 16 }}>
           Edit history — {candidate.title}
         </div>
 

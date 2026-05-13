@@ -326,7 +326,7 @@ function Header({ doc, onBack, onViewOriginal }) {
         <div style={{ fontSize: 11, color: 'var(--md1-accent)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: FNT }}>
           DOCUMENT REVIEW
         </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1.2 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--md1-primary)', fontFamily: FNT, lineHeight: 1.2 }}>
           {doc.title}
         </div>
         <div style={{ marginTop: 6, fontSize: 11, color: 'var(--md1-muted)', fontFamily: FNT, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
