@@ -826,7 +826,7 @@ function GraphCanvas({ rules, assertions, links, gpf, gcf, onSelect, highlightId
 
 // ─── Full detail modal for selected item ───────────────────────────────────────
 
-function ItemDetailModal({ item, loading, onClose, onNavigate }) {
+function ItemDetailModal({ item, loading, onClose, onNavigate, onViewProfile }) {
   return (
     <Modal open={!!(item || loading)} title={item ? `${item.displayId || item.id}${item.versions?.length ? ' · v' + item.versions.length : ''}` : 'Loading…'} onClose={onClose} width={640}>
       {loading && (
@@ -1045,6 +1045,7 @@ export default function RelationshipGraph({ onNavigate, highlightId, onClearHigh
         loading={selLoading}
         onClose={() => { setSel(null); setSelLoading(false) }}
         onNavigate={onNavigate}
+        onViewProfile={onViewProfile}
       />
     </div>
   )
