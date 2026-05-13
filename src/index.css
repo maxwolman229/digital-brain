@@ -90,3 +90,13 @@ body {
   font-family: var(--md1-font-sans);
   background: var(--md1-bg);
 }
+
+/* Form controls don't inherit font-family from <body> in any browser —
+   they use the UA's default (system-ui / Helvetica / etc.). Force them
+   to IBM Plex Sans so the app never shows a "Claude/system font" leak.
+   Headings included for the same reason — some resets style them with
+   the UA serif default. */
+input, textarea, select, button, optgroup,
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--md1-font-sans);
+}
