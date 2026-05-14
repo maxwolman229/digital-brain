@@ -487,7 +487,7 @@ function DocumentRow({ doc, counts, onOpenDoc, onPreview, onDownload, onRequestR
         <span className="md1-title-link" style={{ fontWeight: 600, color: 'var(--md1-primary)', fontFamily: FNT, cursor: 'pointer' }}>
           {doc.title}
         </span>
-        <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNTM, marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--md1-muted)', fontFamily: FNT, marginTop: 2 }}>
           {(doc.file_size_bytes / 1024).toFixed(0)} KB · {doc.mime_type}
         </div>
       </div>
