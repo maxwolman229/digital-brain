@@ -4,6 +4,12 @@ import { Badge, Tag, Modal } from './shared.jsx'
 import { getStoredJwt } from '../lib/supabase.js'
 import { fetchItemById, addQuestion } from '../lib/db.js'
 import { getDisplayName } from '../lib/userContext.js'
+import {
+  fetchChatHistory,
+  saveChatMessage,
+  clearChatHistory,
+  buildContextWindow,
+} from '../lib/queryChatHistory.js'
 import Comments from './Comments.jsx'
 import Verifications from './Verifications.jsx'
 import LinkEditor from './LinkEditor.jsx'
@@ -259,6 +265,7 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
   // (would silently hit the wrong plant). send() guards against this.
   const PLANT_ID = plantId
   const [messages, setMessages] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -277,6 +284,31 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
   const [askSubmitting, setAskSubmitting] = useState(false)
   const [askDone, setAskDone] = useState(false)
 
+  // ── Clear-history confirmation modal ─────────────────────────────────────
+  const [clearOpen, setClearOpen] = useState(false)
+  const [clearing, setClearing] = useState(false)
+
+  // Load persisted history when the plant context arrives (or changes).
+  // Reset to empty first so a plant switch doesn't briefly show the prior
+  // plant's thread. History fetch is non-blocking — the input is usable while
+  // it loads.
+  useEffect(() => {
+    setMessages([])
+    if (!PLANT_ID) return
+    let cancelled = false
+    setHistoryLoading(true)
+    fetchChatHistory(PLANT_ID).then(loaded => {
+      if (cancelled) return
+      setMessages(loaded)
+      setHistoryLoading(false)
+    }).catch(err => {
+      if (cancelled) return
+      console.warn('[QueryView] history load failed:', err?.message)
+      setHistoryLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [PLANT_ID])
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
@@ -293,15 +325,25 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
     }
     setInput('')
     setError(null)
-    setMessages(prev => [...prev, { role: 'user', text: q, time: new Date().toISOString() }])
+
+    // Snapshot prior messages BEFORE we append the new user turn — that's
+    // what counts as "previous conversation" context for the edge function.
+    const priorMessages = messages
+    const history = buildContextWindow(priorMessages)
+
+    const userMsg = { role: 'user', text: q, time: new Date().toISOString() }
+    setMessages(prev => [...prev, userMsg])
     setLoading(true)
+
+    // Fire-and-forget the user-message save so it doesn't block the response.
+    saveChatMessage({ plantId: PLANT_ID, role: 'user', text: q })
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
       const jwt = getStoredJwt()
 
-      console.log('[query] sending with plant_id=', PLANT_ID, 'industry=', industry, 'question=', q.slice(0, 60))
+      console.log('[query] sending with plant_id=', PLANT_ID, 'industry=', industry, 'question=', q.slice(0, 60), 'history_turns=', history.length)
       const resp = await fetch(`${supabaseUrl}/functions/v1/query`, {
         method: 'POST',
         headers: {
@@ -309,19 +351,28 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
           'apikey': supabaseKey,
           'Authorization': 'Bearer ' + (jwt || supabaseKey),
         },
-        body: JSON.stringify({ question: q, plant_id: PLANT_ID, industry }),
+        body: JSON.stringify({ question: q, plant_id: PLANT_ID, industry, history }),
       })
       const data = await resp.json()
       if (!resp.ok) throw new Error(data.error || `Edge function error (${resp.status})`)
 
-      setMessages(prev => [...prev, {
+      const assistantMsg = {
         role: 'assistant',
         text: data.answer,
         query: q,
         sources: data.sources ?? [],
         retrieved: data.totalRetrieved ?? 0,
         time: new Date().toISOString(),
-      }])
+      }
+      setMessages(prev => [...prev, assistantMsg])
+      // Fire-and-forget save — store the citations array so reloads show the
+      // same source chips without re-fetching.
+      saveChatMessage({
+        plantId: PLANT_ID,
+        role: 'assistant',
+        text: data.answer,
+        citations: data.sources ?? [],
+      })
     } catch (err) {
       setError(err.message)
       setMessages(prev => [...prev, {
@@ -334,6 +385,20 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
     } finally {
       setLoading(false)
       setTimeout(() => inputRef.current?.focus(), 50)
+    }
+  }
+
+  async function handleClearHistory() {
+    if (!PLANT_ID || clearing) return
+    setClearing(true)
+    try {
+      await clearChatHistory(PLANT_ID)
+      setMessages([])
+      setClearOpen(false)
+    } catch (err) {
+      setError(`Failed to clear history: ${err?.message || err}`)
+    } finally {
+      setClearing(false)
     }
   }
 
@@ -383,8 +448,8 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
       <div style={{ flex: 1, overflow: 'auto', padding: '24px 28px' }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
 
-          {/* Empty state */}
-          {messages.length === 0 && (
+          {/* Empty state — only after history has loaded */}
+          {messages.length === 0 && !historyLoading && (
             <div style={{ textAlign: 'center', paddingTop: 60 }}>
               <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--md1-text)', fontFamily: FNT, marginBottom: 6 }}>Query</div>
               <div style={{ fontSize: 13, color: 'var(--md1-muted)', fontFamily: FNT, lineHeight: 1.7, marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
@@ -508,8 +573,18 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
             }}
           >{loading ? '…' : 'Query'}</button>
         </div>
-        <div style={{ maxWidth: 720, margin: '6px auto 0', fontSize: 9, color: 'var(--md1-border)', fontFamily: FNT }}>
-          Answers strictly from the validated knowledge bank · Rule IDs are clickable
+        <div style={{ maxWidth: 720, margin: '6px auto 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 9, color: 'var(--md1-border)', fontFamily: FNT }}>
+          <span>Answers strictly from the validated knowledge bank · Rule IDs are clickable</span>
+          {messages.length > 0 && (
+            <button
+              onClick={() => setClearOpen(true)}
+              style={{
+                background: 'none', border: 'none', padding: 0,
+                fontSize: 10, color: 'var(--md1-muted)', cursor: 'pointer',
+                fontFamily: FNT, textDecoration: 'underline',
+              }}
+            >Clear chat history</button>
+          )}
         </div>
       </div>
 
@@ -601,6 +676,35 @@ export default function QueryView({ onNavigate, industry, plantId, onViewProfile
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* ── Clear-history confirmation ── */}
+      <Modal
+        open={clearOpen}
+        onClose={() => { if (!clearing) setClearOpen(false) }}
+        title="Clear chat history"
+        width={420}
+      >
+        <div style={{ fontSize: 13, color: '#5a5550', fontFamily: FNT, lineHeight: 1.6, marginBottom: 20 }}>
+          Clear your chat history? This cannot be undone.
+        </div>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => setClearOpen(false)}
+            disabled={clearing}
+            style={{ padding: '10px 18px', borderRadius: 3, fontSize: 12, background: 'transparent', border: '1px solid var(--md1-border)', color: '#5a5550', cursor: clearing ? 'wait' : 'pointer', fontFamily: FNT, fontWeight: 600 }}
+          >Cancel</button>
+          <button
+            onClick={handleClearHistory}
+            disabled={clearing}
+            style={{
+              padding: '10px 20px', borderRadius: 3, fontSize: 12, fontWeight: 700,
+              background: '#a52a2a', border: 'none', color: '#fff',
+              cursor: clearing ? 'wait' : 'pointer', fontFamily: FNT, letterSpacing: 0.4,
+              opacity: clearing ? 0.7 : 1,
+            }}
+          >{clearing ? 'Clearing…' : 'Clear history'}</button>
+        </div>
       </Modal>
     </div>
   )
