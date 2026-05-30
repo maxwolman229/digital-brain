@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MD1 — In manufacturing, data is visible. Context is not.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #12233A;
+    --bg-dark-2: #0d1a2c;
+    --bg-light: #F4F1EC;
+    --bg-light-2: #ECE7DE;
+    --ink: #12233A;
+    --ink-soft: rgba(18,35,58,0.6);
+    --line: #1f3454;
+    --line-light: #D4CDC0;
+    --off: #F4F1EC;
+    --off-soft: rgba(244,241,236,0.55);
+    --accent: #E8B547;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'IBM Plex Sans', -apple-system, sans-serif; font-weight: 400; line-height: 1.5; -webkit-font-smoothing: antialiased; background: var(--bg-light); }
+  .mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum'; }
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+  .page-landing { background: var(--bg-dark); color: var(--off); }
+  .page-platform, .page-contact { background: var(--bg-light); color: var(--ink); }
+  nav.topnav { position: sticky; top: 0; z-index: 50; padding: 1.4rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid; backdrop-filter: blur(8px); }
+  .page-landing nav.topnav { background: rgba(18,35,58,0.85); border-color: var(--line); }
+  .page-platform nav.topnav, .page-contact nav.topnav { background: rgba(244,241,236,0.85); border-color: var(--line-light); }
+  .logo { font-weight: 600; font-size: 0.85rem; letter-spacing: 0.04em; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; padding: 0.2rem 0.5rem; border: 2px solid; font-family: 'JetBrains Mono', monospace; }
+  .page-landing .logo { color: var(--off); border-color: var(--off); }
+  .page-platform .logo, .page-contact .logo { color: var(--ink); border-color: var(--ink); }
+  .navlinks { display: flex; gap: 2rem; align-items: center; }
+  .navlinks a { font-size: 0.85rem; font-weight: 400; text-decoration: none; cursor: pointer; transition: color .15s; }
+  .page-landing .navlinks a { color: var(--off-soft); }
+  .page-platform .navlinks a, .page-contact .navlinks a { color: var(--ink-soft); }
+  .page-landing .navlinks a:hover, .page-landing .navlinks a.active { color: var(--off); }
+  .page-platform .navlinks a:hover, .page-platform .navlinks a.active, .page-contact .navlinks a:hover, .page-contact .navlinks a.active { color: var(--ink); }
+  .nav-cta { padding: 0.55rem 1.1rem; font-size: 0.82rem; font-weight: 500; border: 1px solid; cursor: pointer; background: transparent; font-family: inherit; transition: all .15s; }
+  .page-landing .nav-cta { color: var(--off); border-color: var(--off); }
+  .page-landing .nav-cta:hover { background: var(--off); color: var(--bg-dark); }
+  .page-platform .nav-cta, .page-contact .nav-cta { color: var(--ink); border-color: var(--ink); }
+  .page-platform .nav-cta:hover, .page-contact .nav-cta:hover { background: var(--ink); color: var(--off); }
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 2.5rem; }
+  .sect-label { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; color: var(--ink-soft); margin-bottom: 1.25rem; }
+  .page-landing .sect-label { color: var(--off-soft); }
+  .hero { padding: 7rem 0 6rem; }
+  .hero h1 { font-size: 5rem; font-weight: 400; letter-spacing: -0.035em; line-height: 1.0; margin-bottom: 1.5rem; max-width: 1100px; }
+  .hero h1 .accent { color: var(--accent); }
+  .hero p.lead { font-size: 1.15rem; font-weight: 400; line-height: 1.55; max-width: 700px; color: var(--off-soft); margin-bottom: 2.25rem; }
+  .cta-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.9rem 1.6rem; background: var(--off); color: var(--bg-dark); font-size: 0.92rem; font-weight: 500; border: none; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+  .cta-primary:hover { opacity: 0.85; }
+  .cta-primary.dark-on-light { background: var(--ink); color: var(--off); }
+  .cta-primary svg { width: 13px; height: 13px; }
+  .hero-preview { margin-top: 5rem; background: var(--bg-dark-2); border: 1px solid var(--line); }
+  .hp-bar { display: flex; align-items: center; padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line); font-size: 0.78rem; color: var(--off-soft); }
+  .hp-bar .hp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 0.6rem; }
+  .hp-bar .hp-title { font-weight: 500; color: var(--off); margin-right: auto; }
+  .hp-tabs { display: flex; gap: 1.5rem; }
+  .hp-tab { font-size: 0.78rem; padding: 0.35rem 0; cursor: pointer; color: var(--off-soft); border-bottom: 1px solid transparent; }
+  .hp-tab.active { color: var(--off); border-color: var(--accent); }
+  .hp-body { display: grid; grid-template-columns: 1.1fr 1fr; min-height: 380px; }
+  .hp-left { padding: 2rem 2rem 2rem 2.5rem; border-right: 1px solid var(--line); }
+  .hp-right { padding: 2rem 2.5rem 2rem 2rem; background: rgba(0,0,0,0.15); }
+  .hp-section-label { font-size: 0.75rem; letter-spacing: 0.02em; color: var(--off-soft); margin-bottom: 0.7rem; font-weight: 500; }
+  .hp-doc { font-size: 0.83rem; line-height: 1.7; color: var(--off-soft); font-family: 'JetBrains Mono', monospace; }
+  .hp-doc strong { color: var(--off); font-weight: 500; }
+  .hp-doc .underline { background: linear-gradient(transparent 70%, rgba(232,181,71,0.25) 70%); }
+  .hp-card { border: 1px solid var(--line); padding: 1rem 1.1rem; margin-bottom: 0.8rem; background: rgba(255,255,255,0.02); }
+  .hp-card-tag { font-size: 0.72rem; letter-spacing: 0.02em; color: var(--accent); font-weight: 500; margin-bottom: 0.4rem; }
+  .hp-card-text { font-size: 0.83rem; color: var(--off); line-height: 1.5; }
+  .hp-card-meta { font-size: 0.7rem; color: var(--off-soft); margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 0.4rem; }
+  .hp-card-meta .chk { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; background: var(--accent); color: var(--bg-dark); border-radius: 50%; font-size: 8px; font-weight: 700; }
+
+  /* K-CARD FULL LAYOUT — mirrors the slide */
+  .kcard-full { font-size: 0.85rem; line-height: 1.45; }
+  .kcf-section-label { font-size: 0.78rem; font-weight: 600; color: var(--off); margin: 0.85rem 0 0.4rem; letter-spacing: 0.005em; }
+  .kcf-title {
+    font-size: 1.1rem; font-weight: 500; color: var(--off);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    padding: 0.75rem 0.85rem;
+    line-height: 1.3;
+    position: relative; cursor: help;
+  }
+  .kcf-context {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--line);
+    padding: 0.65rem;
+    position: relative; cursor: help;
+  }
+  .kcf-tag {
+    font-size: 0.72rem; padding: 0.25rem 0.6rem;
+    background: rgba(46, 158, 117, 0.18);
+    color: #6FD3A8;
+    border: 1px solid rgba(46, 158, 117, 0.4);
+    font-family: 'JetBrains Mono', monospace; font-weight: 500;
+    letter-spacing: 0.005em;
+  }
+  .kcf-content {
+    background: rgba(132, 175, 222, 0.08);
+    border: 1px solid var(--line);
+    padding: 0.75rem;
+    position: relative; cursor: help;
+  }
+  .kcf-field { margin-bottom: 0.65rem; }
+  .kcf-field:last-child { margin-bottom: 0; }
+  .kcf-label { font-size: 0.7rem; font-weight: 600; color: #9BB8DE; margin-bottom: 0.2rem; letter-spacing: 0.01em; }
+  .kcf-body { font-size: 0.8rem; color: var(--off); line-height: 1.5; }
+  .kcf-body > div { margin-bottom: 0.1rem; }
+  .kcf-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .kcf-field-row .kcf-field { margin-bottom: 0; }
+
+  .kcf-confidence {
+    background: rgba(46, 158, 117, 0.12);
+    border: 1px solid rgba(46, 158, 117, 0.3);
+    padding: 0.7rem 0.8rem;
+    position: relative; cursor: help;
+  }
+  .kcf-conf-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .kcf-conf-pill {
+    background: #1D9E75; color: white;
+    font-size: 0.72rem; font-weight: 600;
+    padding: 0.22rem 0.55rem;
+    letter-spacing: 0.005em;
+  }
+  .kcf-conf-meta { font-size: 0.72rem; color: var(--off-soft); }
+  .kcf-comments { font-size: 0.72rem; color: var(--off-soft); font-style: italic; }
+
+  .kcf-actions {
+    display: flex; gap: 0.5rem; margin-top: 0.7rem;
+    position: relative; cursor: help;
+  }
+  .kcf-action {
+    flex: 1; text-align: center;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line);
+    color: var(--off-soft);
+    font-size: 0.72rem; font-weight: 500;
+    padding: 0.5rem 0.4rem;
+    letter-spacing: 0.005em;
+  }
+  .kcf-action:hover { background: rgba(255,255,255,0.08); color: var(--off); }
+
+  /* HOVER TOOLTIPS via data-tip */
+  [data-tip] { position: relative; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%; left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: var(--ink);
+    color: var(--off);
+    padding: 0.7rem 0.9rem;
+    font-size: 0.75rem; line-height: 1.5;
+    font-weight: 400; letter-spacing: 0.005em;
+    font-family: 'IBM Plex Sans', sans-serif;
+    width: 280px;
+    border: 1px solid var(--accent);
+    opacity: 0; pointer-events: none;
+    transition: opacity .15s, transform .15s;
+    z-index: 100;
+    white-space: normal;
+    text-align: left;
+  }
+  [data-tip]::before {
+    content: "";
+    position: absolute;
+    bottom: 100%; left: 50%;
+    transform: translateX(-50%) translateY(-2px);
+    border: 5px solid transparent;
+    border-top-color: var(--accent);
+    opacity: 0; pointer-events: none;
+    transition: opacity .15s;
+    z-index: 100;
+  }
+  [data-tip]:hover::after,
+  [data-tip]:hover::before {
+    opacity: 1;
+    pointer-events: none;
+  }
+  [data-tip]:hover::after { transform: translateX(-50%) translateY(-12px); }
+  .sect { padding: 6rem 0; border-top: 1px solid; }
+  .page-landing .sect { border-color: var(--line); }
+  .page-platform .sect, .page-contact .sect { border-color: var(--line-light); }
+  .sect h2 { font-size: 3rem; font-weight: 400; letter-spacing: -0.025em; line-height: 1.05; margin-bottom: 1.75rem; max-width: 900px; }
+  .page-landing .sect h2 { color: var(--off); }
+  .page-platform .sect h2, .page-contact .sect h2 { color: var(--ink); }
+  .two-col { display: grid; grid-template-columns: 1.1fr 1fr; gap: 5rem; align-items: start; }
+  .two-col .col-right { padding-top: 0.5rem; }
+  .two-col p { font-size: 1.05rem; line-height: 1.65; margin-bottom: 1.25rem; }
+  .page-landing .two-col p { color: var(--off-soft); }
+  .page-platform .two-col p, .page-contact .two-col p { color: var(--ink-soft); }
+  .two-col p:last-child { margin-bottom: 0; }
+  .two-col .closer { font-weight: 500; color: var(--accent) !important; }
+  .triptych { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 3.5rem; border-top: 1px solid var(--line); }
+  .trip-item { padding: 2.5rem 2rem 2.5rem 0; border-right: 1px solid var(--line); }
+  .trip-item:last-child { border-right: none; padding-right: 0; }
+  .trip-item:not(:first-child) { padding-left: 2rem; }
+  .trip-item h3 { font-size: 1.25rem; font-weight: 500; margin-bottom: 0.85rem; letter-spacing: -0.01em; color: var(--off); }
+  .trip-item p { font-size: 0.95rem; line-height: 1.6; color: var(--off-soft); }
+  .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 4rem; border-top: 1px solid var(--line-light); }
+  .step { padding: 2.5rem 2rem 2.5rem 0; border-right: 1px solid var(--line-light); }
+  .step:last-child { border-right: none; padding-right: 0; }
+  .step:not(:first-child) { padding-left: 2rem; }
+  .step-num { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--ink-soft); font-weight: 500; margin-bottom: 0.85rem; }
+  .step h3 { font-size: 1.25rem; font-weight: 500; margin-bottom: 0.7rem; letter-spacing: -0.01em; }
+  .step p { font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); }
+  .product-band { border-top: 1px solid var(--line-light); padding: 6rem 0; cursor: pointer; transition: background .2s; }
+  .product-band:hover { background: var(--bg-light-2); }
+  .product-band .pb-head { display: flex; align-items: baseline; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .product-band .pb-num { font-size: 0.8rem; letter-spacing: 0.05em; color: var(--ink-soft); font-weight: 500; }
+  .product-band .pb-name { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em; }
+  .product-band h3 { font-size: 2.7rem; font-weight: 400; letter-spacing: -0.025em; line-height: 1.05; margin-bottom: 1.5rem; max-width: 850px; }
+  .product-band .pb-body { display: grid; grid-template-columns: 1.1fr 1fr; gap: 5rem; align-items: start; }
+  .product-band .pb-body p { font-size: 1.05rem; line-height: 1.65; color: var(--ink-soft); margin-bottom: 1.25rem; }
+  .product-band .pb-body p.italic { font-style: italic; }
+  .product-band .pb-arrow { margin-top: 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 500; color: var(--ink); border-bottom: 1px solid var(--ink); padding-bottom: 0.2rem; }
+  .kcard-preview { background: var(--off); border: 1px solid var(--line-light); padding: 1.5rem 1.6rem; }
+  .kcard-preview .kc-label { font-size: 0.72rem; letter-spacing: 0.02em; color: var(--ink-soft); margin-bottom: 0.7rem; font-weight: 500; }
+  .kcard-preview h5 { font-size: 1.15rem; font-weight: 500; margin-bottom: 0.85rem; letter-spacing: -0.005em; }
+  .kc-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1.25rem; }
+  .kc-tag { font-size: 0.7rem; padding: 0.18rem 0.5rem; background: var(--bg-light-2); color: var(--ink); font-family: 'JetBrains Mono', monospace; }
+  .kcard-preview .kc-field { font-size: 0.88rem; line-height: 1.55; margin-bottom: 0.55rem; color: var(--ink-soft); }
+  .kcard-preview .kc-field b { font-weight: 600; color: var(--ink); font-size: 0.85rem; letter-spacing: 0.005em; margin-right: 0.4rem; }
+  .kcard-preview .kc-status { padding-top: 0.85rem; margin-top: 0.85rem; border-top: 1px solid var(--line-light); font-size: 0.78rem; color: var(--ink-soft); display: flex; align-items: center; gap: 0.45rem; }
+  .kc-chk { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; background: var(--ink); color: var(--off); border-radius: 50%; font-size: 9px; font-weight: 700; }
+  .chat-preview { background: var(--off); border: 1px solid var(--line-light); padding: 1.5rem; }
+  .chat-msg { font-size: 0.88rem; padding: 0.7rem 0.95rem; margin-bottom: 0.5rem; line-height: 1.5; }
+  .chat-u { background: var(--bg-light-2); color: var(--ink); }
+  .chat-b { background: var(--off); border-left: 2px solid var(--ink-soft); color: var(--ink-soft); }
+  .chat-signal { margin-top: 0.85rem; padding: 0.55rem 0.8rem; background: var(--bg-dark); color: var(--off); font-size: 0.78rem; display: flex; align-items: center; gap: 0.55rem; font-family: 'JetBrains Mono', monospace; }
+  .chat-signal .sig-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 5rem; margin-top: 3.5rem; }
+  .ci-block { margin-bottom: 2.5rem; }
+  .ci-block .ci-label { font-size: 0.78rem; letter-spacing: 0.02em; color: var(--ink-soft); font-weight: 500; margin-bottom: 0.6rem; }
+  .ci-block .ci-val { font-size: 1.1rem; line-height: 1.5; }
+  .ci-block a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--ink-soft); padding-bottom: 1px; }
+  .ci-block a:hover { border-color: var(--ink); }
+  .contact-form { background: var(--bg-light); border: 1px solid var(--line-light); padding: 2.5rem; }
+  .contact-form label { display: block; font-size: 0.78rem; letter-spacing: 0.02em; color: var(--ink-soft); font-weight: 500; margin-bottom: 0.5rem; }
+  .contact-form input, .contact-form textarea { width: 100%; padding: 0.75rem 0; border: none; border-bottom: 1px solid var(--line-light); background: transparent; font-family: inherit; font-size: 0.95rem; color: var(--ink); margin-bottom: 1.75rem; transition: border-color .15s; }
+  .contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: var(--ink); }
+  .contact-form textarea { resize: vertical; min-height: 80px; }
+  footer.site-footer { padding: 2.5rem; border-top: 1px solid; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+  .page-landing footer.site-footer { border-color: var(--line); color: var(--off-soft); }
+  .page-platform footer.site-footer, .page-contact footer.site-footer { border-color: var(--line-light); color: var(--ink-soft); }
+  footer .foot-r { display: flex; gap: 2rem; }
+  footer a { color: inherit; text-decoration: none; cursor: pointer; }
+  footer a:hover { opacity: 0.7; }
+  @media (max-width: 980px) {
+    nav.topnav { padding: 1rem 1.5rem; }
+    .container { padding: 0 1.5rem; }
+    .navlinks { gap: 1rem; }
+    .hero h1 { font-size: 2.6rem; }
+    .sect h2 { font-size: 1.9rem; }
+    .product-band h3 { font-size: 1.9rem; }
+    .two-col, .product-band .pb-body, .contact-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .steps-grid, .triptych { grid-template-columns: 1fr; }
+    .step, .trip-item { border-right: none !important; border-bottom: 1px solid; padding: 1.75rem 0 !important; }
+    .page-landing .trip-item { border-color: var(--line); }
+    .page-platform .step { border-color: var(--line-light); }
+    .hp-body { grid-template-columns: 1fr; }
+    .hp-left { border-right: none; border-bottom: 1px solid var(--line); }
+    footer.site-footer { flex-direction: column; gap: 1rem; padding: 2rem 1.5rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page page-landing active" id="page-landing">
+  <nav class="topnav">
+    <a class="logo" onclick="go('landing')">M/D/1</a>
+    <div class="navlinks">
+      <a class="active" onclick="go('landing')">Home</a>
+      <a onclick="go('platform')">Platform</a>
+      <a onclick="go('contact')">Contact</a>
+    </div>
+  </nav>
+  <section class="hero">
+    <div class="container">
+      <h1>In manufacturing,<br>data is visible.<br><span class="accent">Context is not.</span></h1>
+      <p class="lead">Manufacturing plants record everything that happens. Temperatures, speeds, downtime. But the knowledge that explains why things happen lives only in people's heads, and it's leaving faster than anyone is replacing it. MD1 captures that context and makes it durable.</p>
+      <button class="cta-primary" onclick="go('contact')">Request a demo
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
+      </button>
+      <div class="hero-preview">
+        <div class="hp-bar">
+          <span class="hp-dot"></span>
+          <span class="hp-title">Knowledge Console</span>
+          <div class="hp-tabs">
+            <span class="hp-tab active">Document → K-Cards</span>
+            <span class="hp-tab">Elicitation</span>
+            <span class="hp-tab">Verify</span>
+          </div>
+        </div>
+        <div class="hp-body">
+          <div class="hp-left">
+            <div class="hp-section-label">SOP · Section 4.2 · Plate cylinder removal</div>
+            <div class="hp-doc">
+              1. Wear correct <strong class="underline">PPE</strong>. Back-end maintainer glove requirements apply.<br><br>
+              2. Stage tools and clean-up kit before starting.<br><br>
+              3. <strong class="underline">Protect the plate cylinder shaft</strong> during removal.<br><br>
+              4. Strip plates from old cylinders; <strong class="underline">mark each cylinder's position</strong> on the mounting surface before racking.<br><br>
+              5. Install new cylinders; <strong class="underline">tighten the plate cylinder bolt</strong>.<br><br>
+              6. Register the image.
+            </div>
+          </div>
+          <div class="hp-right">
+            <div class="hp-section-label">Extracted K-Card · LCSD001</div>
+            <div class="kcard-full">
+
+              <div class="kcf-title" data-tip="The title states the knowledge being presented in plain language. Examples: equipment setup, planning rule, safety observation, best practice.">
+                Remove and re-install plate cylinders at shutdown
+              </div>
+
+              <div class="kcf-section-label">Context</div>
+              <div class="kcf-context" data-tip="Where the knowledge applies. Stable, unarguable entities of the plant: equipment, plant, product, process area. Context tags act as graph nodes — a card can apply to a specific product made on a specific piece of equipment.">
+                <span class="kcf-tag">Rutherford Decorator</span>
+                <span class="kcf-tag">Plate cylinders</span>
+                <span class="kcf-tag">Bishopville</span>
+                <span class="kcf-tag">Shutdown (SD)</span>
+              </div>
+
+              <div class="kcf-section-label">Content</div>
+              <div class="kcf-content" data-tip="The knowledge itself, broken into structured fields. The description states the claim. The procedure lists ordered steps. Conditions specify when it applies and when it does not. Rules of thumb capture the heuristics experienced operators carry but rarely write down. Each field can be argued with, corrected, and improved.">
+                <div class="kcf-field">
+                  <div class="kcf-label">Description</div>
+                  <div class="kcf-body">The critical, downtime-heavy step of a label-change shutdown. Hand safety is the major concern.</div>
+                </div>
+                <div class="kcf-field">
+                  <div class="kcf-label">Procedure</div>
+                  <div class="kcf-body">
+                    <div>1. Wear correct PPE.</div>
+                    <div>2. Stage tools and clean-up kit.</div>
+                    <div>3. Protect the plate cylinder shaft.</div>
+                    <div>4. Mark each cylinder's position before racking.</div>
+                  </div>
+                </div>
+                <div class="kcf-field-row">
+                  <div class="kcf-field">
+                    <div class="kcf-label">Condition</div>
+                    <div class="kcf-body">Mark before racking — prevents mis-mounts on the next change.</div>
+                  </div>
+                  <div class="kcf-field">
+                    <div class="kcf-label">Rule of thumb</div>
+                    <div class="kcf-body">~12–14 ft-lbs on the bolt (impact-tool plants).</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="kcf-section-label">Confidence</div>
+              <div class="kcf-confidence" data-tip="Every card carries who has verified it, how many people, and any comments or contesting views. Knowledge starts unverified, gets confirmed by senior operators, and can be challenged or superseded as practice changes. Confidence is a state that evolves, not a label.">
+                <div class="kcf-conf-row">
+                  <span class="kcf-conf-pill">✓ Verified by 3 SMEs</span>
+                  <span class="kcf-conf-meta">R. Bianchi (22 yrs) · A. Patel · M. Chen</span>
+                </div>
+                <div class="kcf-comments">2 comments · 1 contesting view from Winston-Salem</div>
+              </div>
+
+              <div class="kcf-actions" data-tip="Every K-Card is fully traceable. The evidence log shows the source documents, sensor data, and observations that back the claim. The version history shows how the card has changed and who changed it. Nothing in the knowledge base is ever a black box.">
+                <span class="kcf-action">See Evidence Log</span>
+                <span class="kcf-action">See Version History</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="sect">
+    <div class="container">
+      <div class="sect-label">Rebuilding the Knowledge Commons</div>
+      <div class="two-col">
+        <div class="col-left">
+          <h2>Automation is the end state. Not the starting point.</h2>
+        </div>
+        <div class="col-right">
+          <p>The physical infrastructure of manufacturing is being rebuilt. Automated plants are being funded, industries brought home, and workforces hired. The knowledge infrastructure isn't following the physical.</p>
+          <p>You cannot automate decisions that were never understood, or understand decisions that were never made explicit.</p>
+          <p class="closer">We start with the understanding. The knowledge.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="sect">
+    <div class="container">
+      <div class="sect-label">The Problem</div>
+      <div class="two-col">
+        <div class="col-left">
+          <h2>Confident, fast, and wrong.</h2>
+        </div>
+        <div class="col-right">
+          <p>Plants don't lack data. They lack the context that gives it meaning. And what context exists is scattered across SOPs, logs, manuals, and a dozen disconnected systems. The most valuable part isn't in any of them. It's in the heads of the people who run the line.</p>
+          <p>A line ran slow. The data records the deviation; only the operator knows it was a new product, a deliberate quality tradeoff, or a downstream constraint that made speed unnecessary.</p>
+          <p>This is why generic systems struggle and experienced operators outperform them. And it's why AI tools deployed on plant floors are dangerous without it. Pulling from fragmented, unverified sources, they produce outputs that look optimal on paper and fail in practice.</p>
+        </div>
+      </div>
+      <div class="triptych">
+        <div class="trip-item">
+          <h3>Documents go stale.</h3>
+          <p>SOPs and manuals capture the procedure, never the judgment. They're out of date the moment practice changes.</p>
+        </div>
+        <div class="trip-item">
+          <h3>Chatbots just retrieve.</h3>
+          <p>RAG assistants return what's already written and guess at the rest. They can't capture the unwritten, and can't tell you what to trust.</p>
+        </div>
+        <div class="trip-item">
+          <h3>Tribal knowledge walks out.</h3>
+          <p>The why, the exceptions, the tells. The most valuable knowledge lives in people, and leaves when they do.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer class="site-footer">
+    <div>MD1 · The Knowledge Company for Heavy Industry</div>
+    <div class="foot-r">
+      <a onclick="go('platform')">Platform</a>
+      <a onclick="go('contact')">Contact</a>
+      <span>© 2026 MD1 Inc.</span>
+    </div>
+  </footer>
+</div>
+
+<div class="page page-platform" id="page-platform">
+  <nav class="topnav">
+    <a class="logo" onclick="go('landing')">M/D/1</a>
+    <div class="navlinks">
+      <a onclick="go('landing')">Home</a>
+      <a class="active" onclick="go('platform')">Platform</a>
+      <a onclick="go('contact')">Contact</a>
+      <button class="nav-cta" onclick="go('contact')">Request a demo</button>
+    </div>
+  </nav>
+  <section class="hero" style="padding: 6rem 0 4rem;">
+    <div class="container">
+      <div class="sect-label">How MD1 Works</div>
+      <h1 style="color: var(--ink); font-size: 4rem;">Knowledge is captured,<br>structured, and deployed.</h1>
+      <p class="lead" style="color: var(--ink-soft);">Four steps that turn fragmented information and tacit expertise into a living, trusted knowledge base.</p>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-num">Step 01</div>
+          <h3>Ingest & Structure</h3>
+          <p>Point MD1 at your documents and systems. It turns them into structured, tagged knowledge cards (K-Cards).</p>
+        </div>
+        <div class="step">
+          <div class="step-num">Step 02</div>
+          <h3>Elicit</h3>
+          <p>It draws out the unwritten layer from your experts (the why, the when-not, the judgment) by reacting to real knowledge, not asking them to start from a blank page.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">Step 03</div>
+          <h3>Verify</h3>
+          <p>Your people confirm, correct, and challenge. Every claim carries its source and a trust level. Knowledge evolves and is always traceable.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">Step 04</div>
+          <h3>Compound</h3>
+          <p>It improves with every use and becomes the trusted knowledge that is understandable and used by both your people and your machines.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="product-band" onclick="alert('The Knowledge Bank — coming soon')">
+    <div class="container">
+      <div class="pb-head">
+        <span class="pb-num mono">01 / Product</span>
+        <span class="pb-name">The Knowledge Bank</span>
+      </div>
+      <h3>Start with one process worth proving.</h3>
+      <div class="pb-body">
+        <div>
+          <p>A focused engagement on one well-documented, expert-rich area. We sit with your team, ingest your documentation, capture what isn't written down, and stand up a living knowledge base in weeks.</p>
+          <p><strong>Discover · 1–2 weeks.</strong> We sit with your operators and find the knowledge worth capturing. A process where the experts are senior, the stakes are real, and the documentation is incomplete.</p>
+          <p><strong>Prove · 2–4 weeks.</strong> We ingest your documentation, populate the knowledge base, and work alongside your experts to capture what isn't written down.</p>
+          <p><strong>Grow · ongoing.</strong> Broaden across processes and plants. The knowledge base compounds as your people use it.</p>
+          <span class="pb-arrow">Explore The Knowledge Bank →</span>
+        </div>
+        <div class="kcard-preview">
+          <div class="kc-label">K-Card · Knowledge Bank</div>
+          <h5>Plate cylinder removal at shutdown</h5>
+          <div class="kc-tags">
+            <span class="kc-tag">decorator</span>
+            <span class="kc-tag">plate-cylinders</span>
+            <span class="kc-tag">shutdown</span>
+          </div>
+          <div class="kc-field"><b>Statement</b>The critical, downtime-heavy step of a changeover.</div>
+          <div class="kc-field"><b>Why</b>Hand safety is the major concern. This is where cuts happen.</div>
+          <div class="kc-field"><b>Rule</b>~12–14 ft-lbs on the cylinder bolt (impact-tool plants).</div>
+          <div class="kc-status">
+            <span class="kc-chk">✓</span>
+            <span><strong>SME confirmed</strong> · R. Bianchi, 22 yrs · source: SOP + operator</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="product-band" onclick="alert('MD1 ChatSDK — coming soon')">
+    <div class="container">
+      <div class="pb-head">
+        <span class="pb-num mono">02 / Product</span>
+        <span class="pb-name">MD1 ChatSDK</span>
+      </div>
+      <h3>Already deploying AI assistants?</h3>
+      <div class="pb-body">
+        <div>
+          <p>Most plants are, and they have no idea what those assistants are getting wrong, or what knowledge operators reveal while using them.</p>
+          <p>The MD1 SDK sits inside the chatbot you already run. It shows you where it fails, sharpens the sources it pulls from, and captures what your experts say in the gaps.</p>
+          <p class="italic">Sits on top of what you have. Your data never leaves your control.</p>
+          <span class="pb-arrow">Explore the ChatSDK →</span>
+        </div>
+        <div class="chat-preview">
+          <div class="chat-msg chat-u">What should I know about running Poppi Cola on a Rutherford printer?</div>
+          <div class="chat-msg chat-b">A Rutherford decorator can print up to 8 colors at 2200 cans per minute. Poppi is a 12oz Standard Can.</div>
+          <div class="chat-msg chat-u">I know the specs. I'm asking about Poppi specifically.</div>
+          <div class="chat-signal"><span class="sig-dot"></span>SDK signal: knowledge gap detected · product-specific operating knowledge missing</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer class="site-footer">
+    <div>MD1 · The Knowledge Company for Heavy Industry</div>
+    <div class="foot-r">
+      <a onclick="go('landing')">Home</a>
+      <a onclick="go('contact')">Contact</a>
+      <span>© 2026 MD1 Inc.</span>
+    </div>
+  </footer>
+</div>
+
+<div class="page page-contact" id="page-contact">
+  <nav class="topnav">
+    <a class="logo" onclick="go('landing')">M/D/1</a>
+    <div class="navlinks">
+      <a onclick="go('landing')">Home</a>
+      <a onclick="go('platform')">Platform</a>
+      <a class="active" onclick="go('contact')">Contact</a>
+      <button class="nav-cta" onclick="go('contact')">Request a demo</button>
+    </div>
+  </nav>
+  <section class="hero" style="padding: 6rem 0 4rem;">
+    <div class="container">
+      <div class="sect-label">Contact</div>
+      <h1 style="color: var(--ink); font-size: 4rem;">Let's talk.</h1>
+      <p class="lead" style="color: var(--ink-soft);">If you run heavy industrial operations and the knowledge that runs them is in your people's heads, we'd like to hear from you.</p>
+      <div class="contact-grid">
+        <div>
+          <div class="ci-block">
+            <div class="ci-label">Email</div>
+            <div class="ci-val"><a href="mailto:info@MD1.app">info@MD1.app</a></div>
+          </div>
+          <div class="ci-block">
+            <div class="ci-label">Location</div>
+            <div class="ci-val">New York, New York<br>London, United Kingdom</div>
+          </div>
+          <div class="ci-block">
+            <div class="ci-label">Working with us</div>
+            <div class="ci-val" style="font-size: 0.95rem; color: var(--ink-soft); line-height: 1.6;">We work hand-in-hand with operators and engineers. Engagements start with a 1–2 week discovery on one plant or process.</div>
+          </div>
+        </div>
+        <div class="contact-form">
+          <label>Name</label>
+          <input type="text" placeholder="Your name" />
+          <label>Email</label>
+          <input type="email" placeholder="you@company.com" />
+          <label>Company</label>
+          <input type="text" placeholder="Where you work" />
+          <label>Message</label>
+          <textarea placeholder="Tell us about the knowledge you're trying to capture."></textarea>
+          <button class="cta-primary dark-on-light" onclick="alert('Demo form — not wired')" style="margin-top: 0.5rem;">Send message
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer class="site-footer">
+    <div>MD1 · The Knowledge Company for Heavy Industry</div>
+    <div class="foot-r">
+      <a onclick="go('landing')">Home</a>
+      <a onclick="go('platform')">Platform</a>
+      <span>© 2026 MD1 Inc.</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+  function go(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>
