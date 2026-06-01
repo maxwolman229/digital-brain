@@ -2,3 +2,9 @@ node_modules
 dist
 .env.local
 .env*.local
+.astro
+.vercel
+apps/*/dist
+apps/*/.astro
+supabase/.temp
+.superpowers
