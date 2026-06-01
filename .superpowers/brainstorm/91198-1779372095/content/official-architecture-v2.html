@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MD1 Context SDK Architecture</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --navy: #062044;
+      --bg: #f4f1ed;
+      --paper: #ffffff;
+      --border: #d8cec3;
+      --teal: #4FA89A;
+      --text: #1f1f1f;
+      --muted: #6f675f;
+      --line: #8a8278;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", Arial, sans-serif;
+      line-height: 1.35;
+    }
+    main {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 32px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      color: var(--navy);
+      font-size: 34px;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 920px;
+    }
+    .architecture {
+      display: grid;
+      grid-template-columns: 1.1fr 1.15fr 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .env {
+      background: var(--paper);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      padding: 16px;
+      min-height: 620px;
+      position: relative;
+    }
+    .env.md1 {
+      border-color: var(--teal);
+      background: #f7fffd;
+    }
+    .env h2 {
+      margin: 0 0 6px;
+      color: var(--navy);
+      font-size: 18px;
+    }
+    .env-note {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .box {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .box strong {
+      display: block;
+      color: var(--navy);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .box p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .sdk {
+      border-color: var(--teal);
+      background: #eefbf8;
+    }
+    .review {
+      border-color: var(--navy);
+      background: var(--bg);
+    }
+    .arrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 12px 0;
+      color: var(--line);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    .arrow:before,
+    .arrow:after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: var(--line);
+    }
+    .crossing {
+      margin: 20px 0;
+      padding: 12px;
+      border: 1px dashed var(--teal);
+      background: #ffffff;
+      border-radius: 4px;
+      color: var(--navy);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px;
+    }
+    .panel h3 {
+      margin: 0 0 8px;
+      color: var(--navy);
+      font-size: 15px;
+    }
+    .panel ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .chip {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      background: var(--paper);
+    }
+    .swatch.teal { background: #eefbf8; border-color: var(--teal); }
+    .swatch.navy { background: var(--bg); border-color: var(--navy); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>MD1 Context SDK System Architecture</h1>
+    <p class="subtitle">Managed-cloud deployment for a customer with an existing manufacturing chatbot or RAG assistant. The customer keeps their chatbot, RAG stack, documents, auth, and model path; MD1 mines normalized conversation telemetry into reviewed operating knowledge.</p>
+
+    <section class="architecture" aria-label="MD1 Context SDK architecture">
+      <div class="env">
+        <h2>Customer Environment</h2>
+        <p class="env-note">Existing systems. MD1 does not replace the chatbot, retriever, document store, or LLM path.</p>
+
+        <div class="box">
+          <strong>Plant Chatbot UI</strong>
+          <p>Operators, engineers, supervisors, and support teams ask questions in the customer’s existing assistant.</p>
+        </div>
+        <div class="arrow">requests</div>
+        <div class="box">
+          <strong>Chatbot Application Server</strong>
+          <p>Owns auth, sessions, prompts, tools, retrieval calls, model calls, and response handling.</p>
+        </div>
+        <div class="arrow">uses</div>
+        <div class="box">
+          <strong>Existing RAG Stack</strong>
+          <p>Retriever, vector database, chunks, metadata, SOPs, manuals, tickets, MES/ERP-derived context.</p>
+        </div>
+        <div class="box">
+          <strong>LLM Provider or Model Gateway</strong>
+          <p>OpenAI, Anthropic, Azure, Bedrock, internal model gateway, or agent runtime.</p>
+        </div>
+        <div class="crossing">MD1 SDK runs here, inside the chatbot server.</div>
+        <div class="box sdk">
+          <strong>MD1 Context SDK</strong>
+          <p>Server-side middleware captures normalized events: messages, citations, retrieval context, feedback, corrections, user/domain metadata, tool calls, and outcomes.</p>
+        </div>
+      </div>
+
+      <div class="env md1">
+        <h2>MD1 Managed Cloud</h2>
+        <p class="env-note">MD1-owned context engine, tenant isolation, mining workflow, and review surface.</p>
+
+        <div class="box sdk">
+          <strong>Event Ingestion API</strong>
+          <p>Receives SDK events through server-side keys, redaction hooks, allowlists, and tenant routing.</p>
+        </div>
+        <div class="arrow">stores</div>
+        <div class="box">
+          <strong>Conversation Ledger</strong>
+          <p>Structured record of sessions, messages, retrieved sources, responses, feedback, sentiment, and provenance.</p>
+        </div>
+        <div class="arrow">mines</div>
+        <div class="box sdk">
+          <strong>Knowledge Mining Engine</strong>
+          <p>Extracts adjacent operating context, disagreement, process exceptions, missing-source demand, sentiment, expert patterns, and candidate knowledge.</p>
+        </div>
+        <div class="arrow">routes</div>
+        <div class="box review">
+          <strong>Human Review Queue</strong>
+          <p>SMEs approve, reject, edit, merge, verify, and comment on candidates with source conversation attached.</p>
+        </div>
+        <div class="box">
+          <strong>Analytics + RAG Improvement Feed</strong>
+          <p>Shows domain failures, trust signals, unanswered clusters, bad citations, stale references, weak chunks, and suggested fixes.</p>
+        </div>
+      </div>
+
+      <div class="env">
+        <h2>Approved Destinations</h2>
+        <p class="env-note">Nothing publishes automatically. Approved outputs go where the customer wants value first.</p>
+
+        <div class="box review">
+          <strong>RAG / Vector Index</strong>
+          <p>Default fast path. Approved context improves future chatbot answers and retrieval coverage.</p>
+        </div>
+        <div class="box">
+          <strong>SOP / Wiki / Document Systems</strong>
+          <p>SharePoint, Confluence, Google Drive, controlled document workflows, or internal knowledge portals.</p>
+        </div>
+        <div class="box">
+          <strong>MD1 Knowledge Bank</strong>
+          <p>Optional expansion into lifecycle status, verification, comments, versions, links, graph, archive, and health dashboard.</p>
+        </div>
+        <div class="box">
+          <strong>Tickets / Webhooks / Data Warehouse</strong>
+          <p>Jira, ServiceNow, Linear, custom API, CSV export, BI tools, or analytics lake.</p>
+        </div>
+        <div class="crossing">Approved knowledge closes the loop back into the customer’s AI assistant.</div>
+        <div class="box sdk">
+          <strong>Improved Chatbot</strong>
+          <p>Better local context, fewer repeated failures, stronger answers, clearer ownership of knowledge gaps.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="footer-grid">
+      <div class="panel">
+        <h3>What crosses the boundary</h3>
+        <ul>
+          <li>Normalized conversation events</li>
+          <li>Retrieval/citation metadata</li>
+          <li>User role, domain, plant area</li>
+          <li>Feedback, corrections, outcomes</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Security controls</h3>
+        <ul>
+          <li>Server-side SDK key</li>
+          <li>Field allowlists and redaction</li>
+          <li>Tenant isolation and audit logs</li>
+          <li>Retention controls; VPC/customer-hosted path later</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Key integration factors</h3>
+        <ul>
+          <li>Can the chatbot server be modified?</li>
+          <li>Can retrieval context and citations be captured?</li>
+          <li>Is there MCP/tool-call visibility?</li>
+          <li>Where should approved knowledge publish first?</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="legend">
+      <span class="chip"><span class="swatch"></span> Existing customer-owned system</span>
+      <span class="chip"><span class="swatch teal"></span> MD1 instrumentation or mining service</span>
+      <span class="chip"><span class="swatch navy"></span> Human-governed approval checkpoint</span>
+    </div>
+  </main>
+</body>
+</html>

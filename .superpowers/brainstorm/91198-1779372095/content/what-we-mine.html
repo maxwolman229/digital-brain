@@ -1,0 +1,51 @@
+<h2>What “mining” means</h2>
+<p class="subtitle">MD1 does not just log chats. It extracts the plant context that sits around the written knowledge in the RAG system.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Conversation signals the SDK mines</div>
+  <div class="mockup-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div style="border:1px solid #4FA89A;background:#f7fffd;padding:12px;border-radius:4px">
+        <h3 style="margin-top:0">Adjacent operating context</h3>
+        <p>“The SOP says X, but on Line 4 we only do that when humidity is high.”</p>
+      </div>
+      <div style="border:1px solid #4FA89A;background:#f7fffd;padding:12px;border-radius:4px">
+        <h3 style="margin-top:0">Corrections and disagreement</h3>
+        <p>“No, that’s wrong.” “That answer misses the grade change.” “We stopped doing that after the 2023 incident.”</p>
+      </div>
+      <div style="border:1px solid #4FA89A;background:#f7fffd;padding:12px;border-radius:4px">
+        <h3 style="margin-top:0">Process exceptions</h3>
+        <p>When rules change by product, equipment state, shift practice, supplier, season, or failure mode.</p>
+      </div>
+      <div style="border:1px solid #d8cec3;background:#fff;padding:12px;border-radius:4px">
+        <h3 style="margin-top:0">Sentiment and trust</h3>
+        <p>Frustration, confidence, skepticism, repeated re-asking, abandonment, escalation, and positive reinforcement.</p>
+      </div>
+      <div style="border:1px solid #d8cec3;background:#fff;padding:12px;border-radius:4px">
+        <h3 style="margin-top:0">Missing-source demand</h3>
+        <p>Questions the bot cannot answer because the underlying RAG corpus lacks the right source, chunk, or metadata.</p>
+      </div>
+      <div style="border:1px solid #d8cec3;background:#fff;padding:12px;border-radius:4px">
+        <h3 style="margin-top:0">Expert and domain patterns</h3>
+        <p>Who gets asked, who corrects answers, which domains depend on unwritten judgment, and where knowledge risk is concentrated.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>One-pager definition</h4>
+    <ul>
+      <li>“Mining means extracting the context around your documented knowledge: corrections, exceptions, confidence signals, expert judgment, repeated gaps, and plant-specific decision logic.”</li>
+      <li>“The SDK turns those signals into reviewed knowledge candidates and RAG improvement tasks.”</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>Important distinction</h4>
+    <ul>
+      <li>RAG retrieves what is already written down</li>
+      <li>MD1 mines what conversations reveal is missing, wrong, local, disputed, or known only by experienced people</li>
+    </ul>
+  </div>
+</div>

@@ -1,7 +1,7 @@
 # Knowledge Card Data Architecture v0
 
 Status: draft for iteration  
-Date: 2026-05-26
+Date: 2026-05-27
 
 ## MVP
 
@@ -44,6 +44,7 @@ Users do not need to see "rules" or "assertions." The user-facing object is a
 | Persist `knowledge_cards`. | Cards need stable identity for citations, comments, status, SME signals, and versions. |
 | Link cards to exact `source_spans`. | Source-backed trust is central to the product. |
 | Separate context entities from knowledge content. | Plants, lines, equipment, products, and materials are stable nouns; cards are contestable claims. |
+| Make customer-visible changes append-only/versioned. | Historical knowledge changes will be valuable for audit, trust, and continuous improvement. |
 | Design ingestion as resumable async work. | Real documents, OCR, rate limits, and chunked LLM calls make one-shot ingestion risky. |
 
 ### Medium Confidence
@@ -51,6 +52,7 @@ Users do not need to see "rules" or "assertions." The user-facing object is a
 | Decision | Why |
 | --- | --- |
 | Use one flexible `context_entities` table. | Good MVP hedge, but some entity types may later deserve dedicated tables. |
+| Model context as a loose web, not a strict tree. | Different users will view plant relationships differently, so hierarchy should not be overfit early. |
 | Store `document_chunks`. | Useful for extraction/search/retry, though exact chunk strategy will evolve. |
 | Keep `extraction_candidate_contexts`. | Context staging seems important, but the review UX is still unknown. |
 | Use `candidate_kind` / `card_kind`. | Type hints help extraction/rendering, but the exact enum is provisional. |
@@ -120,8 +122,8 @@ lines, equipment, products, materials, etc.
 
 | Table | Why it exists | Key fields |
 | --- | --- | --- |
-| `context_entities` | Captures stable plant nouns that knowledge applies to. | `id`, `org_id`, `plant_id`, `entity_type`, `name`, `canonical_key`, `aliases`, `parent_id`, `metadata`, `active` |
-| `context_entity_relationships` | Captures relationships between plant nouns when hierarchy alone is not enough. | `id`, `source_entity_id`, `target_entity_id`, `relationship_type` |
+| `context_entities` | Captures stable plant nouns that knowledge applies to. | `id`, `org_id`, `plant_id`, `entity_type`, `name`, `canonical_key`, `aliases`, `metadata`, `active` |
+| `context_entity_relationships` | Captures loose relationships between plant nouns without forcing one hierarchy. | `id`, `source_entity_id`, `target_entity_id`, `relationship_type`, `metadata`, `created_by`, `created_at` |
 
 Initial `entity_type` values:
 
@@ -135,13 +137,19 @@ Initial `entity_type` values:
 
 Example:
 
-| entity_type | name | parent |
+| source | relationship | target |
 | --- | --- | --- |
-| process_area | Bodymaking | Plant |
-| line | Line 3 | Bodymaking |
-| equipment | Bodymaker 3A | Line 3 |
-| product | 12 oz Sleek Can | Plant |
-| material | Coil stock 3104-H19 | Plant |
+| Line 3 | part_of | Plant |
+| Bodymaker 3A | located_on | Line 3 |
+| Bodymaker 3A | equipment_type | Bodymaker |
+| 12 oz Sleek Can | produced_on | Line 3 |
+| Coil stock 3104-H19 | used_for | 12 oz Sleek Can |
+
+Context should be a web, not a forced tree. A bodymaker is equipment, is on a
+line, belongs to a process area through that line, may be relevant to a product,
+and may be viewed differently by maintenance, production, and quality teams.
+Use relationships and metadata to stay loose early. Store directed relationships
+for clarity, but allow the app/search layer to traverse them both ways.
 
 ### Documents And Provenance
 
@@ -473,7 +481,52 @@ We can confirm practical limits by testing against representative customer
 documents. Until then, design for resumable async ingestion rather than
 one-shot ingestion.
 
-## 9. Re-Ingestion / Schema Changes
+## 9. Append-Only And Versioning Policy
+
+Default rule: customer-visible changes are append-only. Users should not
+destructively overwrite source files, extraction runs, candidates, cards,
+comments, marks, or answers.
+
+MD1 internal admins may need controlled destructive tools for support, data
+repair, legal deletion, or broken test data. Those should be exceptional admin
+operations, not normal product behavior.
+
+For knowledge cards, "updating" a card means:
+
+1. Preserve the old card content in `knowledge_card_versions`.
+2. Write a new version with the corrected content.
+3. Update the current `knowledge_cards` record or `current_version_id` so users
+   see the correct/latest version.
+
+Example:
+
+```text
+KC-001 v1: "Inspect bodymaker every 8 hours"
+KC-001 v2: "Inspect bodymaker every 4 hours after tooling change"
+
+Users see v2.
+The system still preserves v1, who changed it, when, and why.
+```
+
+Benefits:
+
+- Builds trust by preserving how knowledge changed over time.
+- Supports auditability and rollback.
+- Creates valuable continuous-improvement metadata.
+- Lets us study how SOPs and operational knowledge evolve.
+- Avoids losing context when knowledge is superseded or corrected.
+
+Costs:
+
+- More storage and more tables.
+- Product queries must distinguish current vs historical versions.
+- UI eventually needs "view history" and "why changed" affordances.
+- Admin/data-repair tooling needs care.
+
+The cost is worth it because MD1's product value is not just the latest answer;
+it is the operational memory of how the plant learned.
+
+## 10. Re-Ingestion / Schema Changes
 
 Never overwrite:
 
@@ -511,7 +564,7 @@ Matching signals:
 
 Do not silently mutate trusted cards from re-ingestion. Create review work.
 
-## 10. Build Now / Defer
+## 11. Build Now / Defer
 
 Build now:
 

@@ -1,0 +1,61 @@
+<h2>Architecture with human review</h2>
+<p class="subtitle">The SDK can mine aggressively because publication is governed.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Managed cloud flow</div>
+  <div class="mockup-body">
+    <div style="display:grid;grid-template-columns:1fr .18fr 1fr .18fr 1fr;gap:10px;align-items:stretch">
+      <div style="border:1px solid #d8cec3;background:#fff;padding:14px;border-radius:4px">
+        <h3 style="margin-top:0">Existing chatbot</h3>
+        <p>Chat UI, server endpoint, RAG context, citations, tools, feedback, user metadata.</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;color:#062044">→</div>
+      <div style="border:1px solid #4FA89A;background:#f7fffd;padding:14px;border-radius:4px">
+        <h3 style="margin-top:0">MD1 Context SDK</h3>
+        <p>Captures normalized events server-side and sends them to MD1 Context Cloud.</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;color:#062044">→</div>
+      <div style="border:1px solid #4FA89A;background:#f7fffd;padding:14px;border-radius:4px">
+        <h3 style="margin-top:0">Knowledge mining engine</h3>
+        <p>Extracts candidate rules, assertions, exceptions, SOP deltas, expert questions, and RAG fixes.</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr .18fr 1fr .18fr 1fr;gap:10px;align-items:stretch;margin-top:16px">
+      <div style="border:1px solid #062044;background:#f4f1ed;padding:14px;border-radius:4px">
+        <h3 style="margin-top:0">Review queue</h3>
+        <p>SMEs approve, reject, edit, merge, verify, and comment with source conversation attached.</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;color:#062044">→</div>
+      <div style="border:1px solid #d8cec3;background:#fff;padding:14px;border-radius:4px">
+        <h3 style="margin-top:0">Publish destinations</h3>
+        <p>Customer RAG index, SOP repo, Confluence/SharePoint, ticketing system, or MD1 Knowledge Bank.</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;color:#062044">↺</div>
+      <div style="border:1px solid #d8cec3;background:#fff;padding:14px;border-radius:4px">
+        <h3 style="margin-top:0">Improved chatbot</h3>
+        <p>Better retrieval, better source coverage, fewer repeated failures, stronger plant-specific answers.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>Human review should be visible because it...</h4>
+    <ul>
+      <li>Makes the extraction claim credible</li>
+      <li>Fits manufacturing governance norms</li>
+      <li>Creates a workflow MD1 can later own deeply</li>
+      <li>Lets the product be bold without publishing risky knowledge automatically</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>Keep it from feeling slow by...</h4>
+    <ul>
+      <li>Ranking candidates by confidence and impact</li>
+      <li>Showing source snippets and why the item was extracted</li>
+      <li>Batching similar candidates</li>
+      <li>Exporting approved items directly back into customer tools</li>
+    </ul>
+  </div>
+</div>

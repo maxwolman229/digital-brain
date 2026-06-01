@@ -1,0 +1,50 @@
+<h2>SDK for self-improving plant chatbots</h2>
+<p class="subtitle">A first-pass architecture: easy install, customer-controlled infra, conversation mining into governed operational knowledge.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Proposed data flow</div>
+  <div class="mockup-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:stretch">
+      <div style="border:1px solid #d8cec3;padding:14px;border-radius:4px;background:#fff">
+        <h3 style="margin-top:0">Existing Chatbot</h3>
+        <p>User, assistant, RAG citations, tool calls, feedback, session metadata.</p>
+      </div>
+      <div style="border:1px solid #4FA89A;padding:14px;border-radius:4px;background:#f7fffd">
+        <h3 style="margin-top:0">MD1 Context SDK</h3>
+        <p>Server-side middleware captures events, redacts sensitive fields, scores signals, and forwards to a local or managed collector.</p>
+      </div>
+      <div style="border:1px solid #d8cec3;padding:14px;border-radius:4px;background:#fff">
+        <h3 style="margin-top:0">Customer/MD1 Store</h3>
+        <p>Conversation ledger, knowledge candidates, domain map, usage analytics, governance queue.</p>
+      </div>
+    </div>
+    <div style="margin-top:18px;border:1px solid #062044;padding:14px;border-radius:4px;background:#f4f1ed">
+      <h3 style="margin-top:0">Improvement loop</h3>
+      <p>Mine tacit context → propose rules/assertions/SOP deltas → route to SME review → publish back to RAG index, knowledge bank, or MCP/tool context.</p>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="drop-in-sdk" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Drop-in SDK First</h3>
+      <p>Fastest implementation. Add middleware around chat requests/responses and stream normalized events to the context engine.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="proxy-gateway" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Proxy/Gateway Mode</h3>
+      <p>Best visibility. Route LLM/RAG calls through an observability gateway when teams cannot alter chatbot internals deeply.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="mcp-tool" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>MCP/Tool Integration</h3>
+      <p>Most agent-native. Chatbots call MD1 as a context and feedback tool, useful when their stack already exposes MCP/tools.</p>
+    </div>
+  </div>
+</div>
