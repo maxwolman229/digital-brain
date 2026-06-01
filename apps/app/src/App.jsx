@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { loadProfile, signOut, getRestoredSession, fetchMemberships } from './lib/auth.js'
 import { setUserContext, clearUserContext, getStoredActivePlant } from './lib/userContext.js'
 import { setAuthExpiredHandler, storeJwt, storeRefreshToken } from './lib/supabase.js'
-import LandingPage from './components/LandingPage.jsx'
 import Auth from './components/Auth.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import PlantHome from './components/PlantHome.jsx'
@@ -211,8 +210,21 @@ export default function App() {
     <ErrorBoundary>
     <BrowserRouter>
       <Routes>
-        {/* Public */}
-        <Route path="/" element={<LandingPage loggedInAs={profile?.displayName ?? null} onLogout={handleLogout} />} />
+        {/* Product entry */}
+        <Route
+          path="/"
+          element={
+            !session ? (
+              <Navigate to="/auth" replace />
+            ) : profile && activePlantId ? (
+              <Navigate to="/app" replace />
+            ) : profile ? (
+              <Navigate to="/plants" replace />
+            ) : (
+              <Navigate to="/onboarding" replace />
+            )
+          }
+        />
 
         {/* Auth */}
         <Route

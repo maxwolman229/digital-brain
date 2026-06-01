@@ -1,27 +1,18 @@
 {
-  "name": "md1-knowledge-bank",
+  "name": "md1",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@fontsource/ibm-plex-mono": "^5.2.7",
-    "@fontsource/ibm-plex-sans": "^5.2.8",
-    "@supabase/supabase-js": "^2.99.1",
-    "lucide-react": "^1.14.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^7.4.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17",
-    "vite": "^6.2.2"
+    "dev:app": "npm --workspace @md1/app run dev",
+    "build:app": "npm --workspace @md1/app run build",
+    "preview:app": "npm --workspace @md1/app run preview",
+    "dev:marketing": "npm --workspace @md1/marketing run dev",
+    "build:marketing": "npm --workspace @md1/marketing run build",
+    "preview:marketing": "npm --workspace @md1/marketing run preview",
+    "build": "npm run build:app && npm run build:marketing"
   }
 }
