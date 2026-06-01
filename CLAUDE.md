@@ -6,12 +6,23 @@ structures, and governs operational knowledge from experienced workers.
 The tagline: "The operational brain that never retires."
 
 ## Current state
-- prototype.html contains the full working React prototype (single file,
-  in-memory state, no persistence, no auth)
-- Need to migrate to production stack while preserving all features and styling
+- apps/app contains the production React/Vite MD1 Knowledge Bank app.
+- apps/marketing contains the public Astro marketing site for md1.app.
+- archive/prototype.html contains the old single-file React prototype for reference only.
+- archive/landingpage-original.html contains the old standalone marketing HTML for reference only.
+- supabase remains at the repository root for Edge Functions, migrations, and seed data.
+
+## Repository layout
+- apps/app: Product app (React + Vite + Tailwind CSS)
+- apps/marketing: Marketing site (Astro + Tailwind CSS)
+- supabase: Database migrations, seed data, and Edge Functions
+- docs: Product, technical, strategy, and planning documents
+- eval: Evaluation harnesses and test fixtures
+- archive: Historical prototypes; do not treat as active source
 
 ## Tech stack
-- Frontend: React + Vite + Tailwind CSS
+- Product frontend: React + Vite + Tailwind CSS
+- Marketing frontend: Astro + Tailwind CSS
 - Backend: Supabase (Postgres, Auth, Edge Functions, Row Level Security)
 - Deployment: Vercel
 - AI: Claude API via Supabase Edge Functions (keep API key server-side only)

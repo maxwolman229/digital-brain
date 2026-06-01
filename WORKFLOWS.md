@@ -8,8 +8,11 @@ _Documents what actually exists and works right now. Last updated: 2026-03-19._
 
 ### Step by step
 
-1. User visits `/` (landing page) and clicks **"Get Started"** or navigates to `/auth`.
-2. On the **Sign Up** tab: enters Display Name, Email, Password, Confirm Password.
+1. User visits the product app at `app.md1.app`.
+   - `/` redirects unauthenticated users to `/auth`.
+   - `/` redirects authenticated users with an active plant to `/app`.
+   - The public marketing site lives separately at `md1.app`.
+2. On `/auth`, the user opens the **Sign Up** tab and enters Display Name, Email, Password, Confirm Password.
 3. `signUp(email, password)` is called → Supabase auth creates user + issues JWT.
    - JWT and refresh token stored in `localStorage`.
    - `onNeedsOnboarding(user, displayName)` fires → App navigates to `/onboarding`.
@@ -92,15 +95,13 @@ From **Plant Settings → Pending tab** (visible to admins of the BevCan plant o
 
 ## 3. DEMO LOGIN FLOW — ✅ WORKING
 
-### Path: Landing page → "See Demo" button → password gate
+### Path: Product app auth screen → "Try Demo" button
 
-1. User clicks **"See Demo"** on landing page (`/`).
-2. Password gate modal appears — password is `"digitalbrain"` (hardcoded in LandingPage.jsx).
-3. Correct password → navigates to `/auth`.
-4. Auth page has a **"Try Demo"** button with hardcoded credentials:
+1. User visits the product app at `app.md1.app/auth`.
+2. Auth page has a **"Try Demo"** button with hardcoded credentials:
    - Email: `demo@md1.app`
    - Password: `digitalbrain`
-5. Signs in → loads profile → loads memberships.
+3. Signs in → loads profile → loads memberships.
 
 ### Demo account access
 - **One plant only**: MD1 EAF Plant (`bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb`)
