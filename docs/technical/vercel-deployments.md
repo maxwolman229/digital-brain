@@ -2,6 +2,12 @@
 
 MD1 uses two Vercel projects from the same repository.
 
+The root `vercel.json` is a transition shim for the existing single-root
+GitHub/Vercel integration. It builds the product app from the repository root
+and publishes `apps/app/dist`, so current PR previews do not look for the old
+`public` output directory. The long-term setup should still use the two project
+root directories below.
+
 ## Marketing
 
 ```text

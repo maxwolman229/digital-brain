@@ -29,4 +29,6 @@ npm run build
 - Marketing site: `md1.app`, Vercel Root Directory `apps/marketing`.
 - Product app: `app.md1.app`, Vercel Root Directory `apps/app`.
 
+The root `vercel.json` keeps the old single-root Vercel preview integration building the product app during the transition. The dedicated Vercel projects should use the app-specific root directories above.
+
 The product app uses Supabase for auth, data, and Edge Functions. The marketing site is static and should not receive Supabase or AI provider secrets.
