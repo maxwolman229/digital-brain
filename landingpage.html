@@ -27,28 +27,41 @@
   .mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum'; }
   .page { display: none; min-height: 100vh; }
   .page.active { display: block; }
-  .page-landing { background: var(--bg-dark); color: var(--off); }
+  .page-landing { background: var(--bg-light); color: var(--ink); }
+  .page-landing .hero { background: var(--bg-dark); color: var(--off); margin: 0; padding: 7rem 0 6rem; }
+  .page-landing .hero .lead { color: var(--off-soft); }
+  .page-landing .hero .cta-primary { background: var(--off); color: var(--bg-dark); }
   .page-platform, .page-contact { background: var(--bg-light); color: var(--ink); }
-  nav.topnav { position: sticky; top: 0; z-index: 50; padding: 1.4rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid; backdrop-filter: blur(8px); }
-  .page-landing nav.topnav { background: rgba(18,35,58,0.85); border-color: var(--line); }
-  .page-platform nav.topnav, .page-contact nav.topnav { background: rgba(244,241,236,0.85); border-color: var(--line-light); }
-  .logo { font-weight: 600; font-size: 0.85rem; letter-spacing: 0.04em; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; padding: 0.2rem 0.5rem; border: 2px solid; font-family: 'JetBrains Mono', monospace; }
+  nav.topnav { position: sticky; top: 0; z-index: 50; padding: 1.4rem 2.5rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-bottom: 1px solid; backdrop-filter: blur(8px); }
+  nav.topnav { transition: background .3s, border-color .3s; }
+  nav.topnav .nav-left { justify-self: start; }
+  nav.topnav .nav-right { justify-self: end; }
+  .page-landing nav.topnav { background: var(--bg-dark); border-color: transparent; backdrop-filter: none; }
+  .page-landing.scrolled nav.topnav { background: var(--bg-light); border-color: var(--line-light); backdrop-filter: none; }
+  .page-platform nav.topnav, .page-contact nav.topnav { background: var(--bg-light); border-color: var(--line-light); backdrop-filter: none; }
+  .logo { font-weight: 800; font-size: 1.5rem; letter-spacing: 0.01em; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; line-height: 1; padding: 0.1rem 0.4rem 0.28rem; border: 3px solid; font-family: 'IBM Plex Sans', sans-serif; transition: color .3s, border-color .3s; }
   .page-landing .logo { color: var(--off); border-color: var(--off); }
+  .page-landing.scrolled .logo { color: var(--ink); border-color: var(--ink); }
   .page-platform .logo, .page-contact .logo { color: var(--ink); border-color: var(--ink); }
   .navlinks { display: flex; gap: 2rem; align-items: center; }
-  .navlinks a { font-size: 0.85rem; font-weight: 400; text-decoration: none; cursor: pointer; transition: color .15s; }
+  .navlinks a { font-size: 0.85rem; font-weight: 400; text-decoration: none; cursor: pointer; transition: color .3s; }
   .page-landing .navlinks a { color: var(--off-soft); }
+  .page-landing.scrolled .navlinks a { color: var(--ink-soft); }
+  .page-landing.scrolled .navlinks a.active { color: var(--ink); }
   .page-platform .navlinks a, .page-contact .navlinks a { color: var(--ink-soft); }
   .page-landing .navlinks a:hover, .page-landing .navlinks a.active { color: var(--off); }
+  .page-landing.scrolled .navlinks a:hover { color: var(--ink); }
   .page-platform .navlinks a:hover, .page-platform .navlinks a.active, .page-contact .navlinks a:hover, .page-contact .navlinks a.active { color: var(--ink); }
-  .nav-cta { padding: 0.55rem 1.1rem; font-size: 0.82rem; font-weight: 500; border: 1px solid; cursor: pointer; background: transparent; font-family: inherit; transition: all .15s; }
+  .nav-cta { padding: 0.55rem 1.1rem; font-size: 0.82rem; font-weight: 500; border: 1px solid; cursor: pointer; background: transparent; font-family: inherit; transition: all .3s; }
   .page-landing .nav-cta { color: var(--off); border-color: var(--off); }
+  .page-landing.scrolled .nav-cta { color: var(--ink); border-color: var(--ink); }
   .page-landing .nav-cta:hover { background: var(--off); color: var(--bg-dark); }
+  .page-landing.scrolled .nav-cta:hover { background: var(--ink); color: var(--off); }
   .page-platform .nav-cta, .page-contact .nav-cta { color: var(--ink); border-color: var(--ink); }
   .page-platform .nav-cta:hover, .page-contact .nav-cta:hover { background: var(--ink); color: var(--off); }
   .container { max-width: 1280px; margin: 0 auto; padding: 0 2.5rem; }
   .sect-label { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; color: var(--ink-soft); margin-bottom: 1.25rem; }
-  .page-landing .sect-label { color: var(--off-soft); }
+  .page-landing .hero .sect-label { color: var(--off-soft); }
   .hero { padding: 7rem 0 6rem; }
   .hero h1 { font-size: 5rem; font-weight: 400; letter-spacing: -0.035em; line-height: 1.0; margin-bottom: 1.5rem; max-width: 1100px; }
   .hero h1 .accent { color: var(--accent); }
@@ -79,7 +92,53 @@
 
   /* K-CARD FULL LAYOUT — mirrors the slide */
   .kcard-full { font-size: 0.85rem; line-height: 1.45; }
-  .kcf-section-label { font-size: 0.78rem; font-weight: 600; color: var(--off); margin: 0.85rem 0 0.4rem; letter-spacing: 0.005em; }
+  .kcf-section-label { font-size: 0.78rem; font-weight: 600; color: var(--off); margin: 0.85rem 0 0.4rem; letter-spacing: 0.005em; display: flex; align-items: center; gap: 0.5rem; position: relative; }
+
+  /* Add+ buttons and popovers — dark theme */
+  .kcf-add {
+    font-size: 0.65rem; font-weight: 500;
+    padding: 0.1rem 0.45rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--line);
+    color: var(--off-soft);
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    letter-spacing: 0.02em;
+    transition: all .15s;
+  }
+  .kcf-add:hover {
+    background: rgba(255,255,255,0.12);
+    color: var(--off);
+    border-color: var(--accent);
+  }
+  .kcf-add-popover {
+    display: none;
+    position: absolute; top: 100%; left: 4.5rem;
+    margin-top: 0.4rem;
+    background: var(--bg-dark-2);
+    border: 1px solid var(--accent);
+    padding: 0.5rem;
+    z-index: 50;
+    min-width: 220px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  }
+  .kcf-add-popover.open { display: block; }
+  .kcf-add-popover input {
+    width: 100%; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line); color: var(--off);
+    padding: 0.45rem 0.6rem; font-size: 0.78rem;
+    font-family: 'IBM Plex Sans', sans-serif;
+    letter-spacing: 0.005em; outline: none;
+    cursor: not-allowed;
+  }
+  .kcf-add-popover input::placeholder { color: var(--off-soft); }
+  .kcf-add-menu { padding: 0.25rem; max-height: 180px; overflow-y: auto; }
+  .kcf-menu-item {
+    padding: 0.45rem 0.6rem; font-size: 0.8rem; color: var(--off);
+    cursor: pointer; transition: background .12s;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .kcf-menu-item:hover { background: rgba(255,255,255,0.08); }
   .kcf-title {
     font-size: 1.1rem; font-weight: 500; color: var(--off);
     background: rgba(255,255,255,0.04);
@@ -135,7 +194,7 @@
 
   .kcf-actions {
     display: flex; gap: 0.5rem; margin-top: 0.7rem;
-    position: relative; cursor: help;
+    position: relative;
   }
   .kcf-action {
     flex: 1; text-align: center;
@@ -145,8 +204,143 @@
     font-size: 0.72rem; font-weight: 500;
     padding: 0.5rem 0.4rem;
     letter-spacing: 0.005em;
+    cursor: help; position: relative;
   }
   .kcf-action:hover { background: rgba(255,255,255,0.08); color: var(--off); }
+
+  /* K-CARD FULL LAYOUT — LIGHT MODE (Platform page) */
+  .kcard-full-light { padding: 0 !important; border: 1px solid var(--line-light) !important; background: var(--bg-light) !important; }
+  .kcard-full-light .kcfl-title {
+    background: var(--bg-light-2);
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--line-light);
+    cursor: help; position: relative;
+  }
+  .kcfl-label {
+    font-size: 0.72rem; color: var(--ink-soft); font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 0.3rem; letter-spacing: 0.005em;
+  }
+  .kcfl-title-text {
+    font-size: 1.15rem; font-weight: 600; color: var(--ink);
+    letter-spacing: -0.005em; line-height: 1.25;
+  }
+  .kcfl-section-label {
+    font-size: 0.78rem; font-weight: 600; color: var(--ink);
+    padding: 0.7rem 1.1rem 0.3rem;
+    letter-spacing: 0.005em;
+    display: flex; align-items: center; gap: 0.5rem; position: relative;
+  }
+
+  /* Add+ buttons and popovers — light theme */
+  .kcfl-add {
+    font-size: 0.65rem; font-weight: 500;
+    padding: 0.1rem 0.45rem;
+    background: var(--bg-light-2);
+    border: 1px solid var(--line-light);
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    letter-spacing: 0.02em;
+    transition: all .15s;
+  }
+  .kcfl-add:hover {
+    background: var(--ink);
+    color: var(--off);
+    border-color: var(--ink);
+  }
+  .kcfl-add-popover {
+    display: none;
+    position: absolute; top: 100%; left: 4.5rem;
+    margin-top: 0.4rem;
+    background: var(--bg-light);
+    border: 1px solid var(--ink);
+    padding: 0.5rem;
+    z-index: 50;
+    min-width: 220px;
+    box-shadow: 0 6px 18px rgba(18,35,58,0.12);
+  }
+  .kcfl-add-popover.open { display: block; }
+  .kcfl-add-popover input {
+    width: 100%; background: var(--bg-light-2);
+    border: 1px solid var(--line-light); color: var(--ink);
+    padding: 0.45rem 0.6rem; font-size: 0.78rem;
+    font-family: 'IBM Plex Sans', sans-serif;
+    letter-spacing: 0.005em; outline: none;
+    cursor: not-allowed;
+  }
+  .kcfl-add-popover input::placeholder { color: var(--ink-soft); }
+  .kcfl-add-menu { padding: 0.25rem; max-height: 180px; overflow-y: auto; }
+  .kcfl-menu-item {
+    padding: 0.45rem 0.6rem; font-size: 0.8rem; color: var(--ink);
+    cursor: pointer; transition: background .12s;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .kcfl-menu-item:hover { background: var(--bg-light-2); }
+  .kcard-full-light .kcfl-context {
+    margin: 0 1.1rem 0.5rem;
+    background: #F0EAD8;
+    border: 1px solid #D8CFB5;
+    padding: 0.65rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    cursor: help; position: relative;
+  }
+  .kcfl-tag {
+    font-size: 0.74rem; padding: 0.25rem 0.65rem;
+    background: rgba(29, 158, 117, 0.15);
+    color: #0A6B51;
+    border: 1px solid rgba(29, 158, 117, 0.4);
+    font-family: 'JetBrains Mono', monospace; font-weight: 500;
+  }
+  .kcard-full-light .kcfl-content {
+    margin: 0 1.1rem 0.5rem;
+    background: #E8EFFA;
+    border: 1px solid #BFD0E8;
+    padding: 0.85rem;
+    cursor: help; position: relative;
+  }
+  .kcfl-field { margin-bottom: 0.65rem; }
+  .kcfl-field:last-child { margin-bottom: 0; }
+  .kcfl-flabel {
+    font-size: 0.72rem; font-weight: 700; color: #1E4A82;
+    margin-bottom: 0.22rem; letter-spacing: 0.01em;
+  }
+  .kcfl-body { font-size: 0.84rem; color: var(--ink); line-height: 1.5; }
+  .kcfl-body > div { margin-bottom: 0.1rem; }
+  .kcfl-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+  .kcfl-field-row .kcfl-field { margin-bottom: 0; }
+
+  .kcard-full-light .kcfl-confidence {
+    margin: 0 1.1rem 0.5rem;
+    background: #E1F1E8;
+    border: 1px solid #B7D9C5;
+    padding: 0.75rem 0.85rem;
+    cursor: help; position: relative;
+  }
+  .kcfl-conf-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+  .kcfl-conf-pill {
+    background: #1D9E75; color: white;
+    font-size: 0.72rem; font-weight: 600;
+    padding: 0.22rem 0.6rem;
+  }
+  .kcfl-conf-meta { font-size: 0.74rem; color: var(--ink-soft); }
+  .kcfl-comments { font-size: 0.74rem; color: var(--ink-soft); font-style: italic; }
+
+  .kcard-full-light .kcfl-actions {
+    display: flex; gap: 0.5rem;
+    padding: 0 1.1rem 1.1rem;
+    position: relative;
+  }
+  .kcfl-action {
+    flex: 1; text-align: center;
+    background: #DCD5C8;
+    border: 1px solid #C2B9A8;
+    color: var(--ink);
+    font-size: 0.74rem; font-weight: 500;
+    padding: 0.55rem 0.4rem;
+    cursor: help; position: relative;
+  }
+  .kcfl-action:hover { background: #CFC7B5; }
 
   /* HOVER TOOLTIPS via data-tip */
   [data-tip] { position: relative; }
@@ -187,24 +381,24 @@
   }
   [data-tip]:hover::after { transform: translateX(-50%) translateY(-12px); }
   .sect { padding: 6rem 0; border-top: 1px solid; }
-  .page-landing .sect { border-color: var(--line); }
+  .page-landing .sect { border-color: var(--line-light); }
   .page-platform .sect, .page-contact .sect { border-color: var(--line-light); }
   .sect h2 { font-size: 3rem; font-weight: 400; letter-spacing: -0.025em; line-height: 1.05; margin-bottom: 1.75rem; max-width: 900px; }
-  .page-landing .sect h2 { color: var(--off); }
+  .page-landing .sect h2 { color: var(--ink); }
   .page-platform .sect h2, .page-contact .sect h2 { color: var(--ink); }
   .two-col { display: grid; grid-template-columns: 1.1fr 1fr; gap: 5rem; align-items: start; }
   .two-col .col-right { padding-top: 0.5rem; }
   .two-col p { font-size: 1.05rem; line-height: 1.65; margin-bottom: 1.25rem; }
-  .page-landing .two-col p { color: var(--off-soft); }
+  .page-landing .two-col p { color: var(--ink-soft); }
   .page-platform .two-col p, .page-contact .two-col p { color: var(--ink-soft); }
   .two-col p:last-child { margin-bottom: 0; }
   .two-col .closer { font-weight: 500; color: var(--accent) !important; }
-  .triptych { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 3.5rem; border-top: 1px solid var(--line); }
-  .trip-item { padding: 2.5rem 2rem 2.5rem 0; border-right: 1px solid var(--line); }
+  .triptych { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 3.5rem; border-top: 1px solid var(--line-light); }
+  .trip-item { padding: 2.5rem 2rem 2.5rem 0; border-right: 1px solid var(--line-light); }
   .trip-item:last-child { border-right: none; padding-right: 0; }
   .trip-item:not(:first-child) { padding-left: 2rem; }
-  .trip-item h3 { font-size: 1.25rem; font-weight: 500; margin-bottom: 0.85rem; letter-spacing: -0.01em; color: var(--off); }
-  .trip-item p { font-size: 0.95rem; line-height: 1.6; color: var(--off-soft); }
+  .trip-item h3 { font-size: 1.25rem; font-weight: 500; margin-bottom: 0.85rem; letter-spacing: -0.01em; color: var(--ink); }
+  .trip-item p { font-size: 0.95rem; line-height: 1.6; color: var(--ink-soft); }
   .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 4rem; border-top: 1px solid var(--line-light); }
   .step { padding: 2.5rem 2rem 2.5rem 0; border-right: 1px solid var(--line-light); }
   .step:last-child { border-right: none; padding-right: 0; }
@@ -232,10 +426,11 @@
   .kcard-preview .kc-status { padding-top: 0.85rem; margin-top: 0.85rem; border-top: 1px solid var(--line-light); font-size: 0.78rem; color: var(--ink-soft); display: flex; align-items: center; gap: 0.45rem; }
   .kc-chk { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; background: var(--ink); color: var(--off); border-radius: 50%; font-size: 9px; font-weight: 700; }
   .chat-preview { background: var(--off); border: 1px solid var(--line-light); padding: 1.5rem; }
-  .chat-msg { font-size: 0.88rem; padding: 0.7rem 0.95rem; margin-bottom: 0.5rem; line-height: 1.5; }
+  .chat-msg { font-size: 0.88rem; padding: 0.7rem 0.95rem; margin-bottom: 0.5rem; line-height: 1.5; cursor: help; position: relative; }
   .chat-u { background: var(--bg-light-2); color: var(--ink); }
   .chat-b { background: var(--off); border-left: 2px solid var(--ink-soft); color: var(--ink-soft); }
-  .chat-signal { margin-top: 0.85rem; padding: 0.55rem 0.8rem; background: var(--bg-dark); color: var(--off); font-size: 0.78rem; display: flex; align-items: center; gap: 0.55rem; font-family: 'JetBrains Mono', monospace; }
+  .chat-signal { margin-top: 0.5rem; padding: 0.55rem 0.8rem; background: var(--bg-dark); color: var(--off); font-size: 0.78rem; display: flex; align-items: center; gap: 0.55rem; font-family: 'JetBrains Mono', monospace; cursor: help; position: relative; }
+  .chat-signal:first-of-type { margin-top: 0.85rem; }
   .chat-signal .sig-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
   .contact-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 5rem; margin-top: 3.5rem; }
   .ci-block { margin-bottom: 2.5rem; }
@@ -249,7 +444,7 @@
   .contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: var(--ink); }
   .contact-form textarea { resize: vertical; min-height: 80px; }
   footer.site-footer { padding: 2.5rem; border-top: 1px solid; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
-  .page-landing footer.site-footer { border-color: var(--line); color: var(--off-soft); }
+  .page-landing footer.site-footer { border-color: var(--line-light); color: var(--ink-soft); }
   .page-platform footer.site-footer, .page-contact footer.site-footer { border-color: var(--line-light); color: var(--ink-soft); }
   footer .foot-r { display: flex; gap: 2rem; }
   footer a { color: inherit; text-decoration: none; cursor: pointer; }
@@ -276,12 +471,15 @@
 
 <div class="page page-landing active" id="page-landing">
   <nav class="topnav">
-    <a class="logo" onclick="go('landing')">M/D/1</a>
+    <div class="nav-left">
+      <a class="logo" onclick="go('landing')">M/D/1</a>
+    </div>
     <div class="navlinks">
       <a class="active" onclick="go('landing')">Home</a>
       <a onclick="go('platform')">Platform</a>
       <a onclick="go('contact')">Contact</a>
     </div>
+    <div class="nav-right"></div>
   </nav>
   <section class="hero">
     <div class="container">
@@ -296,13 +494,11 @@
           <span class="hp-title">Knowledge Console</span>
           <div class="hp-tabs">
             <span class="hp-tab active">Document → K-Cards</span>
-            <span class="hp-tab">Elicitation</span>
-            <span class="hp-tab">Verify</span>
           </div>
         </div>
         <div class="hp-body">
           <div class="hp-left">
-            <div class="hp-section-label">SOP · Section 4.2 · Plate cylinder removal</div>
+            <div class="hp-section-label">SOP_34_NEW.docx · Plate cylinder removal</div>
             <div class="hp-doc">
               1. Wear correct <strong class="underline">PPE</strong>. Back-end maintainer glove requirements apply.<br><br>
               2. Stage tools and clean-up kit before starting.<br><br>
@@ -320,15 +516,31 @@
                 Remove and re-install plate cylinders at shutdown
               </div>
 
-              <div class="kcf-section-label">Context</div>
+              <div class="kcf-section-label">
+                <span>Context</span>
+                <button class="kcf-add" onclick="event.stopPropagation(); toggleAdd('hero-ctx-add')" type="button">Add +</button>
+                <div class="kcf-add-popover" id="hero-ctx-add">
+                  <input type="text" placeholder="New context tag (e.g. Material grade)" disabled />
+                </div>
+              </div>
               <div class="kcf-context" data-tip="Where the knowledge applies. Stable, unarguable entities of the plant: equipment, plant, product, process area. Context tags act as graph nodes — a card can apply to a specific product made on a specific piece of equipment.">
                 <span class="kcf-tag">Rutherford Decorator</span>
                 <span class="kcf-tag">Plate cylinders</span>
-                <span class="kcf-tag">Bishopville</span>
-                <span class="kcf-tag">Shutdown (SD)</span>
+                <span class="kcf-tag">Goodyear</span>
               </div>
 
-              <div class="kcf-section-label">Content</div>
+              <div class="kcf-section-label">
+                <span>Content</span>
+                <button class="kcf-add" onclick="event.stopPropagation(); toggleAdd('hero-content-add')" type="button">Add +</button>
+                <div class="kcf-add-popover kcf-add-menu" id="hero-content-add">
+                  <div class="kcf-menu-item" onclick="event.stopPropagation(); closeAdd('hero-content-add')">Description</div>
+                  <div class="kcf-menu-item" onclick="event.stopPropagation(); closeAdd('hero-content-add')">Conditions</div>
+                  <div class="kcf-menu-item" onclick="event.stopPropagation(); closeAdd('hero-content-add')">Photo</div>
+                  <div class="kcf-menu-item" onclick="event.stopPropagation(); closeAdd('hero-content-add')">Procedure</div>
+                  <div class="kcf-menu-item" onclick="event.stopPropagation(); closeAdd('hero-content-add')">Rule of Thumb</div>
+                  <div class="kcf-menu-item" onclick="event.stopPropagation(); closeAdd('hero-content-add')">Other</div>
+                </div>
+              </div>
               <div class="kcf-content" data-tip="The knowledge itself, broken into structured fields. The description states the claim. The procedure lists ordered steps. Conditions specify when it applies and when it does not. Rules of thumb capture the heuristics experienced operators carry but rarely write down. Each field can be argued with, corrected, and improved.">
                 <div class="kcf-field">
                   <div class="kcf-label">Description</div>
@@ -361,12 +573,12 @@
                   <span class="kcf-conf-pill">✓ Verified by 3 SMEs</span>
                   <span class="kcf-conf-meta">R. Bianchi (22 yrs) · A. Patel · M. Chen</span>
                 </div>
-                <div class="kcf-comments">2 comments · 1 contesting view from Winston-Salem</div>
+                <div class="kcf-comments">2 comments · 1 contesting view from Rome</div>
               </div>
 
-              <div class="kcf-actions" data-tip="Every K-Card is fully traceable. The evidence log shows the source documents, sensor data, and observations that back the claim. The version history shows how the card has changed and who changed it. Nothing in the knowledge base is ever a black box.">
-                <span class="kcf-action">See Evidence Log</span>
-                <span class="kcf-action">See Version History</span>
+              <div class="kcf-actions">
+                <span class="kcf-action" data-tip="Every K-Card is fully traceable. The evidence log shows the source documents, sensor data, and observations that back the claim.">See Evidence Log</span>
+                <span class="kcf-action" data-tip="The version history shows how the card has changed and who changed it. Nothing in the knowledge base is ever a black box.">See Version History</span>
               </div>
 
             </div>
@@ -424,18 +636,22 @@
     <div class="foot-r">
       <a onclick="go('platform')">Platform</a>
       <a onclick="go('contact')">Contact</a>
-      <span>© 2026 MD1 Inc.</span>
+      <span>© 2026</span>
     </div>
   </footer>
 </div>
 
 <div class="page page-platform" id="page-platform">
   <nav class="topnav">
-    <a class="logo" onclick="go('landing')">M/D/1</a>
+    <div class="nav-left">
+      <a class="logo" onclick="go('landing')">M/D/1</a>
+    </div>
     <div class="navlinks">
       <a onclick="go('landing')">Home</a>
       <a class="active" onclick="go('platform')">Platform</a>
       <a onclick="go('contact')">Contact</a>
+    </div>
+    <div class="nav-right">
       <button class="nav-cta" onclick="go('contact')">Request a demo</button>
     </div>
   </nav>
@@ -468,7 +684,7 @@
       </div>
     </div>
   </section>
-  <section class="product-band" onclick="alert('The Knowledge Bank — coming soon')">
+  <section class="product-band" onclick="go('contact')">
     <div class="container">
       <div class="pb-head">
         <span class="pb-num mono">01 / Product</span>
@@ -483,26 +699,83 @@
           <p><strong>Grow · ongoing.</strong> Broaden across processes and plants. The knowledge base compounds as your people use it.</p>
           <span class="pb-arrow">Explore The Knowledge Bank →</span>
         </div>
-        <div class="kcard-preview">
-          <div class="kc-label">K-Card · Knowledge Bank</div>
-          <h5>Plate cylinder removal at shutdown</h5>
-          <div class="kc-tags">
-            <span class="kc-tag">decorator</span>
-            <span class="kc-tag">plate-cylinders</span>
-            <span class="kc-tag">shutdown</span>
+        <div class="kcard-preview kcard-full-light">
+
+          <div class="kcfl-title" data-tip="The title states the knowledge being presented in plain language. Examples: equipment setup, planning rule, safety observation, best practice.">
+            <div class="kcfl-label">K-Card · LCSD001</div>
+            <div class="kcfl-title-text">Remove and re-install plate cylinders at shutdown</div>
           </div>
-          <div class="kc-field"><b>Statement</b>The critical, downtime-heavy step of a changeover.</div>
-          <div class="kc-field"><b>Why</b>Hand safety is the major concern. This is where cuts happen.</div>
-          <div class="kc-field"><b>Rule</b>~12–14 ft-lbs on the cylinder bolt (impact-tool plants).</div>
-          <div class="kc-status">
-            <span class="kc-chk">✓</span>
-            <span><strong>SME confirmed</strong> · R. Bianchi, 22 yrs · source: SOP + operator</span>
+
+          <div class="kcfl-section-label">
+            <span>Context</span>
+            <button class="kcfl-add" onclick="event.stopPropagation(); toggleAdd('plat-ctx-add')" type="button">Add +</button>
+            <div class="kcfl-add-popover" id="plat-ctx-add">
+              <input type="text" placeholder="New context tag (e.g. Material grade)" disabled />
+            </div>
           </div>
+          <div class="kcfl-context" data-tip="Where the knowledge applies. Stable, unarguable entities of the plant: equipment, plant, product, process area. Context tags act as graph nodes — a card can apply to a specific product made on a specific piece of equipment.">
+            <span class="kcfl-tag">Rutherford Decorator</span>
+            <span class="kcfl-tag">Plate cylinders</span>
+            <span class="kcfl-tag">Goodyear</span>
+          </div>
+
+          <div class="kcfl-section-label">
+            <span>Content</span>
+            <button class="kcfl-add" onclick="event.stopPropagation(); toggleAdd('plat-content-add')" type="button">Add +</button>
+            <div class="kcfl-add-popover kcfl-add-menu" id="plat-content-add">
+              <div class="kcfl-menu-item" onclick="event.stopPropagation(); closeAdd('plat-content-add')">Description</div>
+              <div class="kcfl-menu-item" onclick="event.stopPropagation(); closeAdd('plat-content-add')">Conditions</div>
+              <div class="kcfl-menu-item" onclick="event.stopPropagation(); closeAdd('plat-content-add')">Photo</div>
+              <div class="kcfl-menu-item" onclick="event.stopPropagation(); closeAdd('plat-content-add')">Procedure</div>
+              <div class="kcfl-menu-item" onclick="event.stopPropagation(); closeAdd('plat-content-add')">Rule of Thumb</div>
+              <div class="kcfl-menu-item" onclick="event.stopPropagation(); closeAdd('plat-content-add')">Other</div>
+            </div>
+          </div>
+          <div class="kcfl-content" data-tip="The knowledge itself, broken into structured fields. Description states the claim. Procedure lists ordered steps. Conditions specify when it applies and when it does not. Rules of thumb capture the heuristics experienced operators carry but rarely write down. Each field can be argued with, corrected, and improved.">
+            <div class="kcfl-field">
+              <div class="kcfl-flabel">Description</div>
+              <div class="kcfl-body">The critical, downtime-heavy step of a label-change shutdown. Hand safety is the major concern.</div>
+            </div>
+            <div class="kcfl-field">
+              <div class="kcfl-flabel">Procedure</div>
+              <div class="kcfl-body">
+                <div>1. Wear correct PPE.</div>
+                <div>2. Stage tools and clean-up kit.</div>
+                <div>3. Protect the plate cylinder shaft.</div>
+                <div>4. Mark each cylinder's position before racking.</div>
+              </div>
+            </div>
+            <div class="kcfl-field-row">
+              <div class="kcfl-field">
+                <div class="kcfl-flabel">Condition</div>
+                <div class="kcfl-body">Mark before racking — prevents mis-mounts on the next change.</div>
+              </div>
+              <div class="kcfl-field">
+                <div class="kcfl-flabel">Rule of thumb</div>
+                <div class="kcfl-body">~12–14 ft-lbs on the bolt (impact-tool plants).</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="kcfl-section-label">Confidence</div>
+          <div class="kcfl-confidence" data-tip="Every card carries who has verified it, how many people, and any comments or contesting views. Knowledge starts unverified, gets confirmed by senior operators, and can be challenged or superseded as practice changes. Confidence is a state that evolves, not a label.">
+            <div class="kcfl-conf-row">
+              <span class="kcfl-conf-pill">✓ Verified by 3 SMEs</span>
+              <span class="kcfl-conf-meta">R. Bianchi (22 yrs) · A. Patel · M. Chen</span>
+            </div>
+            <div class="kcfl-comments">2 comments · 1 contesting view from Rome</div>
+          </div>
+
+          <div class="kcfl-actions">
+            <span class="kcfl-action" data-tip="Every K-Card is fully traceable. The evidence log shows source documents, sensor data, and observations that back the claim.">See Evidence Log</span>
+            <span class="kcfl-action" data-tip="The version history shows how the card has changed and who changed it. Nothing in the knowledge base is ever a black box.">See Version History</span>
+          </div>
+
         </div>
       </div>
     </div>
   </section>
-  <section class="product-band" onclick="alert('MD1 ChatSDK — coming soon')">
+  <section class="product-band" onclick="go('contact')">
     <div class="container">
       <div class="pb-head">
         <span class="pb-num mono">02 / Product</span>
@@ -517,10 +790,11 @@
           <span class="pb-arrow">Explore the ChatSDK →</span>
         </div>
         <div class="chat-preview">
-          <div class="chat-msg chat-u">What should I know about running Poppi Cola on a Rutherford printer?</div>
-          <div class="chat-msg chat-b">A Rutherford decorator can print up to 8 colors at 2200 cans per minute. Poppi is a 12oz Standard Can.</div>
-          <div class="chat-msg chat-u">I know the specs. I'm asking about Poppi specifically.</div>
-          <div class="chat-signal"><span class="sig-dot"></span>SDK signal: knowledge gap detected · product-specific operating knowledge missing</div>
+          <div class="chat-msg chat-u" data-tip="Operator needs assistance and asks chatbot for information related to upcoming task.">What should I know about running Poppi Cola on a Rutherford printer?</div>
+          <div class="chat-msg chat-b" data-tip="Chatbot uses RAG to retrieve a best-efforts response to the question, but often does not have perfect information to meet the needs of the operator.">A Rutherford decorator can print up to 8 colors at 2200 cans per minute. Poppi is a 12oz Standard Can.</div>
+          <div class="chat-msg chat-u" data-tip="Poor quality response causes frustration and potentially mistrust. Operator pushes the chatbot for a better response. Lack of knowledge usually makes a better response untenable.">I know the specs. I'm asking about Poppi specifically.</div>
+          <div class="chat-signal" data-tip="SDK flags insights for improvement of the knowledge base as well as refinement of broader chatbot process."><span class="sig-dot"></span>SDK signal: knowledge gap detected · product-specific operating knowledge missing</div>
+          <div class="chat-signal" data-tip="SDK flags insights for improvement of the knowledge base as well as refinement of broader chatbot process."><span class="sig-dot"></span>SDK signal: operator frustration detected</div>
         </div>
       </div>
     </div>
@@ -530,18 +804,22 @@
     <div class="foot-r">
       <a onclick="go('landing')">Home</a>
       <a onclick="go('contact')">Contact</a>
-      <span>© 2026 MD1 Inc.</span>
+      <span>© 2026</span>
     </div>
   </footer>
 </div>
 
 <div class="page page-contact" id="page-contact">
   <nav class="topnav">
-    <a class="logo" onclick="go('landing')">M/D/1</a>
+    <div class="nav-left">
+      <a class="logo" onclick="go('landing')">M/D/1</a>
+    </div>
     <div class="navlinks">
       <a onclick="go('landing')">Home</a>
       <a onclick="go('platform')">Platform</a>
       <a class="active" onclick="go('contact')">Contact</a>
+    </div>
+    <div class="nav-right">
       <button class="nav-cta" onclick="go('contact')">Request a demo</button>
     </div>
   </nav>
@@ -558,7 +836,7 @@
           </div>
           <div class="ci-block">
             <div class="ci-label">Location</div>
-            <div class="ci-val">New York, New York<br>London, United Kingdom</div>
+            <div class="ci-val">New York, USA</div>
           </div>
           <div class="ci-block">
             <div class="ci-label">Working with us</div>
@@ -586,7 +864,7 @@
     <div class="foot-r">
       <a onclick="go('landing')">Home</a>
       <a onclick="go('platform')">Platform</a>
-      <span>© 2026 MD1 Inc.</span>
+      <span>© 2026</span>
     </div>
   </footer>
 </div>
@@ -596,7 +874,41 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     window.scrollTo(0, 0);
+    // Reset scrolled state when switching pages
+    document.getElementById('page-landing').classList.remove('scrolled');
   }
+  // Toggle .scrolled on the landing page once the user scrolls past most of the hero
+  window.addEventListener('scroll', () => {
+    const landing = document.getElementById('page-landing');
+    if (!landing.classList.contains('active')) return;
+    const hero = landing.querySelector('.hero');
+    if (!hero) return;
+    // Switch when the hero is mostly scrolled out (bottom 100px from top of viewport)
+    const heroBottom = hero.getBoundingClientRect().bottom;
+    if (heroBottom < 100) {
+      landing.classList.add('scrolled');
+    } else {
+      landing.classList.remove('scrolled');
+    }
+  }, { passive: true });
+  function toggleAdd(id) {
+    // Close any other open popovers first
+    document.querySelectorAll('.kcf-add-popover.open, .kcfl-add-popover.open').forEach(p => {
+      if (p.id !== id) p.classList.remove('open');
+    });
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('open');
+  }
+  function closeAdd(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('open');
+  }
+  // Close popovers when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.kcf-add, .kcfl-add, .kcf-add-popover, .kcfl-add-popover')) {
+      document.querySelectorAll('.kcf-add-popover.open, .kcfl-add-popover.open').forEach(p => p.classList.remove('open'));
+    }
+  });
 </script>
 </body>
 </html>
