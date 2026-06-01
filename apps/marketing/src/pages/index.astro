@@ -1,6 +1,75 @@
 ---
+import ArrowIcon from '../components/ArrowIcon.astro'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import KnowledgeConsolePreview from '../components/KnowledgeConsolePreview.astro'
 ---
 
-<html lang="en">
-  <body>MD1</body>
-</html>
+<BaseLayout
+  current="home"
+  darkNav
+  showCta={false}
+  title="MD1 | Manufacturing Context That Does Not Retire"
+  description="MD1 captures manufacturing operating context from documents, systems, and experienced workers, then turns it into trusted knowledge."
+>
+  <section class="bg-[var(--md1-navy)] px-6 pb-24 pt-24 text-[var(--md1-off-white)] md:px-10 md:pb-28 md:pt-32">
+    <div class="mx-auto max-w-7xl">
+      <h1 class="max-w-5xl text-5xl font-normal leading-[1.02] tracking-normal md:text-7xl">
+        In manufacturing,<br />data is visible.<br /><span class="text-[var(--md1-accent)]">Context is not.</span>
+      </h1>
+      <p class="mt-8 max-w-3xl text-lg leading-relaxed text-[rgba(244,241,236,0.62)]">
+        Manufacturing plants record everything that happens. Temperatures, speeds, downtime. But the knowledge that explains why things happen lives only in people's heads, and it is leaving faster than anyone is replacing it. MD1 captures that context and makes it durable.
+      </p>
+      <a href="/contact/" class="mt-10 inline-flex items-center gap-2 bg-[var(--md1-off-white)] px-7 py-4 text-sm font-medium text-[var(--md1-navy)] transition-opacity hover:opacity-85">
+        Request a demo <ArrowIcon />
+      </a>
+      <div class="mt-16">
+        <KnowledgeConsolePreview />
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-[var(--md1-border)] px-6 py-24 md:px-10">
+    <div class="mx-auto grid max-w-7xl gap-10 md:grid-cols-[0.9fr_1.1fr]">
+      <div>
+        <div class="mono mb-6 text-xs font-medium text-[rgba(18,35,58,0.58)]">Rebuilding the Knowledge Commons</div>
+        <h2 class="max-w-xl text-4xl font-normal leading-tight md:text-5xl">Automation is the end state. Not the starting point.</h2>
+      </div>
+      <div class="space-y-6 text-lg leading-relaxed text-[rgba(18,35,58,0.68)]">
+        <p>The physical infrastructure of manufacturing is being rebuilt. Automated plants are being funded, industries brought home, and workforces hired. The knowledge infrastructure is not following the physical.</p>
+        <p>You cannot automate decisions that were never understood, or understand decisions that were never made explicit.</p>
+        <p class="font-medium text-[var(--md1-ink)]">We start with the understanding. The knowledge.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="px-6 py-24 md:px-10">
+    <div class="mx-auto max-w-7xl">
+      <div class="grid gap-10 md:grid-cols-[0.9fr_1.1fr]">
+        <div>
+          <div class="mono mb-6 text-xs font-medium text-[rgba(18,35,58,0.58)]">The Problem</div>
+          <h2 class="max-w-xl text-4xl font-normal leading-tight md:text-5xl">Confident, fast, and wrong.</h2>
+        </div>
+        <div class="space-y-6 text-lg leading-relaxed text-[rgba(18,35,58,0.68)]">
+          <p>Plants do not lack data. They lack the context that gives it meaning. And what context exists is scattered across SOPs, logs, manuals, and disconnected systems. The most valuable part is not in any of them. It is in the heads of the people who run the line.</p>
+          <p>A line ran slow. The data records the deviation; only the operator knows it was a new product, a deliberate quality tradeoff, or a downstream constraint that made speed unnecessary.</p>
+          <p>This is why generic systems struggle and experienced operators outperform them. It is also why AI tools deployed on plant floors are dangerous without it. Pulling from fragmented, unverified sources, they produce outputs that look optimal on paper and fail in practice.</p>
+        </div>
+      </div>
+
+      <div class="mt-20 grid border-y border-[var(--md1-border)] md:grid-cols-3">
+        <div class="border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:pr-8">
+          <h3 class="text-2xl font-semibold">Documents go stale.</h3>
+          <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">SOPs and manuals capture the procedure, never the judgment. They are out of date the moment practice changes.</p>
+        </div>
+        <div class="border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:px-8">
+          <h3 class="text-2xl font-semibold">Chatbots just retrieve.</h3>
+          <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">RAG assistants return what is already written and guess at the rest. They cannot capture the unwritten, and cannot tell you what to trust.</p>
+        </div>
+        <div class="py-8 md:pl-8">
+          <h3 class="text-2xl font-semibold">Tribal knowledge walks out.</h3>
+          <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">The why, the exceptions, the tells. The most valuable knowledge lives in people, and leaves when they do.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

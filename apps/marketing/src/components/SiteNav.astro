@@ -1,0 +1,45 @@
+---
+import Logo from './Logo.astro'
+
+const { current = 'home', dark = false, showCta = true } = Astro.props
+
+const navLink = (name: string) => [
+  'text-sm transition-colors',
+  current === name
+    ? dark ? 'text-[var(--md1-off-white)]' : 'text-[var(--md1-ink)]'
+    : dark ? 'text-[rgba(244,241,236,0.58)] hover:text-[var(--md1-off-white)]' : 'text-[rgba(18,35,58,0.58)] hover:text-[var(--md1-ink)]',
+]
+---
+
+<nav
+  class:list={[
+    'sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center border-b px-5 py-4 md:px-10',
+    dark ? 'border-transparent bg-[var(--md1-navy)]' : 'border-[var(--md1-border)] bg-[var(--md1-off-white)]',
+  ]}
+>
+  <div class="justify-self-start">
+    <Logo dark={dark} />
+  </div>
+
+  <div class="flex items-center gap-4 md:gap-8">
+    <a href="/" class:list={navLink('home')}>Home</a>
+    <a href="/platform/" class:list={navLink('platform')}>Platform</a>
+    <a href="/contact/" class:list={navLink('contact')}>Contact</a>
+  </div>
+
+  <div class="hidden justify-self-end sm:block">
+    {showCta && (
+      <a
+        href="/contact/"
+        class:list={[
+          'inline-flex border px-4 py-2 text-sm font-medium transition-colors',
+          dark
+            ? 'border-[var(--md1-off-white)] text-[var(--md1-off-white)] hover:bg-[var(--md1-off-white)] hover:text-[var(--md1-navy)]'
+            : 'border-[var(--md1-ink)] text-[var(--md1-ink)] hover:bg-[var(--md1-ink)] hover:text-[var(--md1-off-white)]',
+        ]}
+      >
+        Request a demo
+      </a>
+    )}
+  </div>
+</nav>
