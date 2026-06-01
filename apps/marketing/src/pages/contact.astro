@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import ContactForm from '../components/ContactForm.astro'
+---
+
+<BaseLayout
+  current="contact"
+  title="Contact MD1 | Request a Demo"
+  description="Talk with MD1 about capturing and governing the operating knowledge inside your manufacturing plant."
+>
+  <section class="px-6 py-24 md:px-10">
+    <div class="mx-auto max-w-7xl">
+      <div class="mono mb-6 text-xs font-medium text-[rgba(18,35,58,0.58)]">Contact</div>
+      <h1 class="text-4xl font-normal leading-tight sm:text-5xl md:text-7xl">Let's talk.</h1>
+      <p class="mt-8 max-w-3xl text-lg leading-relaxed text-[rgba(18,35,58,0.62)]">If you run heavy industrial operations and the knowledge that runs them is in your people's heads, we would like to hear from you.</p>
+
+      <div class="mt-16 grid gap-12 md:grid-cols-[0.75fr_1.25fr]">
+        <div class="space-y-10">
+          <div>
+            <div class="mono mb-3 text-xs text-[rgba(18,35,58,0.58)]">Email</div>
+            <a class="text-2xl underline decoration-[var(--md1-border)] underline-offset-4 hover:decoration-[var(--md1-ink)]" href="mailto:info@md1.app">info@md1.app</a>
+          </div>
+          <div>
+            <div class="mono mb-3 text-xs text-[rgba(18,35,58,0.58)]">Location</div>
+            <div class="text-2xl">New York, USA</div>
+          </div>
+          <div>
+            <div class="mono mb-3 text-xs text-[rgba(18,35,58,0.58)]">Working with us</div>
+            <p class="max-w-md leading-relaxed text-[rgba(18,35,58,0.62)]">We work hand-in-hand with operators and engineers. Engagements start with a 1-2 week discovery on one plant or process.</p>
+          </div>
+        </div>
+        <ContactForm />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

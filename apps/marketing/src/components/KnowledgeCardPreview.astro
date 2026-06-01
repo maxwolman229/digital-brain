@@ -1,0 +1,73 @@
+---
+const { dark = false } = Astro.props
+const panel = dark
+  ? 'border-[var(--md1-border-dark)] bg-[rgba(255,255,255,0.02)] text-[var(--md1-off-white)]'
+  : 'border-[var(--md1-border)] bg-[var(--md1-off-white)] text-[var(--md1-ink)]'
+const titlePanel = dark
+  ? 'border-[var(--md1-border-dark)] bg-[rgba(255,255,255,0.04)]'
+  : 'border-[var(--md1-border)] bg-[var(--md1-off-white-2)]'
+const contentPanel = dark
+  ? 'border-[var(--md1-border-dark)] bg-[rgba(132,175,222,0.08)]'
+  : 'border-[#bfd0e8] bg-[#e8effa]'
+const confidencePanel = dark
+  ? 'border-[rgba(79,168,154,0.35)] bg-[rgba(79,168,154,0.12)]'
+  : 'border-[#b7d9c5] bg-[#e1f1e8]'
+const muted = dark ? 'text-[rgba(244,241,236,0.58)]' : 'text-[rgba(18,35,58,0.58)]'
+---
+
+<article class:list={['border text-sm', panel]}>
+  <div class:list={['border-b p-4', titlePanel]}>
+    <div class:list={['mono mb-1 text-xs', muted]}>K-Card · LCSD001</div>
+    <h3 class="text-xl font-semibold leading-tight">Remove and re-install plate cylinders at shutdown</h3>
+  </div>
+
+  <div class="p-4">
+    <div class="mb-3 text-sm font-semibold">Context</div>
+    <div class:list={['mb-5 flex flex-wrap gap-2 border p-3', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(79,168,154,0.08)]' : 'border-[#d8cfb5] bg-[#f0ead8]']}>
+      <span class="mono border border-[rgba(79,168,154,0.4)] bg-[rgba(79,168,154,0.15)] px-2 py-1 text-xs font-medium text-[#0a6b51]">Rutherford Decorator</span>
+      <span class="mono border border-[rgba(79,168,154,0.4)] bg-[rgba(79,168,154,0.15)] px-2 py-1 text-xs font-medium text-[#0a6b51]">Plate cylinders</span>
+      <span class="mono border border-[rgba(79,168,154,0.4)] bg-[rgba(79,168,154,0.15)] px-2 py-1 text-xs font-medium text-[#0a6b51]">Goodyear</span>
+    </div>
+
+    <div class="mb-3 text-sm font-semibold">Content</div>
+    <div class:list={['mb-5 border p-4', contentPanel]}>
+      <div class="mb-4">
+        <div class="mb-1 text-xs font-bold text-[#1e4a82]">Description</div>
+        <p class="leading-relaxed">The critical, downtime-heavy step of a label-change shutdown. Hand safety is the major concern.</p>
+      </div>
+      <div class="mb-4">
+        <div class="mb-1 text-xs font-bold text-[#1e4a82]">Procedure</div>
+        <ol class="list-decimal space-y-1 pl-5 leading-relaxed">
+          <li>Wear correct PPE.</li>
+          <li>Stage tools and clean-up kit.</li>
+          <li>Protect the plate cylinder shaft.</li>
+          <li>Mark each cylinder's position before racking.</li>
+        </ol>
+      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <div class="mb-1 text-xs font-bold text-[#1e4a82]">Condition</div>
+          <p class="leading-relaxed">Mark before racking prevents mis-mounts on the next change.</p>
+        </div>
+        <div>
+          <div class="mb-1 text-xs font-bold text-[#1e4a82]">Rule of thumb</div>
+          <p class="leading-relaxed">~12-14 ft-lbs on the bolt in impact-tool plants.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3 text-sm font-semibold">Confidence</div>
+    <div class:list={['border p-4', confidencePanel]}>
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="bg-[#1d9e75] px-3 py-1 text-sm font-semibold text-white">Verified by 3 SMEs</span>
+        <span class:list={['text-sm', muted]}>R. Bianchi (22 yrs) · A. Patel · M. Chen</span>
+      </div>
+      <div class:list={['mt-2 text-sm italic', muted]}>2 comments · 1 contesting view from Rome</div>
+    </div>
+
+    <div class="mt-4 grid gap-2 sm:grid-cols-2">
+      <div class:list={['border px-4 py-3 text-center text-sm font-medium', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(255,255,255,0.05)] text-[rgba(244,241,236,0.7)]' : 'border-[var(--md1-border)] bg-[var(--md1-off-white-2)] text-[rgba(18,35,58,0.7)]']}>Evidence Log</div>
+      <div class:list={['border px-4 py-3 text-center text-sm font-medium', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(255,255,255,0.05)] text-[rgba(244,241,236,0.7)]' : 'border-[var(--md1-border)] bg-[var(--md1-off-white-2)] text-[rgba(18,35,58,0.7)]']}>Version History</div>
+    </div>
+  </div>
+</article>

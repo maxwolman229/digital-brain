@@ -6,15 +6,26 @@ structures, and governs operational knowledge from experienced workers.
 The tagline: "The operational brain that never retires."
 
 ## Current state
-- prototype.html contains the full working React prototype (single file,
-  in-memory state, no persistence, no auth)
-- Need to migrate to production stack while preserving all features and styling
+- apps/app contains the production React/Vite MD1 Knowledge Bank app.
+- apps/marketing contains the public Astro marketing site for md1.app.
+- archive/prototype.html contains the old single-file React prototype for reference only.
+- archive/landingpage-original.html contains the old standalone marketing HTML for reference only.
+- supabase remains at the repository root for Edge Functions, migrations, and seed data.
+
+## Repository layout
+- apps/app: Product app (React + Vite + Tailwind CSS)
+- apps/marketing: Marketing site (Astro + Tailwind CSS)
+- supabase: Database migrations, seed data, and Edge Functions
+- docs: Product, technical, strategy, and planning documents
+- eval: Evaluation harnesses and test fixtures
+- archive: Historical prototypes; do not treat as active source
 
 ## Tech stack
-- Frontend: React + Vite + Tailwind CSS
+- Product frontend: React + Vite + Tailwind CSS
+- Marketing frontend: Astro + Tailwind CSS
 - Backend: Supabase (Postgres, Auth, Edge Functions, Row Level Security)
 - Deployment: Vercel
-- AI: Claude API via Supabase Edge Functions (keep API key server-side only)
+- AI: Codex API via Supabase Edge Functions (keep API key server-side only)
 - Fonts: IBM Plex Sans + IBM Plex Mono (Google Fonts)
 
 ## Supabase connection
@@ -157,8 +168,8 @@ Add these columns to the links table for future graph traversal:
 - Only creator or admin role can delete
 - Notifications filtered by user_id (users see only their own)
 
-## Key features (all in prototype.html — preserve all of them)
-- Landing page: navy background, M/D/1 logo in white box, "Get in Touch" (mailto) and "See Demo" (password gate: "digitalbrain")
+## Key features (preserve from archive/prototype.html)
+- Product entry: the product app root redirects to the appropriate authenticated route; public marketing lives in apps/marketing.
 - Knowledge lifecycle: Proposed → Active → Verified → Established (also Stale, Contradicted, Retired)
 - Both rules AND assertions have status lifecycle
 - Contradiction detection between rules
@@ -181,8 +192,9 @@ Add these columns to the links table for future graph traversal:
 
 ## Coding conventions
 - Functional React components with hooks
-- Keep components in src/components/
-- Keep Supabase queries in src/lib/
+- Keep product components in apps/app/src/components/
+- Keep product Supabase queries in apps/app/src/lib/
+- Keep marketing components in apps/marketing/src/components/
 - Tailwind for styling, matching the design system above
 - No TypeScript for now — plain JSX to move fast
 

@@ -1,0 +1,32 @@
+---
+import ArrowIcon from './ArrowIcon.astro'
+
+const endpoint = import.meta.env.PUBLIC_CONTACT_FORM_ENDPOINT
+---
+
+{endpoint ? (
+  <form action={endpoint} method="POST" class="border border-[var(--md1-border)] p-8">
+    <label class="mb-2 block text-sm font-medium text-[rgba(18,35,58,0.65)]" for="name">Name</label>
+    <input class="mb-6 w-full border-0 border-b border-[var(--md1-border)] bg-transparent px-0 py-3 text-[var(--md1-ink)] outline-none focus:border-[var(--md1-ink)]" id="name" name="name" autocomplete="name" required />
+
+    <label class="mb-2 block text-sm font-medium text-[rgba(18,35,58,0.65)]" for="email">Email</label>
+    <input class="mb-6 w-full border-0 border-b border-[var(--md1-border)] bg-transparent px-0 py-3 text-[var(--md1-ink)] outline-none focus:border-[var(--md1-ink)]" id="email" name="email" type="email" autocomplete="email" required />
+
+    <label class="mb-2 block text-sm font-medium text-[rgba(18,35,58,0.65)]" for="company">Company</label>
+    <input class="mb-6 w-full border-0 border-b border-[var(--md1-border)] bg-transparent px-0 py-3 text-[var(--md1-ink)] outline-none focus:border-[var(--md1-ink)]" id="company" name="company" autocomplete="organization" />
+
+    <label class="mb-2 block text-sm font-medium text-[rgba(18,35,58,0.65)]" for="message">Message</label>
+    <textarea class="mb-6 min-h-32 w-full resize-y border-0 border-b border-[var(--md1-border)] bg-transparent px-0 py-3 text-[var(--md1-ink)] outline-none focus:border-[var(--md1-ink)]" id="message" name="message" required></textarea>
+
+    <button class="inline-flex items-center gap-2 bg-[var(--md1-ink)] px-6 py-3 text-sm font-medium text-[var(--md1-off-white)] transition-opacity hover:opacity-85" type="submit">
+      Send message <ArrowIcon />
+    </button>
+  </form>
+) : (
+  <div class="border border-[var(--md1-border)] p-8">
+    <p class="text-[rgba(18,35,58,0.65)]">Email us directly to start a conversation.</p>
+    <a class="mt-6 inline-flex items-center gap-2 bg-[var(--md1-ink)] px-6 py-3 text-sm font-medium text-[var(--md1-off-white)] transition-opacity hover:opacity-85" href="mailto:info@md1.app">
+      info@md1.app <ArrowIcon />
+    </a>
+  </div>
+)}
