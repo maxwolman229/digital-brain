@@ -168,8 +168,8 @@ Add these columns to the links table for future graph traversal:
 - Only creator or admin role can delete
 - Notifications filtered by user_id (users see only their own)
 
-## Key features (all in prototype.html — preserve all of them)
-- Landing page: navy background, M/D/1 logo in white box, "Get in Touch" (mailto) and "See Demo" (password gate: "digitalbrain")
+## Key features (preserve from archive/prototype.html)
+- Product entry: the product app root redirects to the appropriate authenticated route; public marketing lives in apps/marketing.
 - Knowledge lifecycle: Proposed → Active → Verified → Established (also Stale, Contradicted, Retired)
 - Both rules AND assertions have status lifecycle
 - Contradiction detection between rules
@@ -192,8 +192,9 @@ Add these columns to the links table for future graph traversal:
 
 ## Coding conventions
 - Functional React components with hooks
-- Keep components in src/components/
-- Keep Supabase queries in src/lib/
+- Keep product components in apps/app/src/components/
+- Keep product Supabase queries in apps/app/src/lib/
+- Keep marketing components in apps/marketing/src/components/
 - Tailwind for styling, matching the design system above
 - No TypeScript for now — plain JSX to move fast
 

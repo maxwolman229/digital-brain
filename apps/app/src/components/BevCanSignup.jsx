@@ -372,7 +372,7 @@ export default function BevCanSignup({ session, profile, memberships = [], onSig
           </form>
 
           <div style={{ textAlign: 'center', marginTop: 20 }}>
-            <a href="/" style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 0.5, fontFamily: FNT }}>← Back to home</a>
+            <a href="https://md1.app/" style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 0.5, fontFamily: FNT }}>← Back to home</a>
           </div>
         </div>
       </div>
@@ -462,7 +462,7 @@ export default function BevCanSignup({ session, profile, memberships = [], onSig
         )}
 
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <a href="/" style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 0.5, fontFamily: FNT }}>← Back to home</a>
+          <a href="https://md1.app/" style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', letterSpacing: 0.5, fontFamily: FNT }}>← Back to home</a>
         </div>
       </div>
     </div>

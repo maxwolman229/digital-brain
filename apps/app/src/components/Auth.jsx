@@ -409,7 +409,7 @@ export default function Auth({ onSignedIn, onNeedsOnboarding }) {
 
         {/* Back to landing */}
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <a href="/" style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', letterSpacing: 0.5, fontFamily: FNT }}>
+          <a href="https://md1.app/" style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textDecoration: 'none', letterSpacing: 0.5, fontFamily: FNT }}>
             ← Back to home
           </a>
         </div>
