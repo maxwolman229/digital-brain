@@ -1,0 +1,51 @@
+@import '@fontsource/ibm-plex-sans/300.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-sans/800.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import 'tailwindcss';
+
+:root {
+  --md1-navy: #12233a;
+  --md1-navy-deep: #0d1a2c;
+  --md1-off-white: #f4f1ec;
+  --md1-off-white-2: #ece7de;
+  --md1-ink: #12233a;
+  --md1-ink-muted: rgba(18, 35, 58, 0.62);
+  --md1-border: #d4cdc0;
+  --md1-border-dark: #1f3454;
+  --md1-accent: #e8b547;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  color: var(--md1-ink);
+  background: var(--md1-off-white);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--md1-off-white);
+  color: var(--md1-ink);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
