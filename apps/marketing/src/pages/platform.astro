@@ -16,22 +16,22 @@ import KnowledgeCardPreview from '../components/KnowledgeCardPreview.astro'
       <p class="mt-8 max-w-3xl text-lg leading-relaxed text-[rgba(18,35,58,0.62)]">Four steps that turn fragmented information and tacit expertise into a living, trusted knowledge base.</p>
 
       <div class="mt-16 grid border-y border-[var(--md1-border)] md:grid-cols-4">
-        <div class="border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:pr-6">
+        <div class="md1-step border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:pr-6">
           <div class="mono mb-6 text-xs text-[rgba(18,35,58,0.58)]">Step 01</div>
           <h2 class="text-2xl font-semibold">Ingest & Structure</h2>
           <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">Point MD1 at your documents and systems. It turns them into structured, tagged knowledge cards.</p>
         </div>
-        <div class="border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:px-6">
+        <div class="md1-step border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:px-6">
           <div class="mono mb-6 text-xs text-[rgba(18,35,58,0.58)]">Step 02</div>
           <h2 class="text-2xl font-semibold">Elicit</h2>
           <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">It draws out the unwritten layer from experts by reacting to real knowledge, not asking them to start from a blank page.</p>
         </div>
-        <div class="border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:px-6">
+        <div class="md1-step border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:px-6">
           <div class="mono mb-6 text-xs text-[rgba(18,35,58,0.58)]">Step 03</div>
           <h2 class="text-2xl font-semibold">Verify</h2>
           <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">Your people confirm, correct, and challenge. Every claim carries its source and a trust level.</p>
         </div>
-        <div class="py-8 md:pl-6">
+        <div class="md1-step py-8 md:pl-6">
           <div class="mono mb-6 text-xs text-[rgba(18,35,58,0.58)]">Step 04</div>
           <h2 class="text-2xl font-semibold">Compound</h2>
           <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">It improves with every use and becomes trusted knowledge used by both your people and your machines.</p>
@@ -40,7 +40,7 @@ import KnowledgeCardPreview from '../components/KnowledgeCardPreview.astro'
     </div>
   </section>
 
-  <section class="border-t border-[var(--md1-border)] px-6 py-24 md:px-10">
+  <section class="md1-product-band border-t border-[var(--md1-border)] px-6 py-24 md:px-10">
     <div class="mx-auto max-w-7xl">
       <div class="mb-8 flex flex-wrap gap-4">
         <span class="mono text-sm text-[rgba(18,35,58,0.58)]">01 / Product</span>
@@ -53,13 +53,14 @@ import KnowledgeCardPreview from '../components/KnowledgeCardPreview.astro'
           <p><strong class="text-[var(--md1-ink)]">Discover · 1-2 weeks.</strong> We sit with your operators and find the knowledge worth capturing.</p>
           <p><strong class="text-[var(--md1-ink)]">Prove · 2-4 weeks.</strong> We ingest your documentation, populate the knowledge base, and work alongside your experts.</p>
           <p><strong class="text-[var(--md1-ink)]">Grow · ongoing.</strong> Broaden across processes and plants. The knowledge base compounds as your people use it.</p>
+          <a href="/contact/" class="md1-product-arrow">Explore The Knowledge Bank <span aria-hidden="true">&rarr;</span></a>
         </div>
         <KnowledgeCardPreview />
       </div>
     </div>
   </section>
 
-  <section class="border-t border-[var(--md1-border)] px-6 py-24 md:px-10">
+  <section class="md1-product-band border-t border-[var(--md1-border)] px-6 py-24 md:px-10">
     <div class="mx-auto max-w-7xl">
       <div class="mb-8 flex flex-wrap gap-4">
         <span class="mono text-sm text-[rgba(18,35,58,0.58)]">02 / Product</span>
@@ -71,6 +72,7 @@ import KnowledgeCardPreview from '../components/KnowledgeCardPreview.astro'
           <p>Most plants are, and they have no idea what those assistants are getting wrong, or what knowledge operators reveal while using them.</p>
           <p>The MD1 ChatBotSDK sits inside the chatbot you already run. It shows you where it fails, sharpens the sources it pulls from, and captures what your experts say in the gaps.</p>
           <p class="italic text-[var(--md1-ink)]">Sits on top of what you have. Your data never leaves your control.</p>
+          <a href="/contact/" class="md1-product-arrow">Explore the ChatBotSDK <span aria-hidden="true">&rarr;</span></a>
         </div>
         <ChatBotPreview />
       </div>

@@ -13,11 +13,15 @@ const confidencePanel = dark
   ? 'border-[rgba(79,168,154,0.35)] bg-[rgba(79,168,154,0.12)]'
   : 'border-[#b7d9c5] bg-[#e1f1e8]'
 const muted = dark ? 'text-[rgba(244,241,236,0.58)]' : 'text-[rgba(18,35,58,0.58)]'
+const tagStyle = dark
+  ? 'border-[rgba(79,168,154,0.48)] bg-[rgba(79,168,154,0.18)] text-[#6fd3a8]'
+  : 'border-[rgba(79,168,154,0.4)] bg-[rgba(79,168,154,0.15)] text-[#0a6b51]'
+const fieldLabel = dark ? 'text-[#9bb8de]' : 'text-[#1e4a82]'
 ---
 
-<article class:list={['border text-sm', panel]}>
+<article class:list={['md1-kcard-preview border text-sm', dark ? 'is-dark' : 'is-light', panel]}>
   <div
-    class:list={['border-b p-4', titlePanel]}
+    class:list={['md1-preview-hotspot border-b p-4', titlePanel]}
     data-tip="The title states the knowledge being presented in plain language. Examples: equipment setup, planning rule, safety observation, best practice."
     tabindex="0"
   >
@@ -26,29 +30,46 @@ const muted = dark ? 'text-[rgba(244,241,236,0.58)]' : 'text-[rgba(18,35,58,0.58
   </div>
 
   <div class="p-4">
-    <div class="mb-3 text-sm font-semibold">Context</div>
+    <div class="md1-kcard-section-label mb-3 text-sm font-semibold">
+      <span>Context</span>
+      <button class="md1-add-control" data-add-toggle="context" type="button" aria-expanded="false">Add +</button>
+      <div class="md1-add-popover" data-add-popover="context">
+        <input type="text" placeholder="New context tag (e.g. Material grade)" disabled />
+      </div>
+    </div>
     <div
-      class:list={['mb-5 flex flex-wrap gap-2 border p-3', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(79,168,154,0.08)]' : 'border-[#d8cfb5] bg-[#f0ead8]']}
+      class:list={['md1-preview-hotspot mb-5 flex flex-wrap gap-2 border p-3', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(79,168,154,0.08)]' : 'border-[#d8cfb5] bg-[#f0ead8]']}
       data-tip="Where the knowledge applies. Stable, unarguable entities of the plant: equipment, plant, product, process area. Context tags act as graph nodes: a card can apply to a specific product made on a specific piece of equipment."
       tabindex="0"
     >
-      <span class="mono border border-[rgba(79,168,154,0.4)] bg-[rgba(79,168,154,0.15)] px-2 py-1 text-xs font-medium text-[#0a6b51]">Rutherford Decorator</span>
-      <span class="mono border border-[rgba(79,168,154,0.4)] bg-[rgba(79,168,154,0.15)] px-2 py-1 text-xs font-medium text-[#0a6b51]">Plate cylinders</span>
-      <span class="mono border border-[rgba(79,168,154,0.4)] bg-[rgba(79,168,154,0.15)] px-2 py-1 text-xs font-medium text-[#0a6b51]">Goodyear</span>
+      <span class:list={['mono border px-2 py-1 text-xs font-medium', tagStyle]}>Rutherford Decorator</span>
+      <span class:list={['mono border px-2 py-1 text-xs font-medium', tagStyle]}>Plate cylinders</span>
+      <span class:list={['mono border px-2 py-1 text-xs font-medium', tagStyle]}>Goodyear</span>
     </div>
 
-    <div class="mb-3 text-sm font-semibold">Content</div>
+    <div class="md1-kcard-section-label mb-3 text-sm font-semibold">
+      <span>Content</span>
+      <button class="md1-add-control" data-add-toggle="content" type="button" aria-expanded="false">Add +</button>
+      <div class="md1-add-popover md1-add-menu" data-add-popover="content">
+        <button type="button">Description</button>
+        <button type="button">Conditions</button>
+        <button type="button">Photo</button>
+        <button type="button">Procedure</button>
+        <button type="button">Rule of Thumb</button>
+        <button type="button">Other</button>
+      </div>
+    </div>
     <div
-      class:list={['mb-5 border p-4', contentPanel]}
+      class:list={['md1-preview-hotspot mb-5 border p-4', contentPanel]}
       data-tip="The knowledge itself, broken into structured fields. The description states the claim. The procedure lists ordered steps. Conditions specify when it applies and when it does not. Rules of thumb capture the heuristics experienced operators carry but rarely write down. Each field can be argued with, corrected, and improved."
       tabindex="0"
     >
       <div class="mb-4">
-        <div class="mb-1 text-xs font-bold text-[#1e4a82]">Description</div>
+        <div class:list={['mb-1 text-xs font-bold', fieldLabel]}>Description</div>
         <p class="leading-relaxed">The critical, downtime-heavy step of a label-change shutdown. Hand safety is the major concern.</p>
       </div>
       <div class="mb-4">
-        <div class="mb-1 text-xs font-bold text-[#1e4a82]">Procedure</div>
+        <div class:list={['mb-1 text-xs font-bold', fieldLabel]}>Procedure</div>
         <ol class="list-decimal space-y-1 pl-5 leading-relaxed">
           <li>Wear correct PPE.</li>
           <li>Stage tools and clean-up kit.</li>
@@ -58,11 +79,11 @@ const muted = dark ? 'text-[rgba(244,241,236,0.58)]' : 'text-[rgba(18,35,58,0.58
       </div>
       <div class="grid gap-4 md:grid-cols-2">
         <div>
-          <div class="mb-1 text-xs font-bold text-[#1e4a82]">Condition</div>
+          <div class:list={['mb-1 text-xs font-bold', fieldLabel]}>Condition</div>
           <p class="leading-relaxed">Mark before racking prevents mis-mounts on the next change.</p>
         </div>
         <div>
-          <div class="mb-1 text-xs font-bold text-[#1e4a82]">Rule of thumb</div>
+          <div class:list={['mb-1 text-xs font-bold', fieldLabel]}>Rule of thumb</div>
           <p class="leading-relaxed">~12-14 ft-lbs on the bolt in impact-tool plants.</p>
         </div>
       </div>
@@ -70,7 +91,7 @@ const muted = dark ? 'text-[rgba(244,241,236,0.58)]' : 'text-[rgba(18,35,58,0.58
 
     <div class="mb-3 text-sm font-semibold">Confidence</div>
     <div
-      class:list={['border p-4', confidencePanel]}
+      class:list={['md1-preview-hotspot border p-4', confidencePanel]}
       data-tip="Every card carries who has verified it, how many people, and any comments or contesting views. Knowledge starts unverified, gets confirmed by senior operators, and can be challenged or superseded as practice changes. Confidence is a state that evolves, not a label."
       tabindex="0"
     >
@@ -83,14 +104,14 @@ const muted = dark ? 'text-[rgba(244,241,236,0.58)]' : 'text-[rgba(18,35,58,0.58
 
     <div class="mt-4 grid gap-2 sm:grid-cols-2">
       <div
-        class:list={['border px-4 py-3 text-center text-sm font-medium', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(255,255,255,0.05)] text-[rgba(244,241,236,0.7)]' : 'border-[var(--md1-border)] bg-[var(--md1-off-white-2)] text-[rgba(18,35,58,0.7)]']}
+        class:list={['md1-preview-hotspot border px-4 py-3 text-center text-sm font-medium', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(255,255,255,0.05)] text-[rgba(244,241,236,0.7)]' : 'border-[var(--md1-border)] bg-[var(--md1-off-white-2)] text-[rgba(18,35,58,0.7)]']}
         data-tip="Every K-Card is fully traceable. The evidence log shows the source documents, sensor data, and observations that back the claim."
         tabindex="0"
       >
         Evidence Log
       </div>
       <div
-        class:list={['border px-4 py-3 text-center text-sm font-medium', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(255,255,255,0.05)] text-[rgba(244,241,236,0.7)]' : 'border-[var(--md1-border)] bg-[var(--md1-off-white-2)] text-[rgba(18,35,58,0.7)]']}
+        class:list={['md1-preview-hotspot border px-4 py-3 text-center text-sm font-medium', dark ? 'border-[var(--md1-border-dark)] bg-[rgba(255,255,255,0.05)] text-[rgba(244,241,236,0.7)]' : 'border-[var(--md1-border)] bg-[var(--md1-off-white-2)] text-[rgba(18,35,58,0.7)]']}
         data-tip="The version history shows how the card has changed and who changed it. Nothing in the knowledge base is ever a black box."
         tabindex="0"
       >
@@ -99,3 +120,51 @@ const muted = dark ? 'text-[rgba(244,241,236,0.58)]' : 'text-[rgba(18,35,58,0.58
     </div>
   </div>
 </article>
+
+<script>
+  if (!document.documentElement.hasAttribute('data-md1-kcard-controls')) {
+    document.documentElement.setAttribute('data-md1-kcard-controls', 'true')
+
+    const closeAddPopovers = (root = document) => {
+      root.querySelectorAll('.md1-add-popover[data-open="true"]').forEach((popover) => {
+        popover.removeAttribute('data-open')
+        const card = popover.closest('.md1-kcard-preview')
+        const key = popover.getAttribute('data-add-popover')
+        const toggle = card?.querySelector(`[data-add-toggle="${key}"]`)
+        toggle?.setAttribute('aria-expanded', 'false')
+      })
+    }
+
+    document.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target : null
+      const toggle = target?.closest('[data-add-toggle]')
+
+      if (toggle) {
+        event.stopPropagation()
+        const card = toggle.closest('.md1-kcard-preview')
+        const key = toggle.getAttribute('data-add-toggle')
+        const popover = card?.querySelector(`[data-add-popover="${key}"]`)
+        const willOpen = popover?.getAttribute('data-open') !== 'true'
+
+        closeAddPopovers()
+
+        if (popover && willOpen) {
+          popover.setAttribute('data-open', 'true')
+          toggle.setAttribute('aria-expanded', 'true')
+        }
+
+        return
+      }
+
+      if (!target?.closest('.md1-add-popover')) {
+        closeAddPopovers()
+      }
+    })
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeAddPopovers()
+      }
+    })
+  }
+</script>

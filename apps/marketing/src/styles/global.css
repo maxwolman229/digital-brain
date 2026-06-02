@@ -51,6 +51,345 @@ body {
   font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.md1-site-nav {
+  backdrop-filter: none;
+  transition:
+    background-color 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease;
+}
+
+.md1-home-nav.is-scrolled {
+  border-color: var(--md1-border);
+  background: var(--md1-off-white);
+}
+
+.md1-home-nav.is-scrolled .md1-logo {
+  border-color: var(--md1-ink);
+  color: var(--md1-ink);
+}
+
+.md1-home-nav.is-scrolled .md1-nav-link {
+  color: rgba(18, 35, 58, 0.58);
+}
+
+.md1-home-nav.is-scrolled .md1-nav-link:hover,
+.md1-home-nav.is-scrolled .md1-nav-link:focus-visible,
+.md1-home-nav.is-scrolled .md1-nav-link[aria-current='page'] {
+  color: var(--md1-ink);
+}
+
+.md1-home-nav.is-scrolled .md1-nav-cta {
+  border-color: var(--md1-ink);
+  color: var(--md1-ink);
+}
+
+.md1-home-nav.is-scrolled .md1-nav-cta:hover,
+.md1-home-nav.is-scrolled .md1-nav-cta:focus-visible {
+  background: var(--md1-ink);
+  color: var(--md1-off-white);
+}
+
+.md1-nav-link,
+.md1-nav-cta,
+.md1-logo,
+.md1-primary-cta,
+.md1-product-arrow {
+  outline-offset: 4px;
+}
+
+.md1-nav-link:focus-visible,
+.md1-nav-cta:focus-visible,
+.md1-logo:focus-visible,
+.md1-primary-cta:focus-visible,
+.md1-product-arrow:focus-visible {
+  outline: 2px solid var(--md1-accent);
+}
+
+.md1-primary-cta {
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.md1-primary-cta:hover,
+.md1-primary-cta:focus-visible {
+  transform: translateY(-1px);
+}
+
+.md1-console-preview {
+  overflow: hidden;
+}
+
+.md1-doc-highlight {
+  background: linear-gradient(transparent 70%, rgba(232, 181, 71, 0.25) 70%);
+  cursor: help;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.md1-doc-highlight:hover,
+.md1-doc-highlight:focus-visible {
+  background-color: rgba(232, 181, 71, 0.16);
+  color: var(--md1-accent);
+}
+
+.md1-kcard-preview {
+  line-height: 1.45;
+}
+
+.md1-kcard-section-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.md1-add-control {
+  border: 1px solid var(--md1-border);
+  background: var(--md1-off-white-2);
+  color: rgba(18, 35, 58, 0.62);
+  padding: 0.1rem 0.45rem;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.md1-kcard-preview.is-dark .md1-add-control {
+  border-color: var(--md1-border-dark);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(244, 241, 236, 0.58);
+}
+
+.md1-add-control:hover,
+.md1-add-control:focus-visible,
+.md1-add-control[aria-expanded='true'] {
+  border-color: var(--md1-accent);
+  background: var(--md1-ink);
+  color: var(--md1-off-white);
+  outline: none;
+}
+
+.md1-kcard-preview.is-dark .md1-add-control:hover,
+.md1-kcard-preview.is-dark .md1-add-control:focus-visible,
+.md1-kcard-preview.is-dark .md1-add-control[aria-expanded='true'] {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--md1-off-white);
+}
+
+.md1-add-popover {
+  position: absolute;
+  top: 100%;
+  left: 4.5rem;
+  z-index: 120;
+  display: none;
+  min-width: 220px;
+  margin-top: 0.4rem;
+  border: 1px solid var(--md1-ink);
+  background: var(--md1-off-white);
+  padding: 0.5rem;
+  box-shadow: 0 10px 24px rgba(18, 35, 58, 0.16);
+}
+
+.md1-add-popover[data-open="true"] {
+  display: block;
+}
+
+.md1-kcard-preview.is-dark .md1-add-popover {
+  border-color: var(--md1-accent);
+  background: var(--md1-navy-deep);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.48);
+}
+
+.md1-add-popover input {
+  width: 100%;
+  border: 1px solid var(--md1-border);
+  background: var(--md1-off-white-2);
+  color: var(--md1-ink);
+  padding: 0.45rem 0.6rem;
+  font-size: 0.78rem;
+  outline: none;
+  cursor: not-allowed;
+}
+
+.md1-kcard-preview.is-dark .md1-add-popover input {
+  border-color: var(--md1-border-dark);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--md1-off-white);
+}
+
+.md1-add-menu {
+  display: none;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.md1-add-menu[data-open="true"] {
+  display: block;
+}
+
+.md1-add-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--md1-ink);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.md1-kcard-preview.is-dark .md1-add-menu button {
+  color: var(--md1-off-white);
+}
+
+.md1-add-menu button:hover,
+.md1-add-menu button:focus-visible {
+  background: var(--md1-off-white-2);
+  outline: none;
+}
+
+.md1-kcard-preview.is-dark .md1-add-menu button:hover,
+.md1-kcard-preview.is-dark .md1-add-menu button:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.md1-preview-hotspot {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease;
+}
+
+.md1-preview-hotspot:hover,
+.md1-preview-hotspot:focus,
+.md1-preview-hotspot:focus-visible {
+  border-color: var(--md1-accent) !important;
+  box-shadow: inset 0 0 0 1px rgba(232, 181, 71, 0.35);
+  outline: none;
+}
+
+.md1-kcard-preview.is-light .md1-preview-hotspot:hover,
+.md1-kcard-preview.is-light .md1-preview-hotspot:focus,
+.md1-kcard-preview.is-light .md1-preview-hotspot:focus-visible {
+  background-color: rgba(232, 181, 71, 0.08);
+}
+
+.md1-kcard-preview.is-dark .md1-preview-hotspot:hover,
+.md1-kcard-preview.is-dark .md1-preview-hotspot:focus,
+.md1-kcard-preview.is-dark .md1-preview-hotspot:focus-visible {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.md1-step,
+.md1-trip-item {
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.md1-step:hover,
+.md1-trip-item:hover {
+  background: rgba(236, 231, 222, 0.48);
+  box-shadow: inset 0 2px 0 var(--md1-accent);
+}
+
+.md1-product-band {
+  transition:
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.md1-product-band:hover {
+  background: var(--md1-off-white-2);
+  box-shadow: inset 0 1px 0 var(--md1-border), inset 0 -1px 0 var(--md1-border);
+}
+
+.md1-product-band:hover .md1-product-arrow,
+.md1-product-band:focus-within .md1-product-arrow {
+  color: var(--md1-ink);
+  border-color: var(--md1-ink);
+  transform: translateX(4px);
+}
+
+.md1-product-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  border-bottom: 1px solid rgba(18, 35, 58, 0.42);
+  color: var(--md1-ink);
+  padding-bottom: 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition:
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.md1-chat-preview {
+  overflow: visible;
+}
+
+.md1-chat-message {
+  cursor: help;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.md1-chat-message:hover,
+.md1-chat-message:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(232, 181, 71, 0.45);
+  outline: none;
+}
+
+.md1-chat-signal {
+  border: 1px solid var(--md1-border-dark);
+  background: var(--md1-navy);
+  color: var(--md1-off-white);
+  cursor: help;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.md1-chat-signal:hover,
+.md1-chat-signal:focus-visible {
+  border-color: var(--md1-accent);
+  background: var(--md1-navy-deep);
+  box-shadow: inset 0 0 0 1px rgba(232, 181, 71, 0.35);
+  outline: none;
+}
+
+.md1-signal-dot {
+  background: var(--md1-accent);
+}
+
+.md1-contact-form {
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.md1-contact-form:focus-within {
+  border-color: var(--md1-ink);
+  background: rgba(236, 231, 222, 0.42);
+}
+
 [data-tip] {
   position: relative;
   cursor: help;
@@ -98,12 +437,15 @@ body {
 
 [data-tip]:hover::after,
 [data-tip]:hover::before,
+[data-tip]:focus::after,
+[data-tip]:focus::before,
 [data-tip]:focus-visible::after,
 [data-tip]:focus-visible::before {
   opacity: 1;
 }
 
 [data-tip]:hover::after,
+[data-tip]:focus::after,
 [data-tip]:focus-visible::after {
   transform: translateX(-50%) translateY(-12px);
 }
