@@ -5,7 +5,7 @@ const endpoint = import.meta.env.PUBLIC_CONTACT_FORM_ENDPOINT
 ---
 
 {endpoint ? (
-  <form action={endpoint} method="POST" class="border border-[var(--md1-border)] p-8">
+  <form action={endpoint} method="POST" class="md1-contact-form border border-[var(--md1-border)] p-8">
     <label class="mb-2 block text-sm font-medium text-[rgba(18,35,58,0.65)]" for="name">Name</label>
     <input class="mb-6 w-full border-0 border-b border-[var(--md1-border)] bg-transparent px-0 py-3 text-[var(--md1-ink)] outline-none focus:border-[var(--md1-ink)]" id="name" name="name" autocomplete="name" required />
 
@@ -18,15 +18,31 @@ const endpoint = import.meta.env.PUBLIC_CONTACT_FORM_ENDPOINT
     <label class="mb-2 block text-sm font-medium text-[rgba(18,35,58,0.65)]" for="message">Message</label>
     <textarea class="mb-6 min-h-32 w-full resize-y border-0 border-b border-[var(--md1-border)] bg-transparent px-0 py-3 text-[var(--md1-ink)] outline-none focus:border-[var(--md1-ink)]" id="message" name="message" required></textarea>
 
-    <button class="inline-flex items-center gap-2 bg-[var(--md1-ink)] px-6 py-3 text-sm font-medium text-[var(--md1-off-white)] transition-opacity hover:opacity-85" type="submit">
+    <button class="md1-primary-cta inline-flex items-center gap-2 bg-[var(--md1-ink)] px-6 py-3 text-sm font-medium text-[var(--md1-off-white)] transition-opacity hover:opacity-85" type="submit">
       Send message <ArrowIcon />
     </button>
   </form>
 ) : (
-  <div class="border border-[var(--md1-border)] p-8">
-    <p class="text-[rgba(18,35,58,0.65)]">Email us directly to start a conversation.</p>
-    <a class="mt-6 inline-flex items-center gap-2 bg-[var(--md1-ink)] px-6 py-3 text-sm font-medium text-[var(--md1-off-white)] transition-opacity hover:opacity-85" href="mailto:info@md1.app">
+  <div class="md1-contact-form border border-[var(--md1-border)] p-8">
+    <div class="mono mb-4 text-xs text-[rgba(18,35,58,0.58)]">Direct intake</div>
+    <h2 class="text-2xl font-semibold text-[var(--md1-ink)]">Start with the process that carries the most tacit knowledge.</h2>
+    <p class="mt-4 max-w-xl leading-relaxed text-[rgba(18,35,58,0.65)]">Email us directly to start a conversation. A useful first note includes the plant/process area, the experts you are worried about losing, and where the current knowledge lives.</p>
+    <a class="md1-primary-cta mt-6 inline-flex items-center gap-2 bg-[var(--md1-ink)] px-6 py-3 text-sm font-medium text-[var(--md1-off-white)] transition-opacity hover:opacity-85" href="mailto:info@md1.app">
       info@md1.app <ArrowIcon />
     </a>
+    <div class="mt-8 grid gap-4 border-t border-[var(--md1-border)] pt-6 sm:grid-cols-3">
+      <div>
+        <div class="mono text-xs text-[rgba(18,35,58,0.52)]">Discover</div>
+        <p class="mt-2 text-sm leading-relaxed text-[rgba(18,35,58,0.66)]">One process, one team, one knowledge risk.</p>
+      </div>
+      <div>
+        <div class="mono text-xs text-[rgba(18,35,58,0.52)]">Prove</div>
+        <p class="mt-2 text-sm leading-relaxed text-[rgba(18,35,58,0.66)]">Documents, experts, and live operating context.</p>
+      </div>
+      <div>
+        <div class="mono text-xs text-[rgba(18,35,58,0.52)]">Grow</div>
+        <p class="mt-2 text-sm leading-relaxed text-[rgba(18,35,58,0.66)]">A trusted base that compounds across plants.</p>
+      </div>
+    </div>
   </div>
 )}

@@ -11,7 +11,7 @@ import KnowledgeConsolePreview from '../components/KnowledgeConsolePreview.astro
   title="MD1 | Manufacturing Context That Does Not Retire"
   description="MD1 captures manufacturing operating context from documents, systems, and experienced workers, then turns it into trusted knowledge."
 >
-  <section class="bg-[var(--md1-navy)] px-6 pb-24 pt-24 text-[var(--md1-off-white)] md:px-10 md:pb-28 md:pt-32">
+  <section data-md1-hero class="bg-[var(--md1-navy)] px-6 pb-24 pt-24 text-[var(--md1-off-white)] md:px-10 md:pb-28 md:pt-32">
     <div class="mx-auto max-w-7xl">
       <h1 class="max-w-5xl text-4xl font-normal leading-[1.04] tracking-normal sm:text-5xl md:text-7xl">
         In manufacturing,<br />data is visible.<br /><span class="text-[var(--md1-accent)]">Context is not.</span>
@@ -19,7 +19,7 @@ import KnowledgeConsolePreview from '../components/KnowledgeConsolePreview.astro
       <p class="mt-8 max-w-3xl text-lg leading-relaxed text-[rgba(244,241,236,0.62)]">
         Manufacturing plants record everything that happens. Temperatures, speeds, downtime. But the knowledge that explains why things happen lives only in people's heads, and it is leaving faster than anyone is replacing it. MD1 captures that context and makes it durable.
       </p>
-      <a href="/contact/" class="mt-10 inline-flex items-center gap-2 bg-[var(--md1-off-white)] px-7 py-4 text-sm font-medium text-[var(--md1-navy)] transition-opacity hover:opacity-85">
+      <a href="/contact/" class="md1-primary-cta mt-10 inline-flex items-center gap-2 bg-[var(--md1-off-white)] px-7 py-4 text-sm font-medium text-[var(--md1-navy)] transition-opacity hover:opacity-85">
         Request a demo <ArrowIcon />
       </a>
       <div class="mt-16">
@@ -57,15 +57,15 @@ import KnowledgeConsolePreview from '../components/KnowledgeConsolePreview.astro
       </div>
 
       <div class="mt-20 grid border-y border-[var(--md1-border)] md:grid-cols-3">
-        <div class="border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:pr-8">
+        <div class="md1-trip-item border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:pr-8">
           <h3 class="text-2xl font-semibold">Documents go stale.</h3>
           <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">SOPs and manuals capture the procedure, never the judgment. They are out of date the moment practice changes.</p>
         </div>
-        <div class="border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:px-8">
+        <div class="md1-trip-item border-b border-[var(--md1-border)] py-8 md:border-b-0 md:border-r md:px-8">
           <h3 class="text-2xl font-semibold">Chatbots just retrieve.</h3>
           <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">RAG assistants return what is already written and guess at the rest. They cannot capture the unwritten, and cannot tell you what to trust.</p>
         </div>
-        <div class="py-8 md:pl-8">
+        <div class="md1-trip-item py-8 md:pl-8">
           <h3 class="text-2xl font-semibold">Tribal knowledge walks out.</h3>
           <p class="mt-4 leading-relaxed text-[rgba(18,35,58,0.62)]">The why, the exceptions, the tells. The most valuable knowledge lives in people, and leaves when they do.</p>
         </div>

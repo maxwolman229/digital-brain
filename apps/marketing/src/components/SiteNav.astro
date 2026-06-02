@@ -12,8 +12,10 @@ const navLink = (name: string) => [
 ---
 
 <nav
+  data-md1-nav={dark ? 'home' : undefined}
   class:list={[
-    'sticky top-0 z-50 grid grid-cols-[auto_1fr] items-center border-b px-5 py-4 md:grid-cols-[1fr_auto_1fr] md:px-10',
+    'md1-site-nav sticky top-0 z-50 grid grid-cols-[auto_1fr] items-center border-b px-5 py-4 md:grid-cols-[1fr_auto_1fr] md:px-10',
+    dark && 'md1-home-nav',
     dark ? 'border-transparent bg-[var(--md1-navy)]' : 'border-[var(--md1-border)] bg-[var(--md1-off-white)]',
   ]}
 >
@@ -22,9 +24,9 @@ const navLink = (name: string) => [
   </div>
 
   <div class="flex items-center justify-self-end gap-3 md:justify-self-auto md:gap-8">
-    <a href="/" class:list={navLink('home')}>Home</a>
-    <a href="/platform/" class:list={navLink('platform')}>Platform</a>
-    <a href="/contact/" class:list={navLink('contact')}>Contact</a>
+    <a href="/" aria-current={current === 'home' ? 'page' : undefined} class:list={['md1-nav-link', navLink('home')]}>Home</a>
+    <a href="/platform/" aria-current={current === 'platform' ? 'page' : undefined} class:list={['md1-nav-link', navLink('platform')]}>Platform</a>
+    <a href="/contact/" aria-current={current === 'contact' ? 'page' : undefined} class:list={['md1-nav-link', navLink('contact')]}>Contact</a>
   </div>
 
   <div class="hidden justify-self-end sm:block">
@@ -32,7 +34,7 @@ const navLink = (name: string) => [
       <a
         href="/contact/"
         class:list={[
-          'inline-flex border px-4 py-2 text-sm font-medium transition-colors',
+          'md1-nav-cta inline-flex border px-4 py-2 text-sm font-medium transition-colors',
           dark
             ? 'border-[var(--md1-off-white)] text-[var(--md1-off-white)] hover:bg-[var(--md1-off-white)] hover:text-[var(--md1-navy)]'
             : 'border-[var(--md1-ink)] text-[var(--md1-ink)] hover:bg-[var(--md1-ink)] hover:text-[var(--md1-off-white)]',
@@ -43,3 +45,19 @@ const navLink = (name: string) => [
     )}
   </div>
 </nav>
+
+<script>
+  const nav = document.querySelector('[data-md1-nav="home"]')
+
+  if (nav) {
+    const syncHomeNav = () => {
+      const hero = document.querySelector('[data-md1-hero]')
+      const shouldInvert = hero ? hero.getBoundingClientRect().bottom < 100 : window.scrollY > 80
+      nav.classList.toggle('is-scrolled', shouldInvert)
+    }
+
+    syncHomeNav()
+    window.addEventListener('scroll', syncHomeNav, { passive: true })
+    window.addEventListener('resize', syncHomeNav)
+  }
+</script>
