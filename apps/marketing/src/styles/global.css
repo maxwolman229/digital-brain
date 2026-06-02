@@ -50,3 +50,65 @@ body {
 .mono {
   font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
+
+[data-tip] {
+  position: relative;
+  cursor: help;
+}
+
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: 100;
+  width: min(17.5rem, calc(100vw - 2rem));
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--md1-accent);
+  background: var(--md1-ink);
+  color: var(--md1-off-white);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-8px);
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+[data-tip]::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: 100;
+  border: 5px solid transparent;
+  border-top-color: var(--md1-accent);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-2px);
+  transition: opacity 150ms ease;
+}
+
+[data-tip]:hover::after,
+[data-tip]:hover::before,
+[data-tip]:focus-visible::after,
+[data-tip]:focus-visible::before {
+  opacity: 1;
+}
+
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after {
+  transform: translateX(-50%) translateY(-12px);
+}
+
+[data-tip]:focus-visible {
+  outline: 2px solid var(--md1-accent);
+  outline-offset: 3px;
+}
