@@ -9,12 +9,12 @@ import {
 
 export const prerender = false
 
-function redirect(path, baseUrl) {
+function redirect(path) {
   return new Response(null, {
     status: 303,
     headers: {
       'cache-control': 'no-store',
-      location: new URL(path, baseUrl).toString(),
+      location: path,
     },
   })
 }
@@ -29,8 +29,8 @@ function notConfiguredResponse() {
   })
 }
 
-export function GET({ url }) {
-  return redirect('/danieli/', url)
+export function GET() {
+  return redirect('/danieli/')
 }
 
 export async function POST({ request, cookies, url }) {
@@ -45,10 +45,10 @@ export async function POST({ request, cookies, url }) {
   const nextPath = safeDanieliRedirect(String(form.get('next') || ''))
 
   if (!isDanieliPasswordValid(password)) {
-    return redirect(`/danieli/?error=1&next=${encodeURIComponent(nextPath)}`, url)
+    return redirect(`/danieli/?error=1&next=${encodeURIComponent(nextPath)}`)
   }
 
   cookies.set(DANIELI_COOKIE_NAME, createDanieliAccessToken(), getDanieliCookieOptions(url))
 
-  return redirect(nextPath, url)
+  return redirect(nextPath)
 }

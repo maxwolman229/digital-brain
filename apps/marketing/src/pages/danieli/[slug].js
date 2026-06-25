@@ -11,19 +11,17 @@ const DOCUMENT_HTML = {
   'ontology-and-kcards': ontologyAndKcardsHtml,
 }
 
-function redirect(path, baseUrl) {
-  const response = Response.redirect(new URL(path, baseUrl), 303)
-
+function redirect(path) {
   return new Response(null, {
-    status: response.status,
+    status: 303,
     headers: {
       'cache-control': 'no-store',
-      location: response.headers.get('location'),
+      location: path,
     },
   })
 }
 
-export function GET({ params, cookies, url }) {
+export function GET({ params, cookies }) {
   const document = getDanieliDocument(params.slug)
 
   if (!document) {
@@ -39,7 +37,7 @@ export function GET({ params, cookies, url }) {
   const token = cookies.get(DANIELI_COOKIE_NAME)?.value
 
   if (!isDanieliAccessTokenValid(token)) {
-    return redirect(`/danieli/?next=${encodeURIComponent(document.path)}`, url)
+    return redirect(`/danieli/?next=${encodeURIComponent(document.path)}`)
   }
 
   const documentHtml = DOCUMENT_HTML[document.slug]
