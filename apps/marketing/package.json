@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "test:danieli-share": "node --test src/lib/danieliShare.test.mjs",
     "test:tooltips": "node ./scripts/check-tooltips.mjs",
     "test:ux": "node ./scripts/check-ux-regressions.mjs",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
