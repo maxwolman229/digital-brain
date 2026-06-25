@@ -20,6 +20,8 @@ Production Domain: md1.app
 Additional Domain: www.md1.app
 ```
 
+The marketing app uses the Astro Vercel adapter, so Vercel should deploy the `dist` build output with adapter-generated on-demand routes for temporary server-rendered shares such as Danieli.
+
 Environment variables:
 
 ```text
@@ -95,4 +97,8 @@ DANIELI_SHARE_COOKIE_SECRET
 openssl rand -base64 32
 ```
 
+Do not commit these values, and do not expose them with public environment variable prefixes such as `PUBLIC_` or `VITE_`.
+
 Configure both variables for preview and production before sharing the Danieli URL. If either variable is missing, the share must fail closed and must not serve protected documents.
+
+After adding or changing either variable in Vercel for Preview or Production, redeploy the affected deployment before sharing. Existing deployments will not pick up changed environment variables.
