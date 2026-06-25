@@ -69,3 +69,30 @@ https://*.vercel.app/*
 ```
 
 This protects password recovery, invite links, and auth redirects while the deployment split is in progress.
+
+## Temporary Danieli Client Share
+
+The marketing project may host temporary client review material under:
+
+```text
+https://md1.app/danieli/
+```
+
+This route is protected by an application-level shared password gate, not by Vercel Advanced Deployment Protection. Keep the protected HTML files out of `public`; they should be served only through the Danieli server routes.
+
+Marketing project environment variables:
+
+```text
+DANIELI_SHARE_PASSWORD
+DANIELI_SHARE_COOKIE_SECRET
+```
+
+`DANIELI_SHARE_PASSWORD` is the shared client-facing access code.
+
+`DANIELI_SHARE_COOKIE_SECRET` signs the HTTP-only access cookie and must not be shared. Generate it with:
+
+```bash
+openssl rand -base64 32
+```
+
+Configure both variables for preview and production before sharing the Danieli URL. If either variable is missing, the share must fail closed and must not serve protected documents.
