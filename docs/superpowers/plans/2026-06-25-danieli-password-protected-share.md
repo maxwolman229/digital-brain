@@ -103,7 +103,7 @@ The scripts block should become:
   "test:tooltips": "node ./scripts/check-tooltips.mjs",
   "test:ux": "node ./scripts/check-ux-regressions.mjs",
   "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
-  "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview"
+  "preview": "ASTRO_TELEMETRY_DISABLED=1 astro dev"
 }
 ```
 
@@ -443,7 +443,7 @@ The scripts block should include:
   "test:tooltips": "node ./scripts/check-tooltips.mjs",
   "test:ux": "node ./scripts/check-ux-regressions.mjs",
   "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
-  "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview"
+  "preview": "ASTRO_TELEMETRY_DISABLED=1 astro dev"
 }
 ```
 
@@ -601,7 +601,7 @@ The scripts block should include:
   "test:tooltips": "node ./scripts/check-tooltips.mjs",
   "test:ux": "node ./scripts/check-ux-regressions.mjs",
   "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
-  "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview"
+  "preview": "ASTRO_TELEMETRY_DISABLED=1 astro dev"
 }
 ```
 
@@ -897,7 +897,7 @@ The scripts block should include:
   "test:tooltips": "node ./scripts/check-tooltips.mjs",
   "test:ux": "node ./scripts/check-ux-regressions.mjs",
   "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
-  "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview"
+  "preview": "ASTRO_TELEMETRY_DISABLED=1 astro dev"
 }
 ```
 
@@ -1141,15 +1141,15 @@ done
 
 Expected: no matches.
 
-- [ ] **Step 4: Start local preview**
+- [ ] **Step 4: Start local Danieli dev server**
 
 Run:
 
 ```bash
-DANIELI_SHARE_PASSWORD=local-danieli-code DANIELI_SHARE_COOKIE_SECRET=local-cookie-secret-with-enough-entropy npm --workspace @md1/marketing run preview -- --host 127.0.0.1 --port 4321
+DANIELI_SHARE_PASSWORD=local-danieli-code DANIELI_SHARE_COOKIE_SECRET=local-cookie-secret-with-enough-entropy npm --workspace @md1/marketing run dev -- --host 127.0.0.1 --port 4321
 ```
 
-Expected: preview server starts on `http://127.0.0.1:4321/`.
+Expected: dev server starts on `http://127.0.0.1:4321/`.
 
 - [ ] **Step 5: Verify unauthenticated protected access redirects to the gate**
 
@@ -1220,7 +1220,7 @@ Expected:
 - Logout redirects to `/danieli/`.
 - The next protected document request redirects to the gate again.
 
-- [ ] **Step 10: Stop the preview server**
+- [ ] **Step 10: Stop the dev server**
 
 Stop the server started in Step 4 with `Ctrl-C`.
 

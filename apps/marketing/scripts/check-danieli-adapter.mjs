@@ -22,6 +22,8 @@ const publicAccessHtmlPath = resolve(marketingRoot, 'public/danieli-access-6_25-
 assert.equal(packageJson.dependencies['@astrojs/vercel'], '^9.0.0')
 assert.match(astroConfig, /import vercel from '@astrojs\/vercel'/)
 assert.match(astroConfig, /adapter:\s*vercel\(\)/)
+assert.match(astroConfig, /sitemap\(\{\s*filter:/s)
+assert.match(astroConfig, /!new URL\(page\)\.pathname\.startsWith\('\/danieli'\)/)
 assert.equal(existsSync(protectedHtmlPath), true, 'protected HTML should be copied under src/danieli-html')
 assert.equal(existsSync(oldAccessHtmlPath), false, 'client-side access page must not be copied as protected content')
 assert.equal(existsSync(publicProtectedHtmlPath), false, 'protected Danieli HTML must not be served from public')

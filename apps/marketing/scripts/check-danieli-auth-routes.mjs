@@ -25,6 +25,8 @@ const logout = read('src/pages/danieli/logout.js')
 
 assert.match(index, /export const prerender = false/)
 assert.match(index, /Astro\.response\.headers\.set\('Cache-Control', 'no-store'\)/)
+assert.match(index, /Astro\.response\.headers\.set\('X-Robots-Tag', 'noindex, nofollow'\)/)
+assert.match(index, /Astro\.redirect\(DANIELI_DOCUMENTS\[0\]\?\.path \|\| '\/danieli\/', 303\)/)
 assert.match(index, /method="post"/)
 assert.match(index, /action="\/danieli\/session"/)
 assert.match(index, /name="password"/)
@@ -34,7 +36,6 @@ assert.match(index, /aria-describedby=\{hasError \? 'danieli-password-error' : u
 assert.match(index, /id="danieli-password-error"/)
 assert.match(index, /role="alert"/)
 assert.match(index, /Incorrect code/)
-assert.match(index, /WTP Ontology & K-Cards/)
 
 assert.match(session, /export const prerender = false/)
 assert.match(session, /export async function POST/)

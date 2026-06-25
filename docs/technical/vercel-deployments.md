@@ -22,6 +22,8 @@ Additional Domain: www.md1.app
 
 The marketing app uses the Astro Vercel adapter, so Vercel should deploy the `dist` build output with adapter-generated on-demand routes for temporary server-rendered shares such as Danieli.
 
+The Astro Vercel adapter does not provide a local `astro preview` entrypoint. Use `npm run dev:marketing` or `npm run preview:marketing` for local route smoke tests, and use `npm run build:marketing` plus a Vercel preview deployment to verify the production build.
+
 Environment variables:
 
 ```text

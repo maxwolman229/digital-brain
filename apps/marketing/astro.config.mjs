@@ -6,7 +6,11 @@ import vercel from '@astrojs/vercel'
 export default defineConfig({
   site: 'https://md1.app',
   adapter: vercel(),
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      filter: (page) => !new URL(page).pathname.startsWith('/danieli'),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },
