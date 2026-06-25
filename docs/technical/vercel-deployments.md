@@ -20,6 +20,10 @@ Production Domain: md1.app
 Additional Domain: www.md1.app
 ```
 
+The marketing app uses the Astro Vercel adapter, so Vercel should deploy the `dist` build output with adapter-generated on-demand routes for temporary server-rendered shares such as Danieli.
+
+The Astro Vercel adapter does not provide a local `astro preview` entrypoint. Use `npm run dev:marketing` or `npm run preview:marketing` for local route smoke tests, and use `npm run build:marketing` plus a Vercel preview deployment to verify the production build.
+
 Environment variables:
 
 ```text
@@ -69,3 +73,34 @@ https://*.vercel.app/*
 ```
 
 This protects password recovery, invite links, and auth redirects while the deployment split is in progress.
+
+## Temporary Danieli Client Share
+
+The marketing project may host temporary client review material under:
+
+```text
+https://md1.app/danieli/
+```
+
+This route is protected by an application-level shared password gate, not by Vercel Advanced Deployment Protection. Keep the protected HTML files out of `public`; they should be served only through the Danieli server routes.
+
+Marketing project environment variables:
+
+```text
+DANIELI_SHARE_PASSWORD
+DANIELI_SHARE_COOKIE_SECRET
+```
+
+`DANIELI_SHARE_PASSWORD` is the shared client-facing access code.
+
+`DANIELI_SHARE_COOKIE_SECRET` signs the HTTP-only access cookie and must not be shared. Generate it with:
+
+```bash
+openssl rand -base64 32
+```
+
+Do not commit these values, and do not expose them with public environment variable prefixes such as `PUBLIC_` or `VITE_`.
+
+Configure both variables for preview and production before sharing the Danieli URL. If either variable is missing, the share must fail closed and must not serve protected documents.
+
+After adding or changing either variable in Vercel for Preview or Production, redeploy the affected deployment before sharing. Existing deployments will not pick up changed environment variables.
