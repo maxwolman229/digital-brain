@@ -42,7 +42,19 @@ export function GET({ params, cookies, url }) {
     return redirect(`/danieli/?next=${encodeURIComponent(document.path)}`, url)
   }
 
-  return new Response(DOCUMENT_HTML[document.slug], {
+  const documentHtml = DOCUMENT_HTML[document.slug]
+
+  if (!documentHtml) {
+    return new Response('Document unavailable', {
+      status: 500,
+      headers: {
+        'cache-control': 'no-store',
+        'content-type': 'text/plain; charset=utf-8',
+      },
+    })
+  }
+
+  return new Response(documentHtml, {
     headers: {
       'cache-control': 'no-store, private',
       'content-type': 'text/html; charset=utf-8',
