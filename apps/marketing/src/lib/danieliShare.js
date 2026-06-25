@@ -123,18 +123,18 @@ export function isDanieliAccessTokenValid(token, env = process.env, now = Math.f
   }
 }
 
-export function safeDanieliRedirect(value, fallback = '/danieli/') {
+function normalizeDanieliRedirect(value) {
   const candidate = typeof value === 'string' ? value.trim() : ''
 
   if (!candidate) {
-    return fallback
+    return null
   }
 
   try {
     const parsed = new URL(candidate, REDIRECT_BASE)
 
     if (parsed.origin !== REDIRECT_BASE) {
-      return fallback
+      return null
     }
 
     const path = `${parsed.pathname}${parsed.search}`
@@ -144,17 +144,21 @@ export function safeDanieliRedirect(value, fallback = '/danieli/') {
     }
 
     if (!path.startsWith('/danieli/')) {
-      return fallback
+      return null
     }
 
     if (path.startsWith('/danieli/session') || path.startsWith('/danieli/logout')) {
-      return fallback
+      return null
     }
 
     return path
   } catch {
-    return fallback
+    return null
   }
+}
+
+export function safeDanieliRedirect(value, fallback = '/danieli/') {
+  return normalizeDanieliRedirect(value) || normalizeDanieliRedirect(fallback) || '/danieli/'
 }
 
 export function getDanieliCookieOptions(url) {

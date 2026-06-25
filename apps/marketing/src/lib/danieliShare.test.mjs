@@ -79,6 +79,7 @@ test('allows only safe redirects inside the Danieli share area', () => {
   assert.equal(safeDanieliRedirect('https://md1.app/danieli/ontology-and-kcards/'), '/danieli/ontology-and-kcards/')
   assert.equal(safeDanieliRedirect('/danieli'), '/danieli/')
   assert.equal(safeDanieliRedirect('/platform/'), '/danieli/')
+  assert.equal(safeDanieliRedirect('/platform/', 'https://evil.example/'), '/danieli/')
   assert.equal(safeDanieliRedirect('https://evil.example/danieli/'), '/danieli/')
   assert.equal(safeDanieliRedirect('/danieli/session'), '/danieli/')
   assert.equal(safeDanieliRedirect('/danieli/logout'), '/danieli/')
