@@ -9,6 +9,8 @@ import {
 
 export const prerender = false
 
+Astro.response.headers.set('Cache-Control', 'no-store')
+
 const fallbackDocumentTitle = 'WTP Ontology & K-Cards'
 const cookie = Astro.cookies.get(DANIELI_COOKIE_NAME)?.value
 const isAuthorized = isDanieliAccessTokenValid(cookie)
@@ -68,6 +70,8 @@ const nextPath = safeDanieliRedirect(
               name="password"
               type="password"
               autocomplete="off"
+              aria-invalid={hasError ? 'true' : undefined}
+              aria-describedby={hasError ? 'danieli-password-error' : undefined}
               required
               autofocus
               class="min-h-12 flex-1 border border-[var(--md1-border)] bg-white px-4 text-base text-[var(--md1-ink)] outline-none focus:border-[var(--md1-ink)]"
@@ -80,7 +84,7 @@ const nextPath = safeDanieliRedirect(
             </button>
           </div>
           {hasError && (
-            <p class="mt-3 text-sm font-medium text-[#b23b30]">
+            <p id="danieli-password-error" role="alert" class="mt-3 text-sm font-medium text-[#b23b30]">
               Incorrect code
             </p>
           )}

@@ -7,7 +7,13 @@ function clearSession({ cookies, url }) {
     path: DANIELI_COOKIE_PATH,
   })
 
-  return Response.redirect(new URL('/danieli/', url), 303)
+  return new Response(null, {
+    status: 303,
+    headers: {
+      'cache-control': 'no-store',
+      location: new URL('/danieli/', url).toString(),
+    },
+  })
 }
 
 export function GET(context) {

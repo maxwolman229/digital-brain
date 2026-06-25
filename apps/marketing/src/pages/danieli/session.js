@@ -10,7 +10,13 @@ import {
 export const prerender = false
 
 function redirect(path, baseUrl) {
-  return Response.redirect(new URL(path, baseUrl), 303)
+  return new Response(null, {
+    status: 303,
+    headers: {
+      'cache-control': 'no-store',
+      location: new URL(path, baseUrl).toString(),
+    },
+  })
 }
 
 function notConfiguredResponse() {
