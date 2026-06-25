@@ -8,3 +8,4 @@ apps/*/dist
 apps/*/.astro
 supabase/.temp
 .superpowers
+.worktrees
