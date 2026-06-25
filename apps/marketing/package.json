@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "test:danieli-adapter": "node ./scripts/check-danieli-adapter.mjs",
     "test:danieli-share": "node --test src/lib/danieliShare.test.mjs",
     "test:tooltips": "node ./scripts/check-tooltips.mjs",
     "test:ux": "node ./scripts/check-ux-regressions.mjs",
@@ -14,6 +15,7 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/sitemap": "^3.3.1",
+    "@astrojs/vercel": "^9.0.0",
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@fontsource/ibm-plex-sans": "^5.2.8",
     "@tailwindcss/vite": "^4.1.0",
