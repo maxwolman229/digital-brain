@@ -87,7 +87,13 @@ export function isDanieliAccessTokenValid(token, env = process.env, now = Math.f
   }
 
   try {
-    const [encodedPayload, signature] = String(token).split('.')
+    const tokenParts = String(token).split('.')
+
+    if (tokenParts.length !== 2) {
+      return false
+    }
+
+    const [encodedPayload, signature] = tokenParts
 
     if (!encodedPayload || !signature) {
       return false

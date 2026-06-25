@@ -59,6 +59,7 @@ test('creates and verifies a signed access token', () => {
   assert.equal(isDanieliAccessTokenValid(token, env, issuedAt), true)
   assert.equal(isDanieliAccessTokenValid(token, env, issuedAt + DANIELI_COOKIE_MAX_AGE - 1), true)
   assert.equal(isDanieliAccessTokenValid(token, env, issuedAt + DANIELI_COOKIE_MAX_AGE + 1), false)
+  assert.equal(isDanieliAccessTokenValid(`${token}.extra`, env, issuedAt), false)
   assert.equal(isDanieliAccessTokenValid(`${token}tampered`, env, issuedAt), false)
   assert.equal(isDanieliAccessTokenValid(token, { ...env, DANIELI_SHARE_COOKIE_SECRET: 'different-secret' }, issuedAt), false)
 })
