@@ -7,6 +7,7 @@
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "test:danieli-adapter": "node ./scripts/check-danieli-adapter.mjs",
     "test:danieli-auth-routes": "node ./scripts/check-danieli-auth-routes.mjs",
+    "test:danieli-protected-document": "node ./scripts/check-danieli-protected-document.mjs",
     "test:danieli-share": "node --test src/lib/danieliShare.test.mjs",
     "test:tooltips": "node ./scripts/check-tooltips.mjs",
     "test:ux": "node ./scripts/check-ux-regressions.mjs",
