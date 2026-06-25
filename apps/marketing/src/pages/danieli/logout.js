@@ -2,7 +2,7 @@ import { DANIELI_COOKIE_NAME, DANIELI_COOKIE_PATH } from '../../lib/danieliShare
 
 export const prerender = false
 
-function clearSession({ cookies, url }) {
+function clearSession({ cookies }) {
   cookies.delete(DANIELI_COOKIE_NAME, {
     path: DANIELI_COOKIE_PATH,
   })
@@ -11,7 +11,7 @@ function clearSession({ cookies, url }) {
     status: 303,
     headers: {
       'cache-control': 'no-store',
-      location: new URL('/danieli/', url).toString(),
+      location: '/danieli/',
     },
   })
 }

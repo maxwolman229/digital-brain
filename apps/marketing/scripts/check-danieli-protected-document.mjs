@@ -24,7 +24,8 @@ assert.match(route, /danieli-md1-ontology-and-kcards_6_25-v0\.html\?raw/)
 assert.match(route, /getDanieliDocument/)
 assert.match(route, /isDanieliAccessTokenValid/)
 assert.match(route, /DANIELI_COOKIE_NAME/)
-assert.match(route, /Response\.redirect/)
+assert.match(route, /location: path/)
+assert.doesNotMatch(route, /new URL\(path, baseUrl\)/)
 assert.match(route, /cache-control/)
 assert.match(route, /no-store/)
 assert.match(route, /x-robots-tag/)
@@ -66,7 +67,7 @@ async function importRouteModule(source, { omitDocumentHtml = false } = {}) {
   return import(`data:text/javascript;charset=utf-8,${encodeURIComponent(transformedSource)}`)
 }
 
-function makeRequestContext({ slug, cookieValue, url = 'https://md1.app/danieli/ontology-and-kcards/' }) {
+function makeRequestContext({ slug, cookieValue, url = 'https://localhost/danieli/ontology-and-kcards/' }) {
   return {
     params: { slug },
     cookies: {
@@ -111,7 +112,7 @@ async function assertRedirectsToDanieliLogin(response) {
   assert.equal(response.headers.get('cache-control'), 'no-store')
   assert.equal(
     response.headers.get('location'),
-    'https://md1.app/danieli/?next=%2Fdanieli%2Fontology-and-kcards%2F'
+    '/danieli/?next=%2Fdanieli%2Fontology-and-kcards%2F'
   )
   assert.notEqual(await response.text(), documentHtml)
 }

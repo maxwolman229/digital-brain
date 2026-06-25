@@ -46,12 +46,14 @@ assert.match(session, /getDanieliCookieOptions/)
 assert.match(session, /cookies\.set/)
 assert.match(session, /cache-control/)
 assert.match(session, /no-store/)
+assert.doesNotMatch(session, /new URL\(path, baseUrl\)/)
 
 assert.match(logout, /export const prerender = false/)
 assert.match(logout, /cookies\.delete/)
 assert.match(logout, /DANIELI_COOKIE_PATH/)
 assert.match(logout, /cache-control/)
 assert.match(logout, /no-store/)
+assert.doesNotMatch(logout, /new URL\('\/danieli\/', url\)/)
 
 function createCookieMock() {
   const setCalls = []
@@ -130,10 +132,10 @@ async function checkSessionAndLogoutBehavior() {
     setDanieliEnv(danieliEnv)
 
     const sessionGetResponse = sessionRoute.GET({
-      url: new URL('https://md1.app/danieli/session'),
+      url: new URL('https://localhost/danieli/session'),
     })
 
-    assertNoStoreRedirect(sessionGetResponse, 'https://md1.app/danieli/')
+    assertNoStoreRedirect(sessionGetResponse, '/danieli/')
 
     const wrongPasswordCookies = createCookieMock()
     const wrongPasswordResponse = await sessionRoute.POST({
@@ -142,12 +144,12 @@ async function checkSessionAndLogoutBehavior() {
         next: '/danieli/ontology-and-kcards/',
       }),
       cookies: wrongPasswordCookies.cookies,
-      url: new URL('https://md1.app/danieli/session'),
+      url: new URL('https://localhost/danieli/session'),
     })
 
     assertNoStoreRedirect(
       wrongPasswordResponse,
-      'https://md1.app/danieli/?error=1&next=%2Fdanieli%2Fontology-and-kcards%2F'
+      '/danieli/?error=1&next=%2Fdanieli%2Fontology-and-kcards%2F'
     )
     assert.deepEqual(wrongPasswordCookies.setCalls, [])
 
@@ -158,12 +160,12 @@ async function checkSessionAndLogoutBehavior() {
         next: '/danieli/ontology-and-kcards/?tab=cards',
       }),
       cookies: validPasswordCookies.cookies,
-      url: new URL('https://md1.app/danieli/session'),
+      url: new URL('https://localhost/danieli/session'),
     })
 
     assertNoStoreRedirect(
       validPasswordResponse,
-      'https://md1.app/danieli/ontology-and-kcards/?tab=cards'
+      '/danieli/ontology-and-kcards/?tab=cards'
     )
     assert.equal(validPasswordCookies.setCalls.length, 1)
     assert.equal(validPasswordCookies.setCalls[0].name, DANIELI_COOKIE_NAME)
@@ -183,18 +185,18 @@ async function checkSessionAndLogoutBehavior() {
         next: 'https://evil.example/danieli/ontology-and-kcards/',
       }),
       cookies: unsafeNextCookies.cookies,
-      url: new URL('https://md1.app/danieli/session'),
+      url: new URL('https://localhost/danieli/session'),
     })
 
-    assertNoStoreRedirect(unsafeNextResponse, 'https://md1.app/danieli/')
+    assertNoStoreRedirect(unsafeNextResponse, '/danieli/')
 
     const logoutCookies = createCookieMock()
     const logoutGetResponse = logoutRoute.GET({
       cookies: logoutCookies.cookies,
-      url: new URL('https://md1.app/danieli/logout'),
+      url: new URL('https://localhost/danieli/logout'),
     })
 
-    assertNoStoreRedirect(logoutGetResponse, 'https://md1.app/danieli/')
+    assertNoStoreRedirect(logoutGetResponse, '/danieli/')
     assert.deepEqual(logoutCookies.deleteCalls, [
       {
         name: DANIELI_COOKIE_NAME,
@@ -207,10 +209,10 @@ async function checkSessionAndLogoutBehavior() {
     const logoutPostCookies = createCookieMock()
     const logoutPostResponse = logoutRoute.POST({
       cookies: logoutPostCookies.cookies,
-      url: new URL('https://md1.app/danieli/logout'),
+      url: new URL('https://localhost/danieli/logout'),
     })
 
-    assertNoStoreRedirect(logoutPostResponse, 'https://md1.app/danieli/')
+    assertNoStoreRedirect(logoutPostResponse, '/danieli/')
     assert.deepEqual(logoutPostCookies.deleteCalls, [
       {
         name: DANIELI_COOKIE_NAME,
