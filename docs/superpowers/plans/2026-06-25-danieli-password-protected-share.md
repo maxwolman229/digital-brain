@@ -468,7 +468,7 @@ const protectedHtmlPath = resolve(
 const oldAccessHtmlPath = resolve(marketingRoot, 'src/danieli-html/danieli-access-6_25-v0.html')
 const sourceHtmlPath = resolve(repoRoot, 'docs/html/danieli-md1-ontology-and-kcards_6_25-v0.html')
 
-assert.equal(packageJson.dependencies['@astrojs/vercel'], '^11.0.0')
+assert.equal(packageJson.dependencies['@astrojs/vercel'], '^9.0.0')
 assert.match(astroConfig, /import vercel from '@astrojs\/vercel'/)
 assert.match(astroConfig, /adapter:\s*vercel\(\)/)
 assert.equal(existsSync(sourceHtmlPath), true, 'source Danieli HTML should exist under docs/html')
@@ -493,12 +493,12 @@ Expected: FAIL because `@astrojs/vercel`, the adapter config, and copied protect
 Run from the repository root:
 
 ```bash
-npm install --workspace @md1/marketing @astrojs/vercel@^11.0.0
+npm install --workspace @md1/marketing @astrojs/vercel@^9.0.0
 ```
 
 Expected:
 
-- `apps/marketing/package.json` includes `"@astrojs/vercel": "^11.0.0"`.
+- `apps/marketing/package.json` includes `"@astrojs/vercel": "^9.0.0"`.
 - `package-lock.json` is updated.
 
 - [ ] **Step 4: Configure the Astro adapter**
