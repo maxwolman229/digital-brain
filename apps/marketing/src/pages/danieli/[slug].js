@@ -1,4 +1,4 @@
-import ontologyAndKcardsHtml from '../../danieli-html/danieli-md1-ontology-and-kcards_6_25-v0.html?raw'
+import ontologyAndKcardsHtml from '../../danieli-html/danieli-md1-ontology-and-kcards_7_1-v0.html?raw'
 import {
   DANIELI_COOKIE_NAME,
   getDanieliDocument,

@@ -12,7 +12,7 @@ const marketingRoot = resolve(scriptDir, '..')
 const routePath = resolve(marketingRoot, 'src/pages/danieli/[slug].js')
 const documentHtmlPath = resolve(
   marketingRoot,
-  'src/danieli-html/danieli-md1-ontology-and-kcards_6_25-v0.html'
+  'src/danieli-html/danieli-md1-ontology-and-kcards_7_1-v0.html'
 )
 const shareHelperUrl = pathToFileURL(resolve(marketingRoot, 'src/lib/danieliShare.js')).href
 
@@ -20,7 +20,7 @@ const route = readFileSync(routePath, 'utf8')
 const documentHtml = readFileSync(documentHtmlPath, 'utf8')
 
 assert.match(route, /export const prerender = false/)
-assert.match(route, /danieli-md1-ontology-and-kcards_6_25-v0\.html\?raw/)
+assert.match(route, /danieli-md1-ontology-and-kcards_7_1-v0\.html\?raw/)
 assert.match(route, /getDanieliDocument/)
 assert.match(route, /isDanieliAccessTokenValid/)
 assert.match(route, /DANIELI_COOKIE_NAME/)
@@ -46,7 +46,7 @@ console.log('Danieli protected document route check passed.')
 async function importRouteModule(source, { omitDocumentHtml = false } = {}) {
   let transformedSource = source
     .replace(
-      /import\s+ontologyAndKcardsHtml\s+from\s+['"]\.\.\/\.\.\/danieli-html\/danieli-md1-ontology-and-kcards_6_25-v0\.html\?raw['"]/,
+      /import\s+ontologyAndKcardsHtml\s+from\s+['"]\.\.\/\.\.\/danieli-html\/danieli-md1-ontology-and-kcards_7_1-v0\.html\?raw['"]/,
       `const ontologyAndKcardsHtml = ${JSON.stringify(documentHtml)}`
     )
     .replace(

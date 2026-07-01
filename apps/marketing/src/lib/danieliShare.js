@@ -10,9 +10,9 @@ const REDIRECT_BASE = 'https://md1.app'
 export const DANIELI_DOCUMENTS = [
   {
     slug: 'ontology-and-kcards',
-    title: 'WTP Ontology & K-Cards',
+    title: 'WTP / CLO / WCU Ontology & K-Cards',
     path: '/danieli/ontology-and-kcards/',
-    sourceFile: 'danieli-md1-ontology-and-kcards_6_25-v0.html',
+    sourceFile: 'danieli-md1-ontology-and-kcards_7_1-v0.html',
   },
 ]
 

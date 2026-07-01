@@ -19,16 +19,16 @@ const env = {
   DANIELI_SHARE_COOKIE_SECRET: 'local-cookie-secret-with-enough-entropy',
 }
 
-test('defines the initial ontology/K-cards document', () => {
+test('defines the refreshed 7_1 ontology and K-cards document', () => {
   assert.deepEqual(DANIELI_DOCUMENTS, [
     {
       slug: 'ontology-and-kcards',
-      title: 'WTP Ontology & K-Cards',
+      title: 'WTP / CLO / WCU Ontology & K-Cards',
       path: '/danieli/ontology-and-kcards/',
-      sourceFile: 'danieli-md1-ontology-and-kcards_6_25-v0.html',
+      sourceFile: 'danieli-md1-ontology-and-kcards_7_1-v0.html',
     },
   ])
-  assert.equal(getDanieliDocument('ontology-and-kcards')?.title, 'WTP Ontology & K-Cards')
+  assert.equal(getDanieliDocument('ontology-and-kcards')?.title, 'WTP / CLO / WCU Ontology & K-Cards')
   assert.equal(getDanieliDocument('missing'), null)
 })
 

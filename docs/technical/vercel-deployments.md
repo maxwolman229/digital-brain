@@ -28,9 +28,20 @@ Environment variables:
 
 ```text
 PUBLIC_CONTACT_FORM_ENDPOINT
+DANIELI_SHARE_PASSWORD
+DANIELI_SHARE_COOKIE_SECRET
 ```
 
 `PUBLIC_CONTACT_FORM_ENDPOINT` is optional. If it is unset, the contact page falls back to `mailto:info@md1.app`.
+
+`DANIELI_SHARE_PASSWORD` is the shared client access code for the temporary Danieli review page at `/danieli/`.
+`DANIELI_SHARE_COOKIE_SECRET` signs the HTTP-only access cookie and must not be shared with clients. Generate it with:
+
+```bash
+openssl rand -base64 32
+```
+
+The Danieli HTML is stored under `apps/marketing/src/danieli-html/` and is served only by the on-demand `/danieli/[slug]/` route after password validation. Do not move these HTML files into `public/`.
 
 ## Product App
 
