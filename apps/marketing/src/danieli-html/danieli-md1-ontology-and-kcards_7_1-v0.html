@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MD1 — WTP / CLO / WCU Ontology (PSG Mojave, MIDA)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F1ED;--surface:#FFFFFF;--surface-2:#F5F7F8;--ink:#1A1D21;--muted:#626B73;
+    --faint:#939BA2;--hair:#E2E5E8;--hair-2:#D2D7DC;--graphite:#2A3138;--link:#275B9A;
+    --t-fl:#3A4550;--t-ast:#275B9A;--t-eqc:#7A3FA0;--t-prc:#1F6E6A;--t-prm:#B9791C;
+    --t-str:#1668A8;--t-ins:#0E7C86;--t-fm:#B23B30;--t-mod:#8a6d3b;--t-dsc:#5a4b8a;
+    --t-act:#8a5a2b;--t-doc:#5C6B73;--t-kc:#1F8A53;--t-ext:#7E8893;
+    --ctx-bd:#4f9c54;--ctx-bg:#e1f1e1;--ctx-tx:#256c2b;
+    --cnt-bd:#1f4068;--cnt-bg:#e3ecf7;--cnt-lbl:#173458;--cnt-tx:#15263b;
+    --cnf-bd:#4f9c54;--cnf-bg:#e6f3e6;--cnf-tx:#256c2b;
+    --amber:#b9791c;--amber-bg:#fbf3e6;--amber-bd:#e7d3ad;
+    --red:#b23b30;--red-bg:#fbe9e7;--red-bd:#efc7c1;
+    --radius:5px;--shadow:0 1px 2px rgba(26,29,33,.05),0 8px 24px rgba(26,29,33,.06);
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .code{font-weight:500;letter-spacing:.01em;}
+  button{font-family:inherit;}
+
+  .topbar{background:#F4F1ED;color:#162338;border-bottom:1px solid #E2DED7;position:sticky;top:0;z-index:40;box-shadow:0 1px 0 rgba(0,0,0,.02),0 6px 16px rgba(26,29,33,.05);}
+  .topbar-in{width:100%;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .brand .mk{display:inline-block;font-weight:800;font-size:19px;color:#162338;letter-spacing:.02em;border:3px solid #162338;border-radius:0;padding:3px 7px;line-height:1;}
+  .topbar .sub{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#8a8377;}
+  .trow[data-tip]{cursor:help;}
+  .tip{position:fixed;z-index:100;max-width:280px;background:#1A1D21;color:#fff;font-size:11.5px;line-height:1.45;padding:8px 11px;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .1s;}
+  .tip.show{opacity:1;}
+
+  /* main tabs */
+  .maintabs{background:var(--surface);border-bottom:1px solid var(--hair);position:sticky;top:0;z-index:20;}
+  .maintabs-in{max-width:1180px;margin:0 auto;padding:0 20px;display:flex;gap:4px;}
+  .mtab{background:none;border:none;border-bottom:3px solid transparent;padding:14px 18px;cursor:pointer;
+    font-size:14.5px;font-weight:600;color:var(--muted);transition:color .12s,border-color .12s;}
+  .mtab:hover{color:var(--ink);}
+  .mtab.on{color:var(--ink);border-bottom-color:var(--graphite);}
+  .mtab:focus-visible{outline:2px solid var(--link);outline-offset:-2px;}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 18px 80px;}
+  .view{display:none;}.view.on{display:block;}
+
+  .lede{max-width:860px;margin:6px 0 8px;}
+  .lede h1{font-weight:700;font-size:24px;letter-spacing:-.01em;line-height:1.18;margin:0 0 9px;}
+  .lede p{margin:0;color:var(--muted);font-size:14.5px;}
+  .srcline{font-size:11px;color:var(--faint);margin-top:8px;letter-spacing:.01em;}
+  .countstrip{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .cpill{font-size:11px;background:var(--surface);border:1px solid var(--hair);border-radius:100px;padding:5px 11px;color:var(--muted);}
+  .cpill b{color:var(--ink);}
+
+  h2.sec{font-weight:700;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--graphite);margin:32px 0 4px;}
+  .seclead{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:840px;}
+
+  /* ---- ontology: type system ---- */
+  .types{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .tbl{background:var(--surface);border:1px solid var(--hair);border-radius:6px;overflow:hidden;box-shadow:var(--shadow);}
+  .tbl .th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:11px 14px;border-bottom:1px solid var(--hair);background:var(--surface-2);font-weight:600;}
+  .trow{display:grid;grid-template-columns:74px 1fr;border-top:1px solid var(--hair);padding:8px 14px;gap:10px;align-items:baseline;}
+  .trow:first-of-type{border-top:none;}
+  .trow .k{font-size:11px;display:flex;align-items:center;gap:6px;font-weight:600;}
+  .trow .k .sw{width:9px;height:9px;border-radius:2px;flex:none;}
+  .trow .v{font-size:12px;color:var(--muted);line-height:1.4;}
+  .trow .v b{color:var(--ink);font-weight:600;}
+  .trow .std{font-size:9.5px;color:var(--t-eqc);font-weight:500;}
+  .linkrow{display:grid;grid-template-columns:150px 1fr;border-top:1px solid var(--hair);padding:7px 14px;gap:10px;align-items:baseline;}
+  .linkrow:first-of-type{border-top:none;}
+  .linkrow .lk{font-size:11px;color:var(--graphite);font-weight:600;}
+  .linkrow .ld{font-size:12px;color:var(--muted);}
+
+  /* ---- ontology: graph ---- */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .tab{font-size:12.5px;font-weight:500;border:1px solid var(--hair-2);background:var(--surface);border-radius:5px;padding:8px 13px;cursor:pointer;color:var(--graphite);transition:all .12s;}
+  .tab:hover{border-color:var(--graphite);}.tab.on{background:var(--graphite);color:#fff;border-color:var(--graphite);}
+  .tab:focus-visible{outline:2px solid var(--link);outline-offset:2px;}
+  .graphwrap{background:var(--surface);border:1px solid var(--hair);border-radius:6px;box-shadow:var(--shadow);overflow:hidden;}
+  .gtitle{padding:12px 15px;border-bottom:1px solid var(--hair);font-size:13px;color:var(--muted);}
+  .gtitle b{color:var(--ink);font-weight:600;}
+  .glegend{display:flex;flex-wrap:wrap;align-items:center;gap:7px 14px;padding:9px 15px;border-bottom:1px solid var(--hair);background:var(--surface-2);}
+  .glegend .lg-grp{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;}
+  .glegend .lg-item{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);}
+  .glegend .lg-box{width:16px;height:11px;border-radius:2px;background:#fff;flex:none;}
+  .glegend .lg-box.solid{border:1.5px solid var(--t-ast);}
+  .glegend .lg-box.dash{border:1.5px dashed var(--t-ext);background:#F4F6F7;}
+  .glegend .lg-line{width:26px;height:6px;flex:none;}
+  .glegend .lg-sep{width:1px;height:16px;background:var(--hair-2);}
+  .glegend .lg-note{font-size:10.5px;color:var(--faint);font-style:italic;margin-left:auto;}
+  @media(max-width:720px){.glegend .lg-note{margin-left:0;width:100%;}}
+  .svgscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  svg.flow{display:block;background:repeating-linear-gradient(0deg,transparent,transparent 29px,#f1f3f5 29px,#f1f3f5 30px),repeating-linear-gradient(90deg,transparent,transparent 29px,#f1f3f5 29px,#f1f3f5 30px);}
+  .node rect{cursor:pointer;}.node text{pointer-events:none;font-family:"IBM Plex Sans",sans-serif;}
+  .node .nid{font-size:9px;font-weight:600;letter-spacing:.01em;}
+  .node .nlbl{font-size:10px;}
+  .node.dim{opacity:.25;}.node.sel rect{stroke-width:2.6;}
+  .edge{fill:none;stroke:#BCC6CF;stroke-width:1.4;}.edge.hl{stroke:#2A3138;stroke-width:2.4;}.edge.dim{opacity:.08;}
+  .edge.doses{stroke:#B9791C;stroke-dasharray:4 3;}.edge.cascade{stroke:#1668A8;stroke-dasharray:6 3;}
+  .elabel{font-size:9px;fill:var(--faint);font-family:"IBM Plex Sans",sans-serif;}
+  .collabel{font-size:9.5px;fill:var(--faint);letter-spacing:.05em;text-transform:uppercase;font-weight:600;font-family:"IBM Plex Sans",sans-serif;}
+  .panel{border-top:1px solid var(--hair);padding:15px 17px;display:none;}.panel.show{display:block;}
+  .pid{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;}
+  .ptype{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:#fff;border-radius:3px;padding:3px 7px;font-weight:600;}
+  .pcid{font-size:11.5px;color:var(--graphite);background:var(--surface-2);border:1px solid var(--hair-2);border-radius:3px;padding:2px 7px;font-weight:500;}
+  .panel h3{font-weight:700;font-size:17px;margin:3px 0 10px;}
+  .psub{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:12px 0 6px;font-weight:600;}
+  .alias{font-size:11.5px;display:flex;gap:8px;align-items:baseline;}
+  .alias .ak{color:var(--muted);min-width:90px;}.alias .av{color:var(--ink);font-weight:600;}.alias .src{color:var(--faint);font-size:10px;}
+  .props{font-size:12.5px;color:var(--muted);line-height:1.55;}.props b{color:var(--ink);font-weight:600;}
+  .rels{display:flex;flex-wrap:wrap;gap:5px;}
+  .rel{font-size:10.5px;background:var(--surface-2);border:1px solid var(--hair-2);border-radius:100px;padding:2px 8px;color:var(--muted);}
+  .rel b{color:var(--graphite);font-weight:600;}
+  .clschip{font-size:11px;background:#F4ECFA;border:1px solid #E1CBF0;color:#5e2f80;border-radius:4px;padding:2px 8px;font-weight:500;}
+  .cmap{background:var(--surface);border:1px solid var(--hair);border-radius:6px;overflow:hidden;box-shadow:var(--shadow);}
+  .cmrow{display:grid;grid-template-columns:230px 1fr;border-top:1px solid var(--hair);padding:9px 14px;gap:12px;align-items:baseline;}
+  .cmrow:first-child{border-top:none;}
+  .cmrow .cc{font-size:11px;color:#5e2f80;font-weight:600;}
+  .cmrow .ci{display:flex;flex-wrap:wrap;gap:5px;}
+  .cmrow .ci .it{font-size:10.5px;background:var(--surface-2);border:1px solid var(--hair-2);border-radius:3px;padding:2px 7px;color:var(--muted);}
+  .cmrow .ci .n{font-size:10px;color:var(--faint);align-self:center;}
+  .inv{background:var(--surface);border:1px solid var(--hair);border-radius:6px;box-shadow:var(--shadow);overflow:hidden;}
+  details{border-top:1px solid var(--hair);}details:first-child{border-top:none;}
+  summary{cursor:pointer;padding:11px 15px;font-size:13.5px;display:flex;align-items:center;gap:9px;list-style:none;}
+  summary::-webkit-details-marker{display:none;}
+  summary .sw{width:10px;height:10px;border-radius:2px;flex:none;}
+  summary .nm{font-weight:600;}summary .pfx{font-size:11px;color:var(--faint);font-weight:500;}
+  summary .ct{margin-left:auto;font-size:11px;color:var(--faint);}
+  .invbody{padding:2px 15px 14px;display:flex;flex-wrap:wrap;gap:6px;}
+  .invitem{font-size:10.5px;background:var(--surface-2);border:1px solid var(--hair-2);border-radius:4px;padding:4px 9px;color:var(--muted);}
+  .invitem b{color:var(--ink);font-weight:600;}
+  .fbucket{margin-bottom:14px;}
+  .fbhead{display:flex;align-items:baseline;gap:9px;margin:0 0 8px;flex-wrap:wrap;}
+  .fbhead .bdot{width:10px;height:10px;border-radius:2px;flex:none;align-self:center;}
+  .fbhead .bt{font-weight:700;font-size:13px;color:var(--graphite);}.fbhead .bc{font-size:10.5px;color:var(--faint);}
+  .flags{background:var(--surface);border:1px solid var(--hair);border-radius:6px;overflow:hidden;box-shadow:var(--shadow);}
+  .flag{border-top:1px solid var(--hair);padding:11px 15px;display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;}
+  .flag:first-child{border-top:none;}
+  .flag .fn{font-size:11px;color:var(--faint);font-weight:600;padding-top:1px;}
+  .flag .ft{font-size:12.5px;line-height:1.5;}.flag .ft .ftt{font-weight:600;color:var(--ink);}
+  .flag .ft b{color:var(--t-fm);font-weight:600;}.flag .ft .cite{font-size:10px;color:var(--faint);white-space:nowrap;}
+  .conf{font-size:9px;letter-spacing:.04em;text-transform:uppercase;border-radius:3px;padding:3px 6px;align-self:start;justify-self:end;white-space:nowrap;font-weight:600;}
+  .conf.high{background:var(--red-bg);color:#A23226;border:1px solid var(--red-bd);}
+  .conf.med{background:var(--amber-bg);color:#8a5e12;border:1px solid var(--amber-bd);}
+  .conf.gap{background:#EEF1F2;color:#5C6B73;border:1px solid #D2D7DC;}
+  .conf.cleared{background:#E9F5EE;color:#19663f;border:1px solid #BFE3CD;}
+  .flag.cleared .ft b{color:var(--t-prc);}.flag.cleared .fn{color:var(--t-kc);}
+  .note{margin-top:20px;font-size:11.5px;color:var(--faint);line-height:1.6;max-width:860px;}
+
+  @media(max-width:720px){.types{grid-template-columns:1fr;}.cmrow{grid-template-columns:1fr;}.trow{grid-template-columns:64px 1fr;}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+
+  /* ---- combined-artifact additions ---- */
+  .topbar{position:relative;}
+  .maintabs{top:0;z-index:30;}
+  .emptyslot{background:var(--surface);border:1px dashed var(--hair-2);border-radius:6px;
+    padding:26px 20px;color:var(--faint);font-size:12.5px;line-height:1.6;text-align:center;}
+  .cmap.isempty,.inv.isempty,.flags.isempty{border:none;background:none;box-shadow:none;}
+  .tab.placeholder{cursor:default;color:var(--faint);border-style:dashed;background:var(--surface);}
+  .tab.placeholder:hover{border-color:var(--hair-2);}
+  .svgscroll>.emptyslot{margin:0;border:none;}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in">
+  <span class="brand"><span class="mk">M/D/1</span></span>
+  <span class="sub" id="topsub">WTP &middot; UPC45E-XB11 &middot; PSG Mojave</span>
+</div></header>
+
+<nav class="maintabs"><div class="maintabs-in">
+  <button class="mtab on" data-view="wtp">WTP</button>
+  <button class="mtab" data-view="clo">CLO</button>
+  <button class="mtab" data-view="wcu">WCU</button>
+</div></nav>
+
+<main class="wrap">
+<section class="view on" id="view-wtp">
+  <div class="lede">
+    <h1>Exhaustive ontology of the WTP for MIDA</h1>
+    <div class="srcline">UPC45E-XB11-M1000-AB001 &middot; Rev 00 &middot; 79 pp &middot; Danieli Environment &amp; Systems &middot; MIDA Hybrid</div>
+    <div class="countstrip"></div>
+  </div>
+
+  <h2 class="sec">1 &middot; Type system</h2>
+  <p class="seclead">Hover over object for further detail.</p>
+  <div class="types">
+    <div class="tbl">
+      <div class="th">Object types · prefix · standard</div>
+      <div class="trow" data-tip="FL — A place in the plant hierarchy: site, system, circuit or position. The 'where' an asset sits, independent of the equipment in it."><div class="k"><span class="sw" style="background:var(--t-fl)"></span>FL</div><div class="v"><b>Functional location</b> Site›System›Circuit <span class="std">ISA-95</span></div></div>
+      <div class="trow" data-tip="AST — One specific, tagged piece of installed equipment: a single physical instance, e.g. pump A21WPU."><div class="k"><span class="sw" style="background:var(--t-ast)"></span>AST</div><div class="v"><b>Asset</b> — equipment instance <span class="std">plant tag register</span></div></div>
+      <div class="trow" data-tip="EQC — A reusable kind of equipment. Knowledge bound to a class propagates to every instance and is portable across plants."><div class="k"><span class="sw" style="background:var(--t-eqc)"></span>EQC</div><div class="v"><b>Equipment class</b> — portable / licensable <span class="std">eCl@ss</span></div></div>
+      <div class="trow" data-tip="PRC — Something the plant does: cooling, filtration, blow-down, dosing."><div class="k"><span class="sw" style="background:var(--t-prc)"></span>PRC</div><div class="v"><b>Process / function</b></div></div>
+      <div class="trow" data-tip="PRM — A measurable quantity with a design value and setpoint: pH, conductivity, flow, concentration cycles."><div class="k"><span class="sw" style="background:var(--t-prm)"></span>PRM</div><div class="v"><b>Parameter</b> — design value + setpoint</div></div>
+      <div class="trow" data-tip="STR — Something that flows or is consumed: water, mill scale, oil, sludge, a dosing chemical."><div class="k"><span class="sw" style="background:var(--t-str)"></span>STR</div><div class="v"><b>Stream / material</b></div></div>
+      <div class="trow" data-tip="INS — A sensor or meter that reads a parameter: the hook into live signals and historian data."><div class="k"><span class="sw" style="background:var(--t-ins)"></span>INS</div><div class="v"><b>Instrument</b> — live-signal hook</div></div>
+      <div class="trow" data-tip="FM — A way the plant goes wrong: cavitation, scaling, corrosion, biological fouling."><div class="k"><span class="sw" style="background:var(--t-fm)"></span>FM</div><div class="v"><b>Failure mode</b> <span class="std">ISO 14224</span></div></div>
+      <div class="trow" data-tip="MOD — The state the plant is running in: steady, shutdown, backwash, standby. Decides which knowledge applies."><div class="k"><span class="sw" style="background:var(--t-mod)"></span>MOD</div><div class="v"><b>Operating mode</b></div></div>
+      <div class="trow" data-tip="DSC — The trade that owns the work: hydraulic, chemical, mechanical, electrical. Routes tasks to the right people."><div class="k"><span class="sw" style="background:var(--t-dsc)"></span>DSC</div><div class="v"><b>Discipline</b> — routing</div></div>
+      <div class="trow" data-tip="ACT — A person or organisation that acts and asserts knowledge: operator, OEM, chemical supplier."><div class="k"><span class="sw" style="background:var(--t-act)"></span>ACT</div><div class="v"><b>Actor / role</b></div></div>
+      <div class="trow" data-tip="DOC — A manual, drawing or datasheet the knowledge was extracted from."><div class="k"><span class="sw" style="background:var(--t-doc)"></span>DOC</div><div class="v"><b>Source document</b></div></div>
+      <div class="trow" data-tip="KC — A unit of verified knowledge, bound to nodes in this ontology."><div class="k"><span class="sw" style="background:var(--t-kc)"></span>KC</div><div class="v"><b>K-Card</b> — knowledge <span class="std">knowledge layer</span></div></div>
+      <div class="trow" data-tip="EVT — A time-stamped occurrence: an alarm or deviation. Reserved for the live / kinetic layer."><div class="k"><span class="sw" style="background:#1A1D21"></span>EVT</div><div class="v"><b>Event</b> <span class="std">reserved · kinetic</span></div></div>
+    </div>
+    <div class="tbl">
+      <div class="th">Link types</div>
+      <div class="linkrow"><div class="lk">contains</div><div class="ld">FL → FL (hierarchy)</div></div>
+      <div class="linkrow"><div class="lk">locatedAt</div><div class="ld">AST → FL</div></div>
+      <div class="linkrow"><div class="lk">instanceOf</div><div class="ld">AST → EQC — propagation edge</div></div>
+      <div class="linkrow"><div class="lk">feeds / cools</div><div class="ld">AST → AST / user</div></div>
+      <div class="linkrow"><div class="lk">carries / doses</div><div class="ld">circuit → STR / doser → circuit</div></div>
+      <div class="linkrow"><div class="lk">measures / governs</div><div class="ld">INS → PRM → PRC</div></div>
+      <div class="linkrow"><div class="lk">boundTo / addresses / appliesInMode</div><div class="ld">KC → node / FM / MOD</div></div>
+      <div class="linkrow"><div class="lk">sourcedFrom</div><div class="ld">KC → DOC</div></div>
+      <div class="th" style="border-top:1px solid var(--hair)">Action types</div>
+      <div class="linkrow"><div class="lk">verifyCard · contest</div><div class="ld">attest / challenge</div></div>
+      <div class="linkrow"><div class="lk">resolveAlias · override</div><div class="ld">map tag · localise class card</div></div>
+    </div>
+  </div>
+
+  <h2 class="sec">2 &middot; Instance graph</h2>
+  <p class="seclead">Click asset boxes for further detail.</p>
+  <div class="tabs ctabs"></div>
+  <div class="graphwrap">
+    <div class="gtitle"></div>
+    <div class="glegend">
+      <span class="lg-grp">Nodes:</span>
+      <span class="lg-item"><span class="lg-box solid"></span>WTP asset (documented here)</span>
+      <span class="lg-item"><span class="lg-box dash"></span>Cross-system asset (EAF / caster / mill — cooled, not part of WTP)</span>
+      <span class="lg-sep"></span>
+      <span class="lg-grp">Edges:</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#9aa6b0" stroke-width="1.6"/></svg>process flow / link</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#1668A8" stroke-width="1.8" stroke-dasharray="6 3"/></svg>blow-down cascade</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#B9791C" stroke-width="1.8" stroke-dasharray="4 3"/></svg>chemical dosing</span>
+      <span class="lg-note">Node colour = object type (see §1). Click a node for detail.</span>
+    </div>
+    <div class="svgscroll"><svg class="svg flow" role="img" aria-label="circuit flow graph"></svg></div>
+    <div class="panel"></div>
+  </div>
+
+  <h2 class="sec">3 &middot; Equipment-class map <span style="color:var(--faint);font-weight:600;">&mdash; instanceOf</span></h2>
+  <div class="cmap"></div>
+
+  <h2 class="sec">4 &middot; Full instance inventory</h2>
+  <div class="inv"></div>
+
+  <h2 class="sec">5 &middot; Data-quality flags</h2>
+  <div class="flags"></div>
+</section>
+
+<section class="view" id="view-clo">
+  <div class="lede">
+    <h1>Exhaustive ontology of the CLO Hydraulic Central Units for MIDA</h1>
+    <div class="srcline">UPC45E-JA01-H5701-UB010 &middot; Rev 00 &middot; 86 pp &middot; Danieli Hydraulics &middot; MIDA Hybrid</div>
+    <div class="countstrip"></div>
+  </div>
+
+  <h2 class="sec">1 &middot; Type system</h2>
+  <p class="seclead">Hover over object for further detail.</p>
+  <div class="types">
+    <div class="tbl">
+      <div class="th">Object types &middot; prefix &middot; standard</div>
+      <div class="trow" data-tip="FL — A place in the plant hierarchy: site, system, HPU area or internal circuit. The 'where' an asset sits, independent of the equipment in it."><div class="k"><span class="sw" style="background:var(--t-fl)"></span>FL</div><div class="v"><b>Functional location</b> Site&rsaquo;System&rsaquo;HPU&rsaquo;Circuit <span class="std">ISA-95</span></div></div>
+      <div class="trow" data-tip="AST — One installed sub-assembly tagged by drawing or position: a tank unit, pump set, valve stand, accumulator stand. The CLO manual identifies these by drawing number + area, not by unique component tags."><div class="k"><span class="sw" style="background:var(--t-ast)"></span>AST</div><div class="v"><b>Asset</b> — sub-assembly / drawing instance <span class="std">drawing register</span></div></div>
+      <div class="trow" data-tip="EQC — A reusable kind of equipment (vane pump, piston pump, screw pump, plate HX). Knowledge bound to a class propagates to every unit and is portable across plants — the licensable layer for the Danieli OEM-channel."><div class="k"><span class="sw" style="background:var(--t-eqc)"></span>EQC</div><div class="v"><b>Equipment class</b> — portable / licensable <span class="std">eCl@ss</span></div></div>
+      <div class="trow" data-tip="PRC — Something the unit does: pressurize, recirculate/condition, exchange heat, heat, filter, regulate pressure, bleed air, flush."><div class="k"><span class="sw" style="background:var(--t-prc)"></span>PRC</div><div class="v"><b>Process / function</b></div></div>
+      <div class="trow" data-tip="PRM — A measurable quantity with a design value and setpoint: oil pressure, flow, tank level, fluid temperature, accumulator pre-charge, blow-by."><div class="k"><span class="sw" style="background:var(--t-prm)"></span>PRM</div><div class="v"><b>Parameter</b> — design value + setpoint</div></div>
+      <div class="trow" data-tip="STR — Something that flows or is consumed: hydraulic fluid HLP 46, cooling water, nitrogen, detergent/flushing oil, grease, compressed air."><div class="k"><span class="sw" style="background:var(--t-str)"></span>STR</div><div class="v"><b>Stream / material</b></div></div>
+      <div class="trow" data-tip="INS — A sensor or meter that reads a parameter: pressure switch, pressure gauge, thermo element, level indicators, filter clogging indicator."><div class="k"><span class="sw" style="background:var(--t-ins)"></span>INS</div><div class="v"><b>Instrument</b> — live-signal hook</div></div>
+      <div class="trow" data-tip="FM — A way the unit goes wrong: cavitation, scaling/grease leakage, excessive temperature, lack of pressure, dry-running seizure, air in circuit, solenoid jamming, hose collapse."><div class="k"><span class="sw" style="background:var(--t-fm)"></span>FM</div><div class="v"><b>Failure mode</b> <span class="std">ISO 14224</span></div></div>
+      <div class="trow" data-tip="MOD — The state the unit is running in: commissioning, no-load test, steady automatic, manual/local, normal stop, emergency stop, long-period standstill, maintenance/LOTO, flushing."><div class="k"><span class="sw" style="background:var(--t-mod)"></span>MOD</div><div class="v"><b>Operating mode</b></div></div>
+      <div class="trow" data-tip="DSC — The trade that owns the work: hydraulic/rotating, mechanical, electrical, automation, safety, welding."><div class="k"><span class="sw" style="background:var(--t-dsc)"></span>DSC</div><div class="v"><b>Discipline</b> — routing</div></div>
+      <div class="trow" data-tip="ACT — A person or organisation that acts and asserts knowledge: Danieli Customers' Assistance, Danieli Hydraulics, department manager, operators, lubricant supplier, component OEMs."><div class="k"><span class="sw" style="background:var(--t-act)"></span>ACT</div><div class="v"><b>Actor / role</b></div></div>
+      <div class="trow" data-tip="DOC — A manual, hydraulic diagram, electric scheme, wiring diagram, datasheet or Danieli standard the knowledge was extracted from."><div class="k"><span class="sw" style="background:var(--t-doc)"></span>DOC</div><div class="v"><b>Source document</b></div></div>
+      <div class="trow" data-tip="KC — A unit of verified knowledge, bound to nodes in this ontology."><div class="k"><span class="sw" style="background:var(--t-kc)"></span>KC</div><div class="v"><b>K-Card</b> — knowledge <span class="std">knowledge layer</span></div></div>
+      <div class="trow" data-tip="EVT — A time-stamped occurrence: an alarm (type 0/1/2/3) or deviation. Reserved for the live / kinetic layer."><div class="k"><span class="sw" style="background:#1A1D21"></span>EVT</div><div class="v"><b>Event</b> <span class="std">reserved &middot; kinetic</span></div></div>
+    </div>
+    <div class="tbl">
+      <div class="th">Link types</div>
+      <div class="linkrow"><div class="lk">contains</div><div class="ld">FL &rarr; FL (hierarchy)</div></div>
+      <div class="linkrow"><div class="lk">locatedAt</div><div class="ld">AST &rarr; FL</div></div>
+      <div class="linkrow"><div class="lk">instanceOf</div><div class="ld">AST &rarr; EQC — propagation edge</div></div>
+      <div class="linkrow"><div class="lk">feeds / drives</div><div class="ld">pump &rarr; valve stand / user</div></div>
+      <div class="linkrow"><div class="lk">carries / cools</div><div class="ld">circuit &rarr; STR / water &rarr; HX</div></div>
+      <div class="linkrow"><div class="lk">measures / governs</div><div class="ld">INS &rarr; PRM &rarr; PRC</div></div>
+      <div class="linkrow"><div class="lk">boundTo / addresses / appliesInMode</div><div class="ld">KC &rarr; node / FM / MOD</div></div>
+      <div class="linkrow"><div class="lk">sourcedFrom</div><div class="ld">KC &rarr; DOC</div></div>
+      <div class="th" style="border-top:1px solid var(--hair)">Action types</div>
+      <div class="linkrow"><div class="lk">verifyCard &middot; contest</div><div class="ld">attest / challenge</div></div>
+      <div class="linkrow"><div class="lk">resolveAlias &middot; override</div><div class="ld">map drawing &middot; localise class card</div></div>
+    </div>
+  </div>
+
+  <h2 class="sec">2 &middot; Instance graph</h2>
+  <p class="seclead">Click asset boxes for further detail.</p>
+  <div class="tabs ctabs"></div>
+  <div class="graphwrap">
+    <div class="gtitle"></div>
+    <div class="glegend">
+      <span class="lg-grp">Nodes:</span>
+      <span class="lg-item"><span class="lg-box solid"></span>HPU asset (documented here)</span>
+      <span class="lg-item"><span class="lg-box dash"></span>Cross-system user (robot / tilter / stands / spooler — fed, not part of the HPU)</span>
+      <span class="lg-sep"></span>
+      <span class="lg-grp">Edges:</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#9aa6b0" stroke-width="1.6"/></svg>fluid flow / drive</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#1668A8" stroke-width="1.8" stroke-dasharray="6 3"/></svg>return / recirculation</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#B9791C" stroke-width="1.8" stroke-dasharray="4 3"/></svg>cooling water</span>
+      <span class="lg-note">Node colour = object type (see &sect;1). Click a node for detail.</span>
+    </div>
+    <div class="svgscroll"><svg class="svg flow" role="img" aria-label="circuit flow graph"></svg></div>
+    <div class="panel"></div>
+  </div>
+
+  <h2 class="sec">3 &middot; Equipment-class map <span style="color:var(--faint);font-weight:600;">&mdash; instanceOf</span></h2>
+  <div class="cmap"></div>
+
+  <h2 class="sec">4 &middot; Full instance inventory</h2>
+  <div class="inv"></div>
+
+  <h2 class="sec">5 &middot; Data-quality flags</h2>
+  <div class="flags"></div>
+</section>
+
+<section class="view" id="view-wcu">
+  <div class="lede">
+    <h1>Exhaustive ontology of the WCU (Water Cooling Unit) for MIDA</h1>
+    <div class="srcline">UPC45E-JA01-H7101-UB010 &middot; Rev 00 &middot; 72 pp &middot; Danieli Hydraulics &middot; MIDA Hybrid (Q-HEAT cooling)</div>
+    <div class="countstrip"></div>
+  </div>
+
+  <h2 class="sec">1 &middot; Type system</h2>
+  <p class="seclead">Hover over object for further detail.</p>
+  <div class="types">
+    <div class="tbl">
+      <div class="th">Object types · prefix · standard</div>
+      <div class="trow" data-tip="FL — A place in the plant hierarchy: site, system, circuit or position — the 'where' an asset sits, independent of the equipment in it."><div class="k"><span class="sw" style="background:var(--t-fl)"></span>FL</div><div class="v"><b>Functional location</b> Site›System›Circuit <span class="std">ISA-95</span></div></div>
+      <div class="trow" data-tip="AST — One installed sub-assembly tagged by item number, drawing and model code: tank unit (item 001), heat-exchanger unit (item 002), pump sets (92SV2N / 15SV02N). The WCU is one composed unit identified by item + drawing, not by unique component tags."><div class="k"><span class="sw" style="background:var(--t-ast)"></span>AST</div><div class="v"><b>Asset</b> — sub-assembly / item instance <span class="std">drawing + item register</span></div></div>
+      <div class="trow" data-tip="EQC — A reusable kind of equipment. Knowledge bound to a class propagates to every instance and is portable across plants."><div class="k"><span class="sw" style="background:var(--t-eqc)"></span>EQC</div><div class="v"><b>Equipment class</b> — portable / licensable <span class="std">eCl@ss</span></div></div>
+      <div class="trow" data-tip="PRC — Something the plant does: cooling, filtration, blow-down, dosing."><div class="k"><span class="sw" style="background:var(--t-prc)"></span>PRC</div><div class="v"><b>Process / function</b></div></div>
+      <div class="trow" data-tip="PRM — A measurable quantity with a design value and setpoint: pH, conductivity, flow, concentration cycles."><div class="k"><span class="sw" style="background:var(--t-prm)"></span>PRM</div><div class="v"><b>Parameter</b> — design value + setpoint</div></div>
+      <div class="trow" data-tip="STR — Something that flows or is consumed: water, mill scale, oil, sludge, a dosing chemical."><div class="k"><span class="sw" style="background:var(--t-str)"></span>STR</div><div class="v"><b>Stream / material</b></div></div>
+      <div class="trow" data-tip="INS — A sensor or meter that reads a parameter: the hook into live signals and historian data."><div class="k"><span class="sw" style="background:var(--t-ins)"></span>INS</div><div class="v"><b>Instrument</b> — live-signal hook</div></div>
+      <div class="trow" data-tip="FM — A way the plant goes wrong: cavitation, scaling, corrosion, biological fouling."><div class="k"><span class="sw" style="background:var(--t-fm)"></span>FM</div><div class="v"><b>Failure mode</b> <span class="std">ISO 14224</span></div></div>
+      <div class="trow" data-tip="MOD — The state the plant is running in: steady, shutdown, backwash, standby. Decides which knowledge applies."><div class="k"><span class="sw" style="background:var(--t-mod)"></span>MOD</div><div class="v"><b>Operating mode</b></div></div>
+      <div class="trow" data-tip="DSC — The trade that owns the work: hydraulic, chemical, mechanical, electrical. Routes tasks to the right people."><div class="k"><span class="sw" style="background:var(--t-dsc)"></span>DSC</div><div class="v"><b>Discipline</b> — routing</div></div>
+      <div class="trow" data-tip="ACT — A person or organisation that acts and asserts knowledge: operator, OEM, chemical supplier."><div class="k"><span class="sw" style="background:var(--t-act)"></span>ACT</div><div class="v"><b>Actor / role</b></div></div>
+      <div class="trow" data-tip="DOC — A manual, drawing or datasheet the knowledge was extracted from."><div class="k"><span class="sw" style="background:var(--t-doc)"></span>DOC</div><div class="v"><b>Source document</b></div></div>
+      <div class="trow" data-tip="KC — A unit of verified knowledge, bound to nodes in this ontology."><div class="k"><span class="sw" style="background:var(--t-kc)"></span>KC</div><div class="v"><b>K-Card</b> — knowledge <span class="std">knowledge layer</span></div></div>
+      <div class="trow" data-tip="EVT — A time-stamped occurrence: an alarm or deviation. Reserved for the live / kinetic layer."><div class="k"><span class="sw" style="background:#1A1D21"></span>EVT</div><div class="v"><b>Event</b> <span class="std">reserved · kinetic</span></div></div>
+    </div>
+    <div class="tbl">
+      <div class="th">Link types</div>
+      <div class="linkrow"><div class="lk">contains</div><div class="ld">FL → FL (hierarchy)</div></div>
+      <div class="linkrow"><div class="lk">locatedAt</div><div class="ld">AST → FL</div></div>
+      <div class="linkrow"><div class="lk">instanceOf</div><div class="ld">AST → EQC — propagation edge</div></div>
+      <div class="linkrow"><div class="lk">feeds / cools</div><div class="ld">AST → AST / user</div></div>
+      <div class="linkrow"><div class="lk">carries / doses</div><div class="ld">circuit → STR / doser → circuit</div></div>
+      <div class="linkrow"><div class="lk">measures / governs</div><div class="ld">INS → PRM → PRC</div></div>
+      <div class="linkrow"><div class="lk">boundTo / addresses / appliesInMode</div><div class="ld">KC → node / FM / MOD</div></div>
+      <div class="linkrow"><div class="lk">sourcedFrom</div><div class="ld">KC → DOC</div></div>
+      <div class="th" style="border-top:1px solid var(--hair)">Action types</div>
+      <div class="linkrow"><div class="lk">verifyCard · contest</div><div class="ld">attest / challenge</div></div>
+      <div class="linkrow"><div class="lk">resolveAlias · override</div><div class="ld">map tag · localise class card</div></div>
+    </div>
+  </div>
+
+  <h2 class="sec">2 &middot; Instance graph</h2>
+  <p class="seclead">Click asset boxes for further detail.</p>
+  <div class="tabs ctabs"></div>
+  <div class="graphwrap">
+    <div class="gtitle"></div>
+    <div class="glegend">
+      <span class="lg-grp">Nodes:</span>
+      <span class="lg-item"><span class="lg-box solid"></span>WCU asset (documented here)</span>
+      <span class="lg-item"><span class="lg-box dash"></span>Cross-system user (Q-HEAT — cooled, not part of the WCU)</span>
+      <span class="lg-sep"></span>
+      <span class="lg-grp">Edges:</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#9aa6b0" stroke-width="1.6"/></svg>demineralized flow / drive</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#1668A8" stroke-width="1.8" stroke-dasharray="6 3"/></svg>return / recirc / make-up</span>
+      <span class="lg-item"><svg class="lg-line" viewBox="0 0 26 6"><line x1="1" y1="3" x2="25" y2="3" stroke="#B9791C" stroke-width="1.8" stroke-dasharray="4 3"/></svg>raw cooling water / treatment</span>
+      <span class="lg-note">Node colour = object type (see §1). Click a node for detail.</span>
+    </div>
+    <div class="svgscroll"><svg class="svg flow" role="img" aria-label="circuit flow graph"></svg></div>
+    <div class="panel"></div>
+  </div>
+
+  <h2 class="sec">3 &middot; Equipment-class map <span style="color:var(--faint);font-weight:600;">&mdash; instanceOf</span></h2>
+  <div class="cmap"></div>
+
+  <h2 class="sec">4 &middot; Full instance inventory</h2>
+  <div class="inv"></div>
+
+  <h2 class="sec">5 &middot; Data-quality flags</h2>
+  <div class="flags"></div>
+</section>
+</main>
+
+<script>
+/* ============================================================
+   Combined MD1 ontology browser — WTP / CLO / WCU
+   One rendering engine, three datasets, scoped per view root.
+   ============================================================ */
+
+/* ---- main tabs ---- */
+const SUBS={
+  wtp:"WTP \u00b7 UPC45E-XB11 \u00b7 PSG Mojave",
+  clo:"CLO \u00b7 UPC45E-JA01 \u00b7 PSG Mojave",
+  wcu:"WCU \u00b7 UPC45E-JA01 \u00b7 PSG Mojave"
+};
+function setView(name){
+  document.querySelectorAll(".mtab").forEach(x=>x.classList.toggle("on",x.dataset.view===name));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id==="view-"+name));
+  const sub=document.getElementById("topsub"); if(sub&&SUBS[name]) sub.innerHTML=SUBS[name];
+  window.scrollTo(0,0);
+}
+
+/* ---- shared type table (colours + labels) ---- */
+const BASE_TYPE={FL:{c:"#3A4550",l:"Functional location"},AST:{c:"#275B9A",l:"Asset"},EQC:{c:"#7A3FA0",l:"Equipment class"},
+ PRC:{c:"#1F6E6A",l:"Process"},PRM:{c:"#B9791C",l:"Parameter"},STR:{c:"#1668A8",l:"Stream / material"},
+ INS:{c:"#0E7C86",l:"Instrument"},FM:{c:"#B23B30",l:"Failure mode"},MOD:{c:"#8a6d3b",l:"Operating mode"},
+ DSC:{c:"#5a4b8a",l:"Discipline"},ACT:{c:"#8a5a2b",l:"Actor"},DOC:{c:"#5C6B73",l:"Source document"},EXT:{c:"#7E8893",l:"Cross-system"}};
+const TYPE_WTP=Object.assign({},BASE_TYPE,{EXT:{c:"#7E8893",l:"Cross-system asset"}});
+const TYPE_CLO=Object.assign({},BASE_TYPE,{EXT:{c:"#7E8893",l:"Cross-system user"}});
+
+/* ---- per-dataset edge styling ---- */
+const edgeStyleWTP=(kind,lbl)=>"edge "+kind;
+const edgeStyleCLO=(kind,lbl)=>"edge "+(kind==="feeds"&&(lbl==="return"||lbl==="recirc"||lbl==="clean")?"carries":(kind==="cools"?"doses":(kind==="carries"?"":kind)));
+
+/* ---- per-dataset cross-system panel text ---- */
+const extWTP=(name)=>`Cross-system reference into <b>${name}</b> \u2014 the cooling duty links this WTP to the rest of the MIDA line.`;
+const extCLO=(name)=>`Cross-system user in <b>${name}</b> \u2014 fed by this HPU, not part of it.`;
+
+function confClass(c){return c==="gap"?"gap":(String(c).indexOf("high")===0?"high":"med");}
+
+/* ============================== DATASETS ============================== */
+const NODES_WTP={
+ SITE:{t:"FL",cid:"FL:0001",label:"PSG Mojave",al:[["contract","UPC45E","title"]],props:"Site. PSG micro-mill, MIDA Hybrid."},
+ WTP:{t:"FL",cid:"FL:0002",label:"Water Treatment Plant",al:[["danieli","XB11","doc"]],props:"Cools one steelmaking plant + one rolling mill."},
+ CIR_QW:{t:"FL",cid:"FL:0011",label:"QW · closed no-contact",al:[["circuit","QW/QWR","§1.6.1"]],props:"Closed loop, mould cooling. 120 m³/h."},
+ CIR_CW:{t:"FL",cid:"FL:0012",label:"CW · open no-contact",al:[["circuit","CW/CWR","§1.6.3"]],props:"Open, 3,349 m³/h, 9 user duties. NC conflicted."},
+ CIR_KW:{t:"FL",cid:"FL:0013",label:"KW · open contact",al:[["circuit","KW/KWR","§1.6.5"]],props:"Direct-contact, 850 m³/h, scale+oil. NC conflicted."},
+ CCM_MOULD:{t:"EXT",cid:"AST:EXT·CCM-MOULD",label:"Caster mould",cls:"EQC:CASTER·MOULD",props:"120 m³/h, 38/48°C, 5.02 GJ/h. §1.6.2",ext:"Caster"},
+ B21WEX:{t:"AST",cid:"AST:0031",label:"Plate heat exchanger",cls:"EQC:HX·PLATE",al:[["danieli","B21WEX","§1.6.1"]],props:"QW↔CW. 120 m³/h/side. §1.6.2"},
+ B01WTK:{t:"AST",cid:"AST:0051",label:"Cooled-water tank",cls:"EQC:TANK",al:[["danieli","B01WTK","§1.6.1"]],props:"QW collecting tank. §1.6.1"},
+ B21WPU:{t:"AST",cid:"AST:0061",label:"QW pump station",cls:"EQC:PUMP·CENT",al:[["danieli","B21WPU","§1.6.1"]],props:"Recirc to mould. 120 m³/h, 17/2 bar."},
+ B05WPD:{t:"AST",cid:"AST:0071",label:"Dosing pump (QW)",cls:"EQC:DOSE·PUMP",al:[["danieli","B05WPD","§1.6.1"]],props:"Nitrite/dispersant. §3.2.3"},
+ B81WPD:{t:"AST",cid:"AST:0072",label:"Dosing pump (QW)",cls:"EQC:DOSE·PUMP",al:[["danieli","B81WPD","§1.6.1"]],props:"Closed-circuit conditioning."},
+ A01WCT:{t:"AST",cid:"AST:0007",label:"Cooling tower (CW)",cls:"EQC:COOLTOWER·EVAP",al:[["danieli","A01WCT","§1.2"]],props:"3,876 m³/h, 70 MW, 48/35°C. Blowdown→KW. §1.6.4"},
+ A01WTK:{t:"AST",cid:"AST:0052",label:"CW basin",cls:"EQC:TANK",al:[["danieli","A01WTK","§1.6.3"]],props:"Cooled-water basin. §1.6.3"},
+ A21WPU:{t:"AST",cid:"AST:0041",label:"CW pump 21",cls:"EQC:PUMP·CENT",al:[["danieli","A21WPU","§1.6.3"]],props:"Recirc. §1.6.3"},
+ A22WPU:{t:"AST",cid:"AST:0042",label:"CW pump 22",cls:"EQC:PUMP·CENT",al:[["danieli","A22WPU","§1.6.3"]],props:"Recirc."},
+ A41WPU:{t:"AST",cid:"AST:0043",label:"CW pump 41",cls:"EQC:PUMP·CENT",al:[["danieli","A41WPU","§1.6.3"]],props:"Recirc."},
+ A61WPU:{t:"AST",cid:"AST:0047",label:"CW pump 61",cls:"EQC:PUMP·CENT",al:[["danieli","A61WPU","§1.6.3"]],props:"Recirc."},
+ INS_COND_CW:{t:"INS",cid:"INS:0003",label:"Conductivity meter (CW)",cls:"EQC:INS·COND",props:"CW blow-down control + alarm. §1.6.3"},
+ A05WPD:{t:"AST",cid:"AST:0073",label:"Dosing pump (CW)",cls:"EQC:DOSE·PUMP",al:[["danieli","A05WPD","§1.6.3"]],props:"Phosphonate-molybdate. §3.2.4"},
+ A06WPD:{t:"AST",cid:"AST:0074",label:"Dosing pump (CW)",cls:"EQC:DOSE·PUMP",al:[["danieli","A06WPD","§1.6.3"]],props:"Anti-scalant. §3.2.4"},
+ A81WPD:{t:"AST",cid:"AST:0075",label:"Dosing pump (CW)",cls:"EQC:DOSE·PUMP",al:[["danieli","A81WPD","§1.6.3"]],props:"Biocide shot. §3.2.4"},
+ CCM_TERT:{t:"EXT",cid:"AST:EXT·CCM-TERT",label:"Caster tertiary + hydraulics",props:"71 m³/h, 35/48°C, 3.9 GJ/h. §1.6.4",ext:"Caster"},
+ EAF_SHELL:{t:"EXT",cid:"AST:EXT·EAF-SHELL",label:"EAF shell + Venturi",props:"851 m³/h, 35/43°C, 28 GJ/h. Series→roof. §1.6.4",ext:"EAF"},
+ EAF_ROOF:{t:"EXT",cid:"AST:EXT·EAF-ROOF",label:"EAF roof",props:"450 m³/h, 43/51°C, 15 GJ/h. §1.6.4",ext:"EAF"},
+ ECS01:{t:"EXT",cid:"AST:EXT·ECS-01",label:"ECS #01",props:"886 m³/h, 35/43°C, 29 GJ/h. §1.6.4",ext:"ECS line"},
+ ECS02:{t:"EXT",cid:"AST:EXT·ECS-02",label:"ECS #02",props:"Series. 685 m³/h, 43/51°C, 23 GJ/h. §1.6.4",ext:"ECS line"},
+ LF_QONE:{t:"EXT",cid:"AST:EXT·LF-QONE",label:"Ladle furnace + Q-One",props:"264 m³/h, 35/47°C, 13 GJ/h. §1.6.4",ext:"LF / Q-One"},
+ FTP_ECO:{t:"EXT",cid:"AST:EXT·FTP-ECO",label:"Fume treatment + eco-primary",props:"497 m³/h, 35/55°C, 42 GJ/h. §1.6.4",ext:"Fume plant"},
+ IF_RM:{t:"EXT",cid:"AST:EXT·IF-RM",label:"Induction furnace + rolling mill",props:"660 m³/h, 35/42°C, 19 GJ/h. §1.6.4",ext:"IF / mill"},
+ CCM_SPRAY:{t:"EXT",cid:"AST:EXT·CCM-SPRAY",label:"Caster spray (secondary)",props:"134 m³/h, 32/52°C, 11 GJ/h, 18.5 bar. §1.6.6",ext:"Caster"},
+ STANDS_1_4:{t:"EXT",cid:"AST:EXT·STANDS-1-4",label:"Mill stands 1–4",props:"221 m³/h, 40/48°C, 7.4 GJ/h. §1.6.6",ext:"Mill"},
+ STANDS_5_16:{t:"EXT",cid:"AST:EXT·STANDS-5-16",label:"Mill stands 5–16",props:"336 m³/h, 40/48°C, 11 GJ/h. §1.6.6",ext:"Mill"},
+ FFB:{t:"EXT",cid:"AST:EXT·FFB",label:"Fast finishing block",props:"85 m³/h, 32/40°C, 2.8 GJ/h. §1.6.6",ext:"Mill"},
+ QTB_SPOOL:{t:"EXT",cid:"AST:EXT·QTB-SPOOL",label:"Bar quench + spooler",props:"275–620 m³/h, 32/40°C, 21 GJ/h. §1.6.6",ext:"Finishing"},
+ C51WTK:{t:"AST",cid:"AST:0081",label:"Collecting pit 51",cls:"EQC:TANK",al:[["danieli","C51WTK","§1.6.5"]],props:"CCM 2ndy + stands 1-4. 355 m³/h. §1.6.6"},
+ C52WTK:{t:"AST",cid:"AST:0082",label:"Collecting pit 52",cls:"EQC:TANK",al:[["danieli","C52WTK","§1.6.5"]],props:"Quench 1 + spool; reused for stands. §1.6.6"},
+ C53WTK:{t:"AST",cid:"AST:0083",label:"Collecting pit 53",cls:"EQC:TANK",al:[["danieli","C53WTK","§1.6.5"]],props:"Stands 5-16 + FFB + quench 2. 481 m³/h. §1.6.6"},
+ C51WSC:{t:"AST",cid:"AST:0021",label:"Screw classifier",cls:"EQC:CLASSIFIER·SCREW",al:[["danieli","C51WSC","§2.3.3"]],props:"Coarse scale, ~360 kg/h. §2.3.3"},
+ C81WTR:{t:"AST",cid:"AST:0011",label:"Longitudinal clarifier",cls:"EQC:CLARIFIER·HORIZ",al:[["danieli","C81WTR","§1.6.6"]],props:"906 m³, 850 m³/h, 40×6 m. §1.6.6"},
+ C81WSB:{t:"AST",cid:"AST:0012",label:"Scraper bridge",cls:"EQC:SCRAPER·BRIDGE",al:[["danieli","C81WSB","§1.6.5"]],props:"Scale + oil-skim blades. §1.6.5"},
+ C81WSK:{t:"AST",cid:"AST:0023",label:"Oil skimmer",cls:"EQC:SKIMMER·OIL",al:[["danieli","C81WSK","§1.6.5"]],props:"~1.7 kg/h oil. 1-2 h/shift. §4.2"},
+ C81WBK:{t:"AST",cid:"AST:0024",label:"Submersible bucket",cls:"EQC:BUCKET·SUBMERSIBLE",al:[["danieli","C81WBK","§1.6.5"]],props:"Scale removal. §1.6.5"},
+ C81WHS:{t:"AST",cid:"AST:0025",label:"Hoist",cls:"EQC:HOIST",al:[["danieli","C81WHS","§1.6.5"]],props:"Lifts the bucket. §1.6.5"},
+ C81WTK:{t:"AST",cid:"AST:0084",label:"Clarified-water tank",cls:"EQC:TANK",al:[["danieli","C81WTK","§1.6.5"]],props:"Settling overflow. §1.6.5"},
+ C81WPU:{t:"AST",cid:"AST:0046",label:"Filter feed pump",cls:"EQC:PUMP·CENT",al:[["danieli","C81WPU","§1.6.5"]],props:"Clarified → filters. §1.6.5"},
+ C81WFS:{t:"AST",cid:"AST:0019",label:"Sand filters ×3",cls:"EQC:FILTER·SAND",al:[["danieli","C81WFS 01-03","§1.6.6"]],props:"Ø3.2 m, 8 m²; 2 duty/1 standby; 60 m³/h/m². §1.6.6"},
+ C01WCT:{t:"AST",cid:"AST:0008",label:"Cooling tower (KW)",cls:"EQC:COOLTOWER·EVAP",al:[["danieli","C01WCT","§1.2"]],props:"890 m³/h, 19 MW, 49/32°C. §1.6.6"},
+ C21WPU:{t:"AST",cid:"AST:0044",label:"KW pump 21",cls:"EQC:PUMP·CENT",al:[["danieli","C21WPU","§1.6.5"]],props:"Cooled KW → users. §1.6.5"},
+ C42WPU:{t:"AST",cid:"AST:0045",label:"KW pump 42",cls:"EQC:PUMP·CENT",al:[["danieli","C42WPU","§1.6.5"]],props:"Return; temp transmitter. §1.6.5"},
+ C52WPS:{t:"AST",cid:"AST:0091",label:"Pump 52 (transfer)",cls:"EQC:PUMP·CENT",al:[["danieli","C52WPS","§1.6.5"]],props:"C52WTK → cool stands 1-16."},
+ C53WPS:{t:"AST",cid:"AST:0092",label:"Pump 53 (transfer)",cls:"EQC:PUMP·CENT",al:[["danieli","C53WPS","§1.6.5"]],props:"Dirty water → settling."},
+ C60WPS:{t:"AST",cid:"AST:0093",label:"Pump 60 (flushing)",cls:"EQC:PUMP·CENT",al:[["danieli","C60WPS","§1.6.5"]],props:"Channel flushing."},
+ INS_COND_KW:{t:"INS",cid:"INS:0005",label:"Conductivity meter (KW)",cls:"EQC:INS·COND",props:"KW blow-down control. §1.6.5"},
+ C05WPD:{t:"AST",cid:"AST:0076",label:"Dosing pump (KW)",cls:"EQC:DOSE·PUMP",al:[["danieli","C05WPD","§1.6.5"]],props:"Polyphosphate inhibitor. §3.2.5"},
+ C06WPD:{t:"AST",cid:"AST:0077",label:"Dosing pump (KW)",cls:"EQC:DOSE·PUMP",al:[["danieli","C06WPD","§1.6.5"]],props:"Phosphonate dispersant. §3.2.5"},
+ C81WPD:{t:"AST",cid:"AST:0078",label:"Dosing pump (KW)",cls:"EQC:DOSE·PUMP",al:[["danieli","C81WPD","§1.6.5"]],props:"Biocide. §3.2.5"},
+ F01WPU:{t:"AST",cid:"AST:0094",label:"Backwash water pump",cls:"EQC:PUMP·CENT",al:[["danieli","F01WPU","§1.6.6"]],props:"Backwash supply ~12.5 m³/h/m²."},
+ F01WBF:{t:"AST",cid:"AST:0095",label:"Backwash blower",cls:"EQC:BLOWER",al:[["danieli","F01WBF","§1.6.6"]],props:"Backwash air 600 m³/h. §1.6.6"},
+ F51WTK:{t:"AST",cid:"AST:0085",label:"Backwash drain pit",cls:"EQC:TANK",al:[["danieli","F51WTK","§1.6.5"]],props:"Spent backwash. §1.6.5"},
+ F51WPS:{t:"AST",cid:"AST:0096",label:"Drain-pit pump",cls:"EQC:PUMP·CENT",al:[["danieli","F51WPS","§1.6.5"]],props:"Drain → F11WTK."},
+ F11WTK:{t:"AST",cid:"AST:0086",label:"Polyelectrolyte basin",cls:"EQC:TANK",al:[["danieli","F11WTK","§1.6.5"]],props:"Polyelectrolyte mixing. §1.6.5"},
+ F11WPD:{t:"AST",cid:"AST:0079",label:"Polyelectrolyte doser",cls:"EQC:DOSE·PUMP",al:[["danieli","F11WPD","§1.6.5"]],props:"Flocculant → thickener."},
+ F11WTH:{t:"AST",cid:"AST:0017",label:"Sludge thickener",cls:"EQC:THICKENER",al:[["danieli","F11WTH","§1.6.5"]],props:"Sludge dewatering. §1.6.5"},
+ B03WEM:{t:"AST",cid:"AST:0001",label:"Emergency tank (mould)",cls:"EQC:TANK·ELEVATED",al:[["danieli","B03WEM","§1.6.7"]],props:"20 m³, 40 m³/h, 20 min, +33 m. §1.6.7"},
+ A03WEM:{t:"AST",cid:"AST:0002",label:"Emergency tank (open)",cls:"EQC:TANK·ELEVATED",al:[["danieli","A03WEM","§1.6.7"]],props:"50 m³, 520 m³/h, 5 min, +35 m. §1.6.7"},
+ EMERG_PUMPS:{t:"AST",cid:"AST:0097",label:"Emergency pumps",cls:"EQC:PUMP·CENT",props:"Electrical, network/generator. §1.6.7"},
+ GAS_PUMP:{t:"AST",cid:"AST:0098",label:"Gas-motor pump",cls:"EQC:PUMP·CENT",props:"Backup. §1.6.7"},
+ CITY_WATER:{t:"STR",cid:"STR:0009",label:"City water (backup)",props:"Final backup. §1.6.7"},
+ MAKEUP_WATER:{t:"STR",cid:"STR:0001",label:"Make-up water",props:"Pt 1: pH 7.5-8, TDS 160. ~77 m³/h CW. §1.5"},
+ SOFT_WATER:{t:"STR",cid:"STR:0002",label:"Soft water",props:"Pt 2: hardness <10. To QW. §1.6.8"},
+ BLOWDOWN_DISCHARGE:{t:"STR",cid:"STR:0010",label:"Blow-down discharge",props:"KW blow-down 19 m³/h → customer. §1.4"}
+};
+const CIRCUITS_WTP={
+ QW:{name:"QW · Closed no-contact (mould)",pfd:"PFD AD001",cols:[{l:"Cooled item",n:["CCM_MOULD"]},{l:"Heat exchange",n:["B21WEX"]},{l:"Tank & pump",n:["B01WTK","B21WPU"]},{l:"Dosing",n:["B05WPD","B81WPD"]}],
+  e:[["CCM_MOULD","B21WEX","feeds","hot"],["B21WEX","B01WTK","feeds",""],["B01WTK","B21WPU","feeds",""],["B21WPU","CCM_MOULD","feeds","supply"],["B05WPD","B01WTK","doses",""],["B81WPD","B01WTK","doses",""]]},
+ CW:{name:"CW · Open no-contact (9 users)",pfd:"PFD AD002",cols:[{l:"Heat rejection",n:["A01WCT","A01WTK"]},{l:"Return pumps",n:["A21WPU","A22WPU","A41WPU","A61WPU"]},{l:"Cooled users — non-contact",n:["B21WEX","CCM_TERT","EAF_SHELL","EAF_ROOF","ECS01","ECS02","LF_QONE","FTP_ECO","IF_RM"]},{l:"Control & dosing",n:["INS_COND_CW","A05WPD","A06WPD","A81WPD"]}],
+  e:[["A01WCT","A01WTK","feeds",""],["A01WTK","A21WPU","feeds",""],["A01WTK","A22WPU","feeds",""],["A01WTK","A41WPU","feeds",""],["A01WTK","A61WPU","feeds",""],["A21WPU","B21WEX","cools",""],["A22WPU","EAF_SHELL","cools",""],["A41WPU","ECS01","cools",""],["A61WPU","IF_RM","cools","supply"],["EAF_SHELL","EAF_ROOF","feeds","series"],["ECS01","ECS02","feeds","series"],["B21WEX","A01WCT","feeds",""],["CCM_TERT","A01WCT","feeds",""],["EAF_ROOF","A01WCT","feeds",""],["ECS02","A01WCT","feeds",""],["LF_QONE","A01WCT","feeds",""],["FTP_ECO","A01WCT","feeds",""],["IF_RM","A01WCT","feeds","return"],["INS_COND_CW","A01WCT","governs","blowdown"],["A05WPD","A01WTK","doses",""],["A06WPD","A01WTK","doses",""],["A81WPD","A01WTK","doses",""]]},
+ KW:{name:"KW · Open contact (scale + oil)",pfd:"PFD AD003",cols:[{l:"Contact users",n:["CCM_SPRAY","STANDS_1_4","STANDS_5_16","FFB","QTB_SPOOL"]},{l:"Collecting pits",n:["C51WTK","C52WTK","C53WTK"]},{l:"Coarse sep",n:["C51WSC"]},{l:"Settling / clarifier",n:["C81WTR","C81WSB","C81WSK","C81WBK","C81WHS"]},{l:"Clarified + filtration",n:["C81WTK","C81WPU","C81WFS"]},{l:"Heat reject + return",n:["C01WCT","C21WPU","C42WPU"]},{l:"Backwash & sludge",n:["F01WPU","F01WBF","F51WTK","F51WPS","F11WTK","F11WPD","F11WTH"]},{l:"Control & dosing",n:["INS_COND_KW","C05WPD","C06WPD","C81WPD","C52WPS","C53WPS","C60WPS"]}],
+  e:[["CCM_SPRAY","C51WTK","feeds",""],["STANDS_1_4","C51WTK","feeds",""],["QTB_SPOOL","C52WTK","feeds",""],["STANDS_5_16","C53WTK","feeds",""],["FFB","C53WTK","feeds",""],["C52WTK","C53WTK","feeds","re-cool"],["C51WTK","C51WSC","feeds",""],["C51WSC","C81WTR","feeds",""],["C53WTK","C81WTR","feeds",""],["C81WTR","C81WTK","feeds",""],["C81WTK","C81WPU","feeds",""],["C81WPU","C81WFS","feeds",""],["C81WFS","C01WCT","feeds",""],["C01WCT","C21WPU","feeds",""],["C01WCT","C42WPU","feeds",""],["C21WPU","CCM_SPRAY","cools","return"],["C42WPU","STANDS_5_16","cools","return"],["C81WSB","C81WTR","feeds",""],["C81WSK","C81WTR","feeds",""],["C81WBK","C81WTR","feeds",""],["C81WHS","C81WBK","feeds",""],["C81WFS","F51WTK","feeds","backwash"],["F01WPU","C81WFS","feeds",""],["F01WBF","C81WFS","feeds","air"],["F51WTK","F51WPS","feeds",""],["F51WPS","F11WTK","feeds",""],["F11WPD","F11WTK","doses",""],["F11WTK","F11WTH","feeds",""],["INS_COND_KW","C01WCT","governs","blowdown"],["C05WPD","C01WCT","doses",""],["C06WPD","C01WCT","doses",""],["C81WPD","C01WCT","doses",""]]},
+ EW:{name:"EW · Emergency cooling",pfd:"§1.6.7",cols:[{l:"Emergency tanks",n:["B03WEM","A03WEM"]},{l:"Protected users",n:["CCM_MOULD","IF_RM","EAF_SHELL","ECS01","CCM_TERT"]},{l:"Backup sequence",n:["EMERG_PUMPS","GAS_PUMP","CITY_WATER"]}],
+  e:[["B03WEM","CCM_MOULD","feeds","gravity"],["A03WEM","IF_RM","feeds","24 m³/h"],["A03WEM","EAF_SHELL","feeds","245"],["A03WEM","ECS01","feeds","240"],["A03WEM","CCM_TERT","feeds","11"],["A03WEM","EMERG_PUMPS","feeds","then"],["EMERG_PUMPS","GAS_PUMP","feeds","then"],["GAS_PUMP","CITY_WATER","feeds","then"]]},
+ MW:{name:"MW · Make-up & blow-down",pfd:"§1.6.8 / §1.4",cols:[{l:"Sources",n:["MAKEUP_WATER","SOFT_WATER"]},{l:"Circuits",n:["CIR_QW","CIR_CW","CIR_KW"]},{l:"Discharge",n:["BLOWDOWN_DISCHARGE"]}],
+  e:[["SOFT_WATER","CIR_QW","carries",""],["MAKEUP_WATER","CIR_CW","carries",""],["MAKEUP_WATER","CIR_KW","carries",""],["CIR_CW","CIR_KW","cascade","CW blow-down → KW make-up"],["CIR_KW","BLOWDOWN_DISCHARGE","carries","19 m³/h"]]}
+};
+const INV_WTP=[["FL","Functional locations","FL:",["Site · PSG Mojave","System · WTP (XB11)","QW closed circuit","CW open circuit","KW contact circuit","EW emergency","MW make-up / soft-water"]],
+ ["AST","Assets — internal (tagged)","AST:",["A01WCT / C01WCT towers","B21WEX heat exch","B01WTK / A01WTK / C81WTK tanks","C51/C52/C53WTK pits","F51WTK / F11WTK pits","B03WEM / A03WEM emerg tanks","C81WTR clarifier","C81WFS ×3 filters","C51WSC classifier","C81WSK skimmer","C81WSB scraper","C81WBK bucket","C81WHS hoist","F01WBF blower","F11WTH thickener","B21WPU pump","A21/A22/A41/A61WPU","C21WPU / C42WPU","C52/C53/C60WPS","C81WPU","F01WPU / F51WPS","emerg / gas pumps","B05/B81WPD","A05/A06/A81WPD","C05/C06/C81WPD","F11WPD"]],
+ ["EXT","Cross-system (cooled users)","AST:EXT·",["Caster mould","Caster tertiary","Caster spray","EAF shell + Venturi","EAF roof","ECS #01 / #02","Ladle furnace + Q-One","Fume treatment + eco-primary","Induction furnace + mill","Stands 1-4 / 5-16","Fast finishing block","Bar quench + spooler"]],
+ ["EQC","Equipment classes","EQC:",["Centrifugal pump","Dosing pump","Cooling tower","Plate heat exchanger","Tank / basin","Elevated emergency tank","Clarifier","Sand filter","Screw classifier","Oil skimmer","Scraper bridge","Submersible bucket","Hoist","Blower","Thickener","Conductivity meter"]],
+ ["PRC","Processes","PRC:",["Closed no-contact cooling","Open no-contact cooling","Contact cooling","Heat exchange","Coarse scale separation","Settling / clarification","Sand filtration","Oil skimming","Sludge thickening","Blow-down control","Make-up supply","Cleaning & passivation","Corrosion inhibition","Scale / deposit control","Biological control","Backwash","Emergency cooling","Corrosion monitoring","Water-hammer prevention"]],
+ ["STR","Streams / materials","STR:",["Make-up water (Pt 1)","Soft water (Pt 2)","QW water (Pt 3)","CW water (Pt 4)","KW water (Pt 5)","City water","Mill scale","Rolling oil","Sludge","Compressed air","Quartz sand","Polyphosphate / antifoam","Nitrite + dispersant","Phosphonate-molybdate","Organic-phosphate","Sodium hypochlorite","Non-oxidiser biocide","Polyelectrolyte","Corrosion inhibitor","Anti-scalant"]],
+ ["PRM","Parameters","PRM:",["pH","Conductivity","TDS","Total hardness","Calcium hardness","M-alkalinity","Chlorides","Sulphates","Silica","Total iron","Dissolved iron","Manganese","TOC","Oil & grease","TSS","Nitrate / Nitrite","Chlorine residual","Phosphate","Bacteria count","Flowrate","Pressure","Temperature","Heat removed","Concentration cycles NC","Evap / blow-down / make-up","Drift & mech losses","Langelier index","Ryznar index","Surface loading","Filtration rate","Backwash rate","Corrosion rate"]],
+ ["INS","Instruments","INS:",["Conductivity meter","Level transmitter","Level switches","Temperature transmitter","Temperature indicators","Flow transmitter","Diff-pressure switch","Level-control valves","Pressure gauges","Thermometers","Corrosion coupons"]],
+ ["FM","Failure modes","FM:",["Cavitation","Scaling","Corrosion","Biological fouling","Fouling (silt/iron)","Clogging","Water hammer","High temperature","Reduced flow / low pressure","Foaming","Vapor-column separation"]],
+ ["MOD","Operating modes","MOD:",["Commissioning","Steady operation","Start-up / fill & flush","Shutdown","Standstill / maintenance","Emergency cooling","Backwash","Cleaning & passivation","Cold standby","Low-flow / single-pump"]],
+ ["DSC","Disciplines","DSC:",["Hydraulic / rotating","Chemical / water treatment","Mechanical","Electrical","Automation","Safety"]],
+ ["ACT","Actors / roles","ACT:",["Danieli Customers' Assistance","Danieli Replacement Office","Danieli WTP Dept","Chemical supplier","Operators / foreman","Hart G. (compiled)","Colladel L. (checked)","Nardella A. (approved)"]],
+ ["DOC","Source documents","DOC:",["M1000-AB001 (manual)","P7100-AD001..003 (PFDs)","P7100-AD100..107 (P&IDs)","G0100-AD001..004 (layout)","P7400-AD101 (air)","XA00-P7000-AS101 (flushing)","AA00-W1001-UN001 (safety)","Annex A","Annex B"]]];
+const BUCKETS_WTP=[
+ {title:"Hard contradictions",note:"same quantity stated differently; arithmetic confirms",dot:"var(--t-fm)",items:[
+   ["CW concentration cycles","Stated <b>2.80</b> (p.8) but the blow-down calc divides by (2.0−1) and §2.2.1 / §3.2 both use <b>2.0</b>.","p.8 / p.25 / p.32","high"],
+   ["KW concentration cycles (×3)","Stated <b>3.00</b> (p.8) and <b>2.8</b> (§2.3.1 / §3.2), but the p.28 blow-down only reconciles at <b>1.4</b>.","p.8 / p.27 / p.28","high"],
+   ["Settling-basin TSS values","Inlet given as <b>300</b> (p.17), <b>500</b> (p.16 / p.29 text) and <b>700</b> (p.29 calc) — p.29 contradicts itself.","p.16 / p.17 / p.29","high"],
+   ["CW Langelier pHs arithmetic","Printed pHs = <b>7.07</b>, but the sum = <b>7.25</b>; the next lines use 7.26. KW page does it correctly.","p.22 vs p.27","high"],
+   ["CW tower average inlet temp","Evaporation calc uses <b>41.4 °C</b>; tables show <b>48–49 °C</b>. Only 41.4 matches the result.","p.13 / p.21 / p.25","high–med"],
+   ["CW scale/corrosion verdicts transposed","p.22 labels Langelier 0.54 ‘stable’ and Ryznar 6.73 ‘scaling’; the index table (p.23) says the opposite.","p.22 vs p.23","med"],
+   ["Filter sand volume","Run-length calc uses <b>20 m³</b>; the §9.1 spec gives <b>21.3 m³</b> (geometrically correct).","p.30 vs p.63","med"]]},
+ {title:"Unit / conversion errors",note:"value right, converted figure wrong",dot:"var(--t-prm)",items:[
+   ["845 m³/h → gpm","Written <b>4,095 gpm</b>; correct ≈ <b>3,720 gpm</b> (what p.29 uses).","p.30","high"],
+   ["KW tower inlet 38 °C → °F","Given <b>68 °F</b>; 38 °C = <b>100 °F</b>.","p.26","high"],
+   ["A03WEM tank height","<b>+35 m</b> annotated <b>108 ft</b>; 35 m ≈ 115 ft.","p.19","med"],
+   ["Conductivity units","Make-up table implies µS/cm; Annex A logs ‘S/m’.","p.9 / Annex A","med"],
+   ["Backwash air-flow unit","Air ‘600 m³/h’ tagged with liquid unit ‘(2,642 gpm)’.","p.17","med"],
+   ["Duplicate loss label","‘DL = 0.05%’ listed twice; one should be ML.","p.28","med"]]},
+ {title:"Gaps & caveats",note:"not contradictions, but flagged",dot:"#939BA2",items:[
+   ["Chemical dosing program — GAP","Products, functions, dosages deferred to the local chemical supplier.","§3.2.8 · p.38","gap"],
+   ["Source self-caveat","Settling-basin figures “are approximations and may not match real-world data.”","p.17","gap"],
+   ["Terminology drift","“Concentration cycles NC” and “concentration coefficient C” used interchangeably.","§2.2.2 / §2.3.2","gap"]]}];
+
+const NODES_CLO={
+ /* ---- functional locations ---- */
+ SITE:{t:"FL",cid:"FL:0001",label:"Pacific Steel Group",al:[["contract","UPC45E","title"]],props:"Site. PSG long-product micro-mill."},
+ SYS:{t:"FL",cid:"FL:0002",label:"CLO Hydraulic Central Units",al:[["danieli","JA01 / CLO","doc"]],props:"4 compact HPUs feeding valve stands, blocks and loose controls on interlocked machines. Total 1st fill 9,350 L. §0/§1.1"},
+ FL_WS:{t:"FL",cid:"FL:0011",label:"Workshop-area HPU",al:[["dwg","000-000-282-738","§1.1 DS-1"]],props:"500 L tank; 1 vane pump; 150 l/min @ 100 bar; 30 kW. Feeds robot + tilter. §1.1"},
+ FL_RM:{t:"FL",cid:"FL:0012",label:"Rolling-mill-area HPU",al:[["dwg","000-000-287-443","§1.1 DS-2"]],props:"2,000 L; 3 piston pumps (2+1) 150 l/min @ 130 bar 45 kW; recirc 2 screw (1+1) 200 l/min @ 6 bar 5.5 kW. 11 valve stands + 1 accumulator stand. §1.1"},
+ FL_FN:{t:"FL",cid:"FL:0013",label:"Finishing-area HPU",al:[["dwg","000-000-292-419","§1.1 DS-3"]],props:"3,000 L; 4 piston (3+1) 200 l/min @ 130 bar 55 kW; recirc 2 screw (1+1) 300 l/min @ 5 bar 7.5 kW. 7 valve blocks + 1 accumulator stand. §1.1"},
+ FL_SP:{t:"FL",cid:"FL:0014",label:"Spooler-area HPU",al:[["dwg","000-000-292-061","§1.1 DS-4"]],props:"3,000 L; 4 piston (3+1) 200 l/min @ 130 bar 55 kW; recirc 2 screw (1+1) 300 l/min @ 5 bar 7.5 kW. Identical class to Finishing. §1.1"},
+ CIR_TANK:{t:"FL",cid:"FL:0021",label:"Tank unit + control",props:"Holds HLP 46; air bleeder, sight glass, level, heater, thermo element, gauge, pressure switch, safety valve, return filter, HX. §1.2"},
+ CIR_REC:{t:"FL",cid:"FL:0022",label:"Recirculation / conditioning (LP)",props:"Screw pumps clean+condition the contaminated part, convey fluid to the clean part. Low pressure 5-6 bar. §1.2"},
+ CIR_HP:{t:"FL",cid:"FL:0023",label:"Delivery / high-pressure",props:"Piston/vane pumps feed circuit at 100-130 bar through delivery filters to valve stands/blocks. §1.2"},
+ CIR_COOL:{t:"FL",cid:"FL:0024",label:"Water cooling (indirect)",props:"Water-oil HX cools fluid above operating temp; on/off water solenoid at 45/41 °C. §1.2/§2"},
+
+ /* ---- equipment instances per area (sub-assemblies, tagged by drawing) ---- */
+ WS_TANK:{t:"AST",cid:"AST:WS-TK",label:"Tank unit 500 L",cls:"EQC:TANK·HPU",al:[["dwg","000-000-324-089","§10.1"],["hyd","000-000-282-751","§10.1"]],props:"500 L (132 gal); 1st fill 550 L (146 gal). Carbon-steel assembly tank. §1.1 DS-1"},
+ WS_PUMP:{t:"AST",cid:"AST:WS-MP",label:"Vane motor-pump unit",cls:"EQC:PUMP·VANE",al:[["spec","30 kW / 150 l/min / 100 bar","§1.1"]],props:"Single vane pump. 1800 rpm, 460 V/60 Hz. Workshop is the only vane-pump unit. §1.1/§4.3.2"},
+ WS_VS_ROB:{t:"AST",cid:"AST:WS-VS-ROB",label:"Valve stand · robot",cls:"EQC:VALVE-STAND",al:[["dwg","8.882787.W","§10.1"]],props:"Qty 1. §1.1 DS-1"},
+ WS_VS_TIL:{t:"AST",cid:"AST:WS-VS-TIL",label:"Valve stand · tilter",cls:"EQC:VALVE-STAND",al:[["dwg","8.882786.V","§10.1"]],props:"Qty 1. §1.1 DS-1"},
+ EX_ROBOT:{t:"EXT",cid:"AST:EXT·ROBOT",label:"Robot",props:"Workshop user fed by vane HPU. §1.1",ext:"Workshop"},
+ EX_TILTER:{t:"EXT",cid:"AST:EXT·TILTER",label:"Tilter",props:"Workshop user. §1.1",ext:"Workshop"},
+
+ RM_TANK:{t:"AST",cid:"AST:RM-TK",label:"Tank unit 2,000 L",cls:"EQC:TANK·HPU",al:[["dwg","000-000-287-443","§10.1"],["hyd","000-000-282-497","§10.1"]],props:"2,000 L (528 gal); 1st fill 2,200 L (581 gal). 40' container. §1.1 DS-2"},
+ RM_PUMP:{t:"AST",cid:"AST:RM-MP",label:"Main piston-pump set ×3 (2+1)",cls:"EQC:PUMP·PISTON",al:[["spec","45 kW / 150 l/min / 130 bar","§1.1"]],props:"Variable-displacement; 1 in reserve. Pressure compensator. §1.1/§4.3.1"},
+ RM_REC:{t:"AST",cid:"AST:RM-RC",label:"Recirculation screw set ×2 (1+1)",cls:"EQC:PUMP·SCREW",al:[["spec","5.5 kW / 200 l/min / 6 bar","§1.1"]],props:"Cleans + conditions; 1 standby. §1.1/§4.3.2",ext:""},
+ RM_VS_ESS:{t:"AST",cid:"AST:RM-VS-ESS",label:"Valve stands · ESS roughing ×8",cls:"EQC:VALVE-STAND",al:[["dwg","000-000-713-876 / -877","§10.1"]],props:"Qty 8. Stands 9H-16V. §1.1 DS-2"},
+ RM_VS_FIN:{t:"AST",cid:"AST:RM-VS-FIN",label:"Valve stands · finishing ×2",cls:"EQC:VALVE-STAND",al:[["dwg","000-000-282-499 / -500","§10.1"]],props:"Qty 2. §1.1 DS-2"},
+ RM_VS_FUR:{t:"AST",cid:"AST:RM-VS-FUR",label:"Valve stand · furnace exit ×1",cls:"EQC:VALVE-STAND",al:[["dwg","000-000-713-875","§10.1"]],props:"Qty 1. §1.1 DS-2"},
+ RM_ACC:{t:"AST",cid:"AST:RM-AC",label:"Accumulator stand ×1",cls:"EQC:ACCUMULATOR",al:[["spec","N2 pre-charge","§4.3.2"]],props:"Hydro-pneumatic. Pre-charge ¼-⅓ of max pressure. §1.1/§7.3.1-13"},
+ EX_ESS:{t:"EXT",cid:"AST:EXT·ESS",label:"ESS roughing rolling area",props:"8 valve stands. §1.1 DS-2",ext:"Rolling mill"},
+ EX_FINROLL:{t:"EXT",cid:"AST:EXT·FINROLL",label:"Finishing rolling area",props:"2 valve stands. §1.1 DS-2",ext:"Rolling mill"},
+ EX_FUREXIT:{t:"EXT",cid:"AST:EXT·FUREXIT",label:"Furnace exit area",props:"1 valve stand. §1.1 DS-2",ext:"Rolling mill"},
+
+ FN_TANK:{t:"AST",cid:"AST:FN-TK",label:"Tank unit 3,000 L",cls:"EQC:TANK·HPU",al:[["dwg","000-000-292-419","§10.1"],["hyd","000-000-282-772","§10.1"]],props:"3,000 L (793 gal); 1st fill 3,300 L (872 gal). Container 5. §1.1 DS-3"},
+ FN_PUMP:{t:"AST",cid:"AST:FN-MP",label:"Main piston-pump set ×4 (3+1)",cls:"EQC:PUMP·PISTON",al:[["spec","55 kW / 200 l/min / 130 bar","§1.1"]],props:"Variable-displacement; 1 reserve. §1.1 DS-3"},
+ FN_REC:{t:"AST",cid:"AST:FN-RC",label:"Recirculation screw set ×2 (1+1)",cls:"EQC:PUMP·SCREW",al:[["spec","7.5 kW / 300 l/min / 5 bar","§1.1"]],props:"1 standby. §1.1 DS-3"},
+ FN_VB_BUN:{t:"AST",cid:"AST:FN-VB-BUN",label:"Valve blocks · bundle formers ×3",cls:"EQC:VALVE-BLOCK",al:[["dwg","000-000-767-708","§10.1"]],props:"Qty 3. §1.1 DS-3"},
+ FN_VB_APR:{t:"AST",cid:"AST:FN-VB-APR",label:"Valve blocks · aprons ×3",cls:"EQC:VALVE-BLOCK",props:"Qty 3. §1.1 DS-3"},
+ FN_VB_DIV:{t:"AST",cid:"AST:FN-VB-DIV",label:"Valve block · diverter drum LH trolley ×1",cls:"EQC:VALVE-BLOCK",al:[["dwg","000-000-831-682","§10.1"]],props:"Qty 1. §1.1 DS-3"},
+ FN_ACC:{t:"AST",cid:"AST:FN-AC",label:"Accumulator stand ×1",cls:"EQC:ACCUMULATOR",props:"Hydro-pneumatic. §1.1 DS-3"},
+ EX_BUNDLE:{t:"EXT",cid:"AST:EXT·BUNDLE",label:"Bundle formers",props:"3 valve blocks. §1.1 DS-3",ext:"Finishing"},
+ EX_APRON:{t:"EXT",cid:"AST:EXT·APRON",label:"Aprons",props:"3 valve blocks. §1.1 DS-3",ext:"Finishing"},
+ EX_DRUM:{t:"EXT",cid:"AST:EXT·DRUM",label:"Diverter — drum LH trolley",props:"§1.1 DS-3",ext:"Finishing"},
+ EX_CBED:{t:"EXT",cid:"AST:EXT·CBED",label:"Cooling-bed area",props:"Finishing sub-area; own hyd diagram 000-000-282-838 (§10.1). Not enumerated in DS-3 — drawing-sourced.",ext:"Finishing"},
+
+ SP_TANK:{t:"AST",cid:"AST:SP-TK",label:"Tank unit 3,000 L",cls:"EQC:TANK·HPU",al:[["dwg","000-000-292-061","§10.1"],["hyd","000-000-282-700","§10.1"]],props:"3,000 L (793 gal); 1st fill 3,300 L (872 gal). Container 7. §1.1 DS-4"},
+ SP_PUMP:{t:"AST",cid:"AST:SP-MP",label:"Main piston-pump set ×4 (3+1)",cls:"EQC:PUMP·PISTON",al:[["spec","55 kW / 200 l/min / 130 bar","§1.1"]],props:"Same class as Finishing. §1.1 DS-4"},
+ SP_REC:{t:"AST",cid:"AST:SP-RC",label:"Recirculation screw set ×2 (1+1)",cls:"EQC:PUMP·SCREW",al:[["spec","7.5 kW / 300 l/min / 5 bar","§1.1"]],props:"1 standby. §1.1 DS-4"},
+ SP_VB_DIV2:{t:"AST",cid:"AST:SP-VB-DIV2",label:"Valve block · diverter #2 ×1",cls:"EQC:VALVE-BLOCK",al:[["dwg","000-000-282-501","§10.1"]],props:"Qty 1. §1.1 DS-4"},
+ SP_VB_WBX:{t:"AST",cid:"AST:SP-VB-WBX",label:"Valve blocks · water box #1-5 ×5",cls:"EQC:VALVE-BLOCK",al:[["dwg","000-000-282-702","§10.1"]],props:"Qty 5. §1.1 DS-4"},
+ SP_VS_LINE:{t:"AST",cid:"AST:SP-VS-LINE",label:"Valve stands · spooler line A-B ×4",cls:"EQC:VALVE-STAND",al:[["dwg","000-000-775-239 … -242","§10.1"]],props:"Qty 4. §1.1 DS-4"},
+ SP_VS_FORK:{t:"AST",cid:"AST:SP-VS-FORK",label:"Valve stand · evacuation fork ×1",cls:"EQC:VALVE-STAND",al:[["dwg","000-000-775-243","§10.1"]],props:"Qty 1. §1.1 DS-4"},
+ SP_VS_COIL:{t:"AST",cid:"AST:SP-VS-COIL",label:"Valve stand · coil lifting ×1",cls:"EQC:VALVE-STAND",al:[["dwg","000-000-775-244","§10.1"]],props:"Qty 1. §1.1 DS-4"},
+ EX_DIV2:{t:"EXT",cid:"AST:EXT·DIV2",label:"Diverter #2",props:"§1.1 DS-4",ext:"Spooler"},
+ EX_WBOX:{t:"EXT",cid:"AST:EXT·WBOX",label:"Water box #1-5",props:"5 valve blocks. §1.1 DS-4",ext:"Spooler"},
+ EX_SPLINE:{t:"EXT",cid:"AST:EXT·SPLINE",label:"Spooler line A-B",props:"4 valve stands. §1.1 DS-4",ext:"Spooler"},
+ EX_FORK:{t:"EXT",cid:"AST:EXT·FORK",label:"Evacuation fork",props:"§1.1 DS-4",ext:"Spooler"},
+ EX_COIL:{t:"EXT",cid:"AST:EXT·COIL",label:"Coil lifting system",props:"§1.1 DS-4",ext:"Spooler"},
+
+ /* ---- representative internal-circuit nodes (generic, from §1.2 + §7.4.12) ---- */
+ INT_TANK:{t:"AST",cid:"AST:INT-TK",label:"Tank unit + control devices",cls:"EQC:TANK·HPU",props:"Clean + contaminated parts. Air bleeder, sight glass, level, heater, thermo, gauge, pressure switch, safety valve. §1.2"},
+ INT_HEAT:{t:"AST",cid:"AST:INT-HT",label:"Electric heating element",cls:"EQC:HEATER·IMMERSION",props:"Brings fluid to operating temp at start-up. ins/dis 35/40 °C. §1.2/§7.4.8"},
+ INT_THERMO:{t:"INS",cid:"INS:INT-TE",label:"Thermo element",cls:"EQC:INS·TEMP",props:"Tank temp; start 30 °C, max 55 °C; drives heater + water valve. §1.1/§1.2"},
+ INT_REC:{t:"AST",cid:"AST:INT-RC",label:"Recirculation screw pumps",cls:"EQC:PUMP·SCREW",props:"Self-priming; condition contaminated→clean part. §1.2/§4.3.2"},
+ INT_MAIN:{t:"AST",cid:"AST:INT-MP",label:"Main pumps (piston/vane)",cls:"EQC:PUMP·PISTON",props:"Feed circuit at correct pressure; 1 in reserve. §1.2/§4.3.1"},
+ INT_FREC:{t:"AST",cid:"AST:INT-F-REC",label:"Recirculation filter (LP)",cls:"EQC:FILTER·LP",props:"Replace requires HPU shutdown (depressurise recirc). §7.4.12"},
+ INT_FDEL:{t:"AST",cid:"AST:INT-F-DEL",label:"Delivery filter (HP)",cls:"EQC:FILTER·HP",props:"Per pump; replace via backup pump, no full shutdown. §7.4.12"},
+ INT_FPIL:{t:"AST",cid:"AST:INT-F-PIL",label:"Pilot-line filter (HP, dual)",cls:"EQC:FILTER·HP",props:"Twin parallel + 3-way valve; replace at zero pressure, no shutdown. §7.4.12"},
+ INT_FRET:{t:"AST",cid:"AST:INT-F-RET",label:"Return filter (LP, dual)",cls:"EQC:FILTER·LP",props:"Twin parallel + 3-way valve; on return line. §1.2/§7.4.12"},
+ INT_HX:{t:"AST",cid:"AST:INT-HX",label:"Water-oil heat exchanger (plate)",cls:"EQC:HX·PLATE",props:"Cools fluid above operating temp; clean plates ~every 3 months. §1.2/§7.3.1-7"},
+ INT_ACC:{t:"AST",cid:"AST:INT-AC",label:"Hydro-pneumatic accumulator",cls:"EQC:ACCUMULATOR",props:"N2 pre-charge; isolate during flushing. §7.3.1-13/§7.4.17"},
+ INT_PSW:{t:"INS",cid:"INS:INT-PS",label:"Pressure switch (delivery)",cls:"EQC:INS·PSW",props:"On delivery line; calibrated via reaction spring. §1.2/§7.4.4"},
+ INT_SAFE:{t:"AST",cid:"AST:INT-SV",label:"Safety / relief valve",cls:"EQC:VALVE·SAFETY",props:"Discharges oil when delivery reduced; calibrated on hand wheel. §1.2/§7.4.5"},
+ INT_VS:{t:"AST",cid:"AST:INT-VS",label:"Valve stands & blocks",cls:"EQC:VALVE-STAND",props:"Flow + distribution control near machines; reducing valves + flow regulators. §1.2"},
+ STR_HLP:{t:"STR",cid:"STR:0001",label:"Hydraulic fluid HLP 46",props:"Danieli type 10 / L-HM-46 / DIN 51524-2; per Danieli Std 0.000.001. 9,350 L total. §1.1/§7.2"},
+ STR_WATER:{t:"STR",cid:"STR:0002",label:"Cooling water (indirect)",props:"To HX; per Danieli spec 2.4.305. §2/§4.2",ext:""},
+ STR_N2:{t:"STR",cid:"STR:0003",label:"Nitrogen",props:"Accumulator pre-charge; 3.5 bar portable storage. §6.6.3/§7.3.1"}
+};
+const CIRCUITS_CLO={
+ WS:{name:"Workshop · vane HPU (robot + tilter)",pfd:"DS-1 · 282-738",cols:[
+    {l:"Tank & pump",n:["WS_TANK","WS_PUMP"]},
+    {l:"Distribution",n:["WS_VS_ROB","WS_VS_TIL"]},
+    {l:"Users",n:["EX_ROBOT","EX_TILTER"]}],
+  e:[["WS_TANK","WS_PUMP","feeds",""],["WS_PUMP","WS_VS_ROB","feeds","100 bar"],["WS_PUMP","WS_VS_TIL","feeds",""],
+     ["WS_VS_ROB","EX_ROBOT","feeds","drive"],["WS_VS_TIL","EX_TILTER","feeds","drive"],
+     ["EX_ROBOT","WS_TANK","feeds","return"]]},
+ RM:{name:"Rolling mill · piston + screw-recirc HPU",pfd:"DS-2 · 287-443",cols:[
+    {l:"Tank & recirc",n:["RM_TANK","RM_REC"]},
+    {l:"Main pumps",n:["RM_PUMP"]},
+    {l:"Accumulator",n:["RM_ACC"]},
+    {l:"Valve stands",n:["RM_VS_ESS","RM_VS_FIN","RM_VS_FUR"]},
+    {l:"Users",n:["EX_ESS","EX_FINROLL","EX_FUREXIT"]}],
+  e:[["RM_REC","RM_TANK","feeds","recirc"],["RM_TANK","RM_PUMP","feeds",""],["RM_PUMP","RM_ACC","feeds",""],
+     ["RM_PUMP","RM_VS_ESS","feeds","130 bar"],["RM_PUMP","RM_VS_FIN","feeds",""],["RM_PUMP","RM_VS_FUR","feeds",""],
+     ["RM_VS_ESS","EX_ESS","feeds","drive"],["RM_VS_FIN","EX_FINROLL","feeds","drive"],["RM_VS_FUR","EX_FUREXIT","feeds","drive"],
+     ["EX_ESS","RM_TANK","feeds","return"]]},
+ FN:{name:"Finishing · piston + screw-recirc HPU",pfd:"DS-3 · 292-419",cols:[
+    {l:"Tank & recirc",n:["FN_TANK","FN_REC"]},
+    {l:"Main pumps",n:["FN_PUMP"]},
+    {l:"Accumulator",n:["FN_ACC"]},
+    {l:"Valve blocks",n:["FN_VB_BUN","FN_VB_APR","FN_VB_DIV"]},
+    {l:"Users",n:["EX_BUNDLE","EX_APRON","EX_DRUM","EX_CBED"]}],
+  e:[["FN_REC","FN_TANK","feeds","recirc"],["FN_TANK","FN_PUMP","feeds",""],["FN_PUMP","FN_ACC","feeds",""],
+     ["FN_PUMP","FN_VB_BUN","feeds","130 bar"],["FN_PUMP","FN_VB_APR","feeds",""],["FN_PUMP","FN_VB_DIV","feeds",""],
+     ["FN_VB_BUN","EX_BUNDLE","feeds","drive"],["FN_VB_APR","EX_APRON","feeds","drive"],["FN_VB_DIV","EX_DRUM","feeds","drive"],
+     ["FN_VB_DIV","EX_CBED","feeds",""],["EX_BUNDLE","FN_TANK","feeds","return"]]},
+ SP:{name:"Spooler · piston + screw-recirc HPU",pfd:"DS-4 · 292-061",cols:[
+    {l:"Tank & recirc",n:["SP_TANK","SP_REC"]},
+    {l:"Main pumps",n:["SP_PUMP"]},
+    {l:"Valve stands / blocks",n:["SP_VB_DIV2","SP_VB_WBX","SP_VS_LINE","SP_VS_FORK","SP_VS_COIL"]},
+    {l:"Users",n:["EX_DIV2","EX_WBOX","EX_SPLINE","EX_FORK","EX_COIL"]}],
+  e:[["SP_REC","SP_TANK","feeds","recirc"],["SP_TANK","SP_PUMP","feeds",""],
+     ["SP_PUMP","SP_VB_DIV2","feeds","130 bar"],["SP_PUMP","SP_VB_WBX","feeds",""],["SP_PUMP","SP_VS_LINE","feeds",""],["SP_PUMP","SP_VS_FORK","feeds",""],["SP_PUMP","SP_VS_COIL","feeds",""],
+     ["SP_VB_DIV2","EX_DIV2","feeds","drive"],["SP_VB_WBX","EX_WBOX","feeds","drive"],["SP_VS_LINE","EX_SPLINE","feeds","drive"],["SP_VS_FORK","EX_FORK","feeds","drive"],["SP_VS_COIL","EX_COIL","feeds","drive"],
+     ["EX_SPLINE","SP_TANK","feeds","return"]]},
+ INT:{name:"Internal circuit · representative HPU (§1.2 / §7.4.12)",pfd:"composition + filter map",cols:[
+    {l:"Tank & thermal",n:["INT_TANK","INT_HEAT","INT_THERMO"]},
+    {l:"Recirc (LP)",n:["INT_REC","INT_FREC"]},
+    {l:"Main pumps (HP)",n:["INT_MAIN","INT_FDEL"]},
+    {l:"Pressure control",n:["INT_SAFE","INT_PSW","INT_ACC"]},
+    {l:"Filters & cooling",n:["INT_FPIL","INT_FRET","INT_HX"]},
+    {l:"Distribution",n:["INT_VS"]}],
+  e:[["STR_HLP","INT_TANK","carries","HLP 46"],["INT_HEAT","INT_TANK","feeds","heat"],["INT_THERMO","INT_HEAT","governs",""],
+     ["INT_TANK","INT_REC","feeds",""],["INT_REC","INT_FREC","feeds",""],["INT_FREC","INT_TANK","feeds","clean"],
+     ["INT_TANK","INT_MAIN","feeds",""],["INT_MAIN","INT_FDEL","feeds",""],["INT_FDEL","INT_FPIL","feeds",""],
+     ["INT_MAIN","INT_SAFE","feeds","relief"],["INT_PSW","INT_MAIN","governs",""],["INT_FDEL","INT_ACC","feeds",""],
+     ["INT_FPIL","INT_VS","feeds","HP"],["INT_VS","INT_FRET","feeds","return"],["INT_FRET","INT_TANK","feeds",""],
+     ["STR_WATER","INT_HX","cools","water"],["INT_HX","INT_TANK","cools","oil"],["STR_N2","INT_ACC","carries","pre-charge"]]}
+};
+
+/* ---- graph render (adapted from WTP ingestion) ---- */;
+const INV_CLO=[
+ ["FL","Functional locations","FL:",["Site &middot; PSG","System &middot; CLO HPU (JA01)","Workshop area (282-738)","Rolling mill area (287-443)","Finishing area (292-419)","Spooler area (292-061)","Tank unit + control","Recirculation / conditioning","Delivery / high-pressure","Water cooling (indirect)"]],
+ ["AST","Assets &mdash; sub-assemblies (drawing-tagged)","AST:",["WS tank 500 L","WS vane pump","WS valve stands &times;2","RM tank 2,000 L","RM piston ×3 (2+1)","RM screw recirc ×2","RM valve stands ×11","RM accumulator stand","FN tank 3,000 L","FN piston ×4 (3+1)","FN screw recirc ×2","FN valve blocks ×7","FN accumulator stand","SP tank 3,000 L","SP piston ×4 (3+1)","SP screw recirc ×2","SP valve stands/blocks ×11","INT tank+control","INT heating element","INT recirc pumps","INT main pumps","INT delivery filter (HP)","INT recirc filter (LP)","INT pilot filter (HP dual)","INT return filter (LP dual)","INT plate HX","INT accumulator","INT safety valve","INT valve stands/blocks"]],
+ ["EXT","Cross-system users (fed)","AST:EXT&middot;",["Robot","Tilter","ESS roughing rolling area","Finishing rolling area","Furnace exit area","Bundle formers","Aprons","Diverter — drum LH trolley","Cooling-bed area","Diverter #2","Water box #1-5","Spooler line A-B","Evacuation fork","Coil lifting system"]],
+ ["EQC","Equipment classes","EQC:",["Vane pump","Piston pump (variable displ.)","Screw pump (recirc)","Electric motor","Tank unit (HPU)","Immersion heating element","Plate heat exchanger","Hydro-pneumatic accumulator","Filter — high pressure","Filter — low pressure","Air-bleeder filter","Safety / relief valve","Pressure-reducing valve","Solenoid valve","Pressure switch","Thermo element","Valve stand","Valve block","Junction box","Flow regulator"]],
+ ["PRC","Processes / functions","PRC:",["Fluid pressurization","Recirculation / conditioning","Heat exchange / cooling","Start-up heating","Filtration (HP / LP)","Pressure regulation","Pressure relief / safety","Air bleeding","Plant flushing / fluxing","Pump blow-by check","Accumulator pre-charge","Fluid distribution","Solenoid blow-by test","Pressure-switch calibration"]],
+ ["PRM","Parameters","PRM:",["Tank capacity 500/2000/3000 L","1st fill 550/2200/3300 L","Oil pressure 100/130 bar","Recirc pressure 5/6 bar","Flow 150/200/300 l/min","Motor power 30/45/55 kW","Recirc motor 5.5/7.5 kW","Start temp 30 &deg;C","Max temp 55 &deg;C","Heater ins/dis 35/40 &deg;C","Water valve on/off 45/41 &deg;C","Bearing limit ~70 &deg;C","Accumulator pre-charge ¼-⅓ max / 3.5 bar","Solenoid blow-by &le;100 cm&sup3;/min","Filtration 10/5 &micro;m &middot; 5/3 &micro;m","Variable displ. 40%","O-ring stretch 5% / 10%","Under-load start 10-20 kg/cm&sup2;","460 V / 60 Hz / 1800 rpm","Tightening M4-M20 (1.2-80 Nm)"]],
+ ["STR","Streams / materials","STR:",["Hydraulic fluid HLP 46 (type 10)","Cooling water (indirect)","Nitrogen (pre-charge)","Detergent / flushing oil","Grease (bearings)","Compressed air (drying)","Corrosion-protection paint"]],
+ ["INS","Instruments","INS:",["Pressure switch (delivery)","Pressure gauge / manometer","Thermo element","Temperature indicator","Electric level indicator","Sight glass / optical level","Filter clogging indicator","Flow meter (blow-by)","Megger (tool)","Contact thermometer (tool)","Stethoscope (tool)","Vibration device — Doppler (tool)"]],
+ ["FM","Failure modes","FM:",["Cavitation","Noise & vibration","Excessive motor-pump temp","Excessive fluid temp","Grease / seal leakage","Lack of pressure","Stoppage of the unit","Failure to start motor","Air in circuit / foaming","Dry-running seizure","Solenoid jamming","Hose collapse / kink","Water in oil","Thermo-element failure"]],
+ ["MOD","Operating modes","MOD:",["Commissioning / no-load test","Machine prep & tune-up","Steady automatic","Manual / local","Setup & production change","Normal stop","Emergency stop (alarm 0/1/2/3)","Long-period standstill (>1 mo)","Maintenance / LOTO","Flushing","Backup / standby pump"]],
+ ["DSC","Disciplines","DSC:",["Hydraulic / rotating","Mechanical","Electrical","Automation","Safety","Welding"]],
+ ["ACT","Actors / roles","ACT:",["Danieli Customers' Assistance","Danieli Hydraulics (HYD) — approved","Danieli Manuals Office (MUM/DCS)","Department manager / foreman","Operators / maintenance operators","Lubricant supplier (LLD)","Component OEMs (third parties)"]],
+ ["DOC","Source documents","DOC:",["UPC45E-JA01-H5701-UB010 (manual)","Hydraulic diagrams (282-497/-772/-700/-751/-837/-838)","Assembly drawings (per area)","Electric schemes (287-534/292-423/292-065)","Wiring diagrams (713-875…877 / 775-239…244)","NGI / LUB / LLD / LTC","SSR / RPR / DDS","Danieli Std 0.000.001 (fluids)","Std 2.1.001 (painting/colour)","Std 2.4.305 (cooling water)","Std 2.4.603 (torques)","Std 2.4.106 / 2.8.006 (welding)","Std 2.8.302/303 (paint life)","Component catalogues (aux systems)"]]];
+const BUCKETS_CLO=[
+ {title:"Content errors & contradictions",note:"text that misstates the machine",dot:"var(--t-fm)",items:[
+   ["Piston-pump start = vane-pump text","The &sect;7.4.2 \u201cStarting the piston pumps\u201d list tells you to pulse-start \u201cquickly so as to facilitate the <b>vane exit</b>\u201d and then \u201cdismantle the pump and see whether the <b>vanes</b> are free to run in the <b>rotor slots</b>\u201d \u2014 piston pumps have no vanes. The vane-pump procedure (correct under &sect;4.3.2 \u201cVane pump\u201d) was pasted into the piston section. Note: the parallel &sect;4.3.1 \u201cStarting the piston pumps\u201d list is clean.","&sect;7.4.2 (cf. &sect;4.3.1 / &sect;4.3.2)","high"],
+   ["\u201cMaintenance tools\u201d section number","TOC (p.2) numbers it <b>7.4</b>, directly after 7.4.17; the body heading (p.62) is <b>7.5</b>. Two different numbers for one section.","p.2 vs p.62","med"],
+   ["&sect;9.2 title drift","TOC: \u201cDismantling the equipments / auxiliary equipments\u201d; body: \u201cDismantling of auxiliary equipment / systems.\u201d","p.3 vs p.77","low"]]},
+ {title:"Transcription, spelling & rounding",note:"source artifacts; design values unaffected",dot:"var(--t-prm)",items:[
+   ["550 L printed as 146 gal","Workshop 1st-fill 550 L = 145.3 gal but is printed <b>146</b> (DS-1, &sect;7.2.1). The +1 propagates into the printed grand total <b>2,471 gal</b> (the manual summed the rounded per-unit gallons; 9,350 L converts directly to \u2248 2,470). All litre figures are internally consistent \u2014 only the gallon round is loose.","DS-1 / &sect;7.2.1","low"],
+   ["\u201cDaneili type 10\u201d","Vendor name misspelled in the hydraulic-fluid row of all four data sheets (should be <b>Danieli</b>).","DS-1\u2026DS-4","low"],
+   ["\u201cDate sheet Nr.\u201d","Header reads \u201cDate sheet\u201d on all four spec sheets (should be <b>Data sheet</b>).","&sect;1.1","low"],
+   ["\u201cstaring pumps: 30&nbsp;&deg;C\u201d","Thermo-element row in every data sheet (should be <b>starting pumps</b>).","&sect;1.1","low"],
+   ["\u201chighter / quitter / orther\u201d","Pump start-up prose: \u201cset highter,\u201d \u201cbecomes quitter,\u201d \u201creverse orther.\u201d","&sect;4.3 / &sect;7.4","low"]]},
+ {title:"Gaps, caveats & modelling notes",note:"not errors, but flagged for the graph",dot:"#939BA2",items:[
+   ["Class-and-count, not instance-tagged","Unlike the WTP manual (per-pump tags like A21WPU), the CLO identifies components by <b>quantity per area</b> and by <b>drawing number</b>, not unique instance tags. Federation here runs through the &sect;10 drawing register, and most reusable knowledge lives on the <b>equipment-class</b> layer.","&sect;1.1 / &sect;10","gap"],
+   ["&sect;1.2 composition is the union, not per-unit","The generic composition lists recirculation screw pumps + accumulators, but the <b>Workshop</b> unit (DS-1) has a single vane pump, no recirc pump and no accumulator stand.","&sect;1.2 vs DS-1","gap"],
+   ["Finishing \u2261 Spooler HPU","DS-3 and DS-4 are spec-identical (3,000 L; 4 piston 3+1; 200 l/min; 130 bar; 55 kW; recirc 300 l/min). One shared class card covers both \u2014 good propagation test.","DS-3 / DS-4","gap"],
+   ["Accumulator stands are per-unit, not universal","An accumulator stand is listed only for <b>Rolling mill</b> (DS-2) and <b>Finishing</b> (DS-3). <b>Workshop</b> (DS-1) and <b>Spooler</b> (DS-4) data sheets list none, and &sect;1.2 composition never mentions accumulators \u2014 so the graph carries them only on RM and FN. Maintenance prose hedges them throughout as \u201cif present / if foreseen.\u201d","DS-1\u2026DS-4 / &sect;1.2 / &sect;6.2","gap"],
+   ["Accumulator pre-charge \u2014 two figures","<b>3.5 bar</b> for long-period storage (&sect;6.6.3) vs <b>\u00bc-\u2153 of max operating pressure</b> (&sect;7.3.1-13). Different contexts; a reader could conflate them.","&sect;6.6.3 / &sect;7.3.1","gap"],
+   ["Many values deferred to OEM","Lubrication type/quantity/interval, max allowed pump pressure, bolt torques (per drawing) all \u201csee manufacturer's documentation / drawings.\u201d","&sect;7.1.1 / &sect;4.3.1","gap"]]}];
+
+
+/* ============================== WCU dataset (UPC45E-JA01-H7101-UB010) ============================== */
+const NODES_WCU={
+ SITE:{t:"FL",cid:"FL:0001",label:"Pacific Steel Group",al:[["contract","UPC45E","title"]],props:"Site. PSG micro-mill (IH / Q-HEAT)."},
+ SYS:{t:"FL",cid:"FL:0002",label:"Water Cooling Unit (WCU)",al:[["danieli","JA01 / WCU C-2000","doc"],["code","JA01H01SDK","§1"]],props:"Cools the Q-HEAT via a water-to-water plate HX. 2,000 L tank, deionizer, main + emergency pumps. §0/§1"},
+ CIR_QW:{t:"FL",cid:"FL:0011",label:"QW · internal demin loop",props:"De-ionized water to Q-HEAT; 160 m³/h @ 5.3 bar, 38→47 °C. §1.1/§1.2"},
+ CIR_EX:{t:"FL",cid:"FL:0012",label:"External raw-water circuit",props:"Industrial water to HX cold side; carries heat to exterior. 204 m³/h, 35→43.4 °C. §1.2/§4.2"},
+ CIR_DI:{t:"FL",cid:"FL:0013",label:"Deionizer / treatment branch",props:"Resin ion-exchange keeps conductivity low; make-up connection. §1.2"},
+ CIR_EW:{t:"FL",cid:"FL:0014",label:"EW · emergency cooling",props:"Emergency demin pump 24 m³/h + emergency cooling-water circuit. §4.3.2/§1.1"},
+ CIR_PN:{t:"FL",cid:"FL:0015",label:"Pneumatic / control system",props:"Compressed air drives butterfly + solenoid valves; PIS min-pressure consent. §1.2/§4.2"},
+
+ Q_HEAT:{t:"EXT",cid:"AST:EXT·Q-HEAT",label:"Q-HEAT (induction heating)",props:"Cooled apparatus: electrical switchboards + heating coils / inductor QW100. The duty the WCU exists to cool. §1/§1.2",ext:"Q-HEAT"},
+ EXT_RAW:{t:"EXT",cid:"AST:EXT·RAW-CIRCUIT",label:"External raw-water circuit",props:"Main industrial-water circuit; HX cold side 35→43.4 °C, carries heat to exterior. Per Danieli spec 2.4.305. §1.2/§4.2",ext:"Raw-water plant"},
+
+ TANK:{t:"AST",cid:"AST:0001",label:"Tank unit 2,000 L",cls:"EQC:TANK·HPU",al:[["item","001","§2"],["dwg","000-000-408-238","§10.1"]],props:"Stainless AISI 304L; 2,000 L (528 gal). Holds de-ionized water; air-bleed, sight glass, level. §1.1/§1.2"},
+ MAIN_PUMP:{t:"AST",cid:"AST:0002",label:"Main centrifugal pumps ×4 (2+1)",cls:"EQC:PUMP·CENT",al:[["model","92SV2N(3006T)","§1.1"]],props:"102 m³/h, outlet 6.4 bar, 30 kW (40 hp), 460 V/60 Hz; 1 stand-by. Qty conflict — see flags. §1.1"},
+ EMG_PUMP:{t:"AST",cid:"AST:0003",label:"Emergency centrifugal pump ×1",cls:"EQC:PUMP·CENT",al:[["model","15SV02N(0306T)","§1.1"]],props:"24 m³/h, outlet 2.7 bar, 3 kW (4 hp). Backup demin / cooling. §1.1/§4.3.2"},
+ HX:{t:"AST",cid:"AST:0004",label:"Plate heat exchanger",cls:"EQC:HX·PLATE",al:[["item","002","§2"]],props:"Water-to-water. 204 m³/h both sides; hot 46.4→38 °C, cold 35→43.4 °C. §1.1/§1.2"},
+ DEI_TANK:{t:"AST",cid:"AST:0005",label:"Deionizer vessel ×2",cls:"EQC:DEIONIZER·VESSEL",props:"Ion-exchange resin; purifies internal water to keep conductivity low. Qty 2; inlet 1 m³/h @ 5.4 bar. §1.1/§1.2/§7.3.8"},
+ MOTOR_MAIN:{t:"AST",cid:"AST:0006",label:"Electric motor (main pump)",cls:"EQC:MOTOR·ELECTRIC",props:"30 kW (40 hp), 460 V/60 Hz; bearings long-life grease, limit ~70 °C. §1.1/§7.1.1"},
+ MOTOR_EMG:{t:"AST",cid:"AST:0007",label:"Electric motor (emergency pump)",cls:"EQC:MOTOR·ELECTRIC",props:"3 kW (4 hp), 460 V/60 Hz. §1.1/§7.1.1"},
+ BV_QW100:{t:"AST",cid:"AST:0010",label:"Butterfly valve · QW100 (pneu)",cls:"EQC:VALVE·BTRFLY·PNEU",props:"Automatic flow regulation on the inductor QW100 delivery line. §1.2"},
+ BV_REFILL:{t:"AST",cid:"AST:0011",label:"Butterfly valve · refill (pneu)",cls:"EQC:VALVE·BTRFLY·PNEU",props:"Automatic make-up of demineralized water. §1.2/§4.2"},
+ BV_RETURN:{t:"AST",cid:"AST:0012",label:"Butterfly valves · return (pneu)",cls:"EQC:VALVE·BTRFLY·PNEU",props:"Deviate return into HX or bypass the exchanger. §1.2/§4.3.2"},
+ SOL_DEI:{t:"AST",cid:"AST:0013",label:"Solenoid valve · deionizer",cls:"EQC:VALVE·SOLENOID",props:"Controls flow into the treatment circuit. §1.2/§4.3.2"},
+ REG_VALVE:{t:"AST",cid:"AST:0014",label:"Regulating valve(s)",cls:"EQC:VALVE·REGULATING",props:"Set demin-return + emergency-line flow to design. §4.3.2"},
+ BALL_VALVES:{t:"AST",cid:"AST:0015",label:"Ball valves · discharge",cls:"EQC:VALVE·BALL",props:"Discharge water into pipes at various circuit points. §1.2"},
+ AIR_FILTER:{t:"AST",cid:"AST:0020",label:"Air line filter",cls:"EQC:FILTER·AIR",props:"Pneumatic line; periodic cup + cartridge cleaning. §7.2.1-6c"},
+ PRESS_REG:{t:"AST",cid:"AST:0021",label:"Pressure regulator",cls:"EQC:VALVE·PRESS-REG",props:"Sets pneumatic line pressure. §7.2.1-6d"},
+ AIR_LUBR:{t:"AST",cid:"AST:0022",label:"Air lubricator",cls:"EQC:LUBRICATOR·AIR",props:"Lubricates pneumatic actuators. §7.2.1-6e"},
+ JB:{t:"AST",cid:"AST:0030",label:"Junction box (J.B.)",cls:"EQC:JUNCTION-BOX",props:"Waterproof terminal boards; auxiliary connections. §3.2/§7.2.1-14"},
+
+ PSW:{t:"INS",cid:"INS:0001",label:"Pressure switch (delivery, PIS)",cls:"EQC:INS·PSW",props:"Controls delivery-line pressure; min-pressure consent for pneumatic valves. Calibrated via reaction spring. §1.2/§7.3.4"},
+ TEMP_TX:{t:"INS",cid:"INS:0002",label:"Temperature transmitter (tank)",cls:"EQC:INS·TEMP",props:"Tank water temperature; drives pump-stop + HX start/stop switches. §1.2/§4.3.1"},
+ THERMO_CTRL:{t:"INS",cid:"INS:0003",label:"Thermo controller (CWR / return)",cls:"EQC:INS·TEMP",props:"Controls water temp in the CWR + return line. §1.2"},
+ COND_TX:{t:"INS",cid:"INS:0004",label:"Conductivity transmitter",cls:"EQC:INS·COND",props:"Monitors conductivity; governs the deionizer solenoid. §1.2"},
+ LEVEL_IND:{t:"INS",cid:"INS:0005",label:"Electric level indicators",cls:"EQC:INS·LEVEL·ELEC",props:"Tank level; drive automatic refill (STOP REFILL / empty-tank sensor). §1.2/§4.2"},
+ SIGHT:{t:"INS",cid:"INS:0006",label:"Sight glass (optical level)",cls:"EQC:INS·LEVEL·SIGHT",props:"Visual tank level. §1.2"},
+ FLOW_TX:{t:"INS",cid:"INS:0007",label:"Flow transmitter (FISH)",cls:"EQC:INS·FLOW",props:"Demin-return + de-ionizing branch flow; setpoint via regulating valve. §4.3.2"},
+ PGAUGE:{t:"INS",cid:"INS:0008",label:"Pressure gauge / manometer",cls:"EQC:INS·PGAUGE",props:"Visual delivery / CWR pressure. §1.2/§4.3.2"},
+
+ STR_DEMIN:{t:"STR",cid:"STR:0001",label:"De-ionized / demineralized water",props:"Internal circuit. 160 m³/h delivery, 5.3 bar, 38→47 °C. §1.1/§1.2"},
+ STR_RAW:{t:"STR",cid:"STR:0002",label:"Industrial cooling water (raw)",props:"External circuit / HX cold side. Per Danieli spec 2.4.305. §1.2/§4.2"},
+ STR_MAKEUP:{t:"STR",cid:"STR:0003",label:"Make-up demineralized water",props:"Automatic refill via butterfly valve. §1.2/§4.2"},
+ STR_AIR:{t:"STR",cid:"STR:0004",label:"Compressed air",props:"Pneumatic actuation; per Danieli std 2.4.306. §4.2"},
+ STR_RESIN:{t:"STR",cid:"STR:0005",label:"Ion-exchange resin",props:"Deionizer charge; replace when make-up frequency >100 % of new-resin baseline; exhaust to waste drums. §7.2.1-12"},
+ STR_GREASE:{t:"STR",cid:"STR:0006",label:"Grease (bearings)",props:"Motor + pump bearing lubrication; per Danieli std 0.000.001 / LLD. §7.1"}
+};
+const CIRCUITS_WCU={
+ QW:{name:"QW · internal demineralized loop (to Q-HEAT)",pfd:"P&ID YD901 · §1.2",cols:[
+    {l:"Cooled user",n:["Q_HEAT"]},
+    {l:"Tank & pumps",n:["TANK","MAIN_PUMP"]},
+    {l:"Heat exchange",n:["HX"]},
+    {l:"Flow & pressure control",n:["BV_QW100","BV_RETURN","PSW","TEMP_TX"]}],
+  e:[["TANK","MAIN_PUMP","feeds",""],["MAIN_PUMP","Q_HEAT","feeds","160 m³/h"],["Q_HEAT","HX","feeds","return 47°C"],["HX","TANK","feeds","38°C"],
+     ["BV_QW100","Q_HEAT","governs","flow"],["BV_RETURN","HX","governs","HX / bypass"],["PSW","MAIN_PUMP","governs","delivery"],["TEMP_TX","MAIN_PUMP","governs","temp stop"]]},
+ EX:{name:"EX · external raw-water (HX cold side)",pfd:"§1.2 / §4.2",cols:[
+    {l:"External circuit",n:["EXT_RAW","STR_RAW"]},
+    {l:"Heat exchanger (cold side)",n:["HX"]},
+    {l:"Temperature control",n:["THERMO_CTRL","PGAUGE"]}],
+  e:[["STR_RAW","EXT_RAW","carries","raw"],["EXT_RAW","HX","cools","35°C in"],["HX","EXT_RAW","feeds","43.4°C out"],
+     ["THERMO_CTRL","HX","governs","CWR temp"],["PGAUGE","HX","measures","pressure"]]},
+ DI:{name:"DI · deionizer / treatment & make-up",pfd:"§1.2 / §4.3.2",cols:[
+    {l:"Tank",n:["TANK"]},
+    {l:"Treatment branch",n:["SOL_DEI","DEI_TANK","FLOW_TX"]},
+    {l:"Conductivity control",n:["COND_TX"]},
+    {l:"Make-up & resin",n:["BV_REFILL","STR_MAKEUP","LEVEL_IND","STR_RESIN"]}],
+  e:[["TANK","SOL_DEI","feeds",""],["SOL_DEI","DEI_TANK","feeds",""],["DEI_TANK","FLOW_TX","feeds",""],["FLOW_TX","TANK","feeds","clean"],
+     ["COND_TX","SOL_DEI","governs","conductivity"],["STR_RESIN","DEI_TANK","carries","resin"],
+     ["STR_MAKEUP","BV_REFILL","carries","make-up"],["BV_REFILL","TANK","feeds","make-up"],["LEVEL_IND","BV_REFILL","governs","refill"]]},
+ EW:{name:"EW · emergency cooling",pfd:"§4.3.2 / §1.1",cols:[
+    {l:"Tank & emergency pump",n:["TANK","EMG_PUMP"]},
+    {l:"Protected user",n:["Q_HEAT"]},
+    {l:"Emergency cooling",n:["HX","BV_RETURN"]},
+    {l:"Flow control",n:["REG_VALVE","FLOW_TX"]}],
+  e:[["TANK","EMG_PUMP","feeds",""],["EMG_PUMP","Q_HEAT","feeds","24 m³/h emerg"],["Q_HEAT","HX","feeds","return"],["HX","TANK","feeds","cooled"],
+     ["REG_VALVE","EMG_PUMP","governs","emerg flow"],["FLOW_TX","REG_VALVE","governs","flow"],["BV_RETURN","HX","governs","emerg cooling"]]},
+ PN:{name:"PN · pneumatic / control",pfd:"§1.2 / §4.2",cols:[
+    {l:"Compressed air",n:["STR_AIR"]},
+    {l:"Air conditioning",n:["AIR_FILTER","PRESS_REG","AIR_LUBR"]},
+    {l:"Actuated valves",n:["BV_REFILL","BV_QW100","BV_RETURN","SOL_DEI"]},
+    {l:"Pressure check",n:["PSW"]}],
+  e:[["STR_AIR","AIR_FILTER","carries","air"],["AIR_FILTER","PRESS_REG","feeds",""],["PRESS_REG","AIR_LUBR","feeds",""],
+     ["AIR_LUBR","BV_REFILL","feeds","drive"],["AIR_LUBR","BV_QW100","feeds","drive"],["AIR_LUBR","BV_RETURN","feeds","drive"],["AIR_LUBR","SOL_DEI","feeds","drive"],
+     ["PSW","AIR_LUBR","governs","min press"]]}
+};
+const INV_WCU=[
+ ["FL","Functional locations","FL:",["Site · Pacific Steel Group","System · WCU C-2000 (JA01)","QW internal demin loop","External raw-water circuit","Deionizer / treatment branch","Emergency cooling (EW)","Pneumatic / control"]],
+ ["AST","Assets — sub-assemblies (item / drawing-tagged)","AST:",["Tank unit 2,000 L (item 001)","Main centrifugal pumps ×4 (2+1) — 92SV2N","Emergency pump ×1 — 15SV02N","Plate heat exchanger (item 002)","Deionizer vessel ×2","Main-pump motor 30 kW","Emergency-pump motor 3 kW","Butterfly valve · QW100 (pneu)","Butterfly valve · refill (pneu)","Butterfly valves · return (pneu)","Solenoid valve · deionizer","Regulating valve(s)","Ball valves · discharge","Air line filter","Pressure regulator","Air lubricator","Junction box (J.B.)"]],
+ ["EXT","Cross-system (cooled / external)","AST:EXT·",["Q-HEAT — switchboards + heating coils","Inductor QW100 delivery","External raw-water main circuit"]],
+ ["EQC","Equipment classes","EQC:",["Centrifugal pump","Plate heat exchanger","Tank unit (HPU)","Deionizer vessel","Electric motor","Pneumatic butterfly valve","Solenoid valve","Regulating valve","Ball valve","Pressure regulator","Air line filter","Air lubricator","Junction box","Pressure switch","Temperature transmitter","Conductivity transmitter","Level indicator (electric)","Sight glass","Flow transmitter","Pressure gauge"]],
+ ["PRC","Processes / functions","PRC:",["Indirect water cooling","Demineralized-water delivery / recirc","Water-to-water heat exchange","De-ionization (resin ion exchange)","Automatic make-up / refill","Conductivity control","Pneumatic flow regulation","Delivery-pressure control","Emergency cooling","Circuit bleeding / air venting","Plant flushing","Pump blow-by check","Pressure-switch calibration"]],
+ ["PRM","Parameters","PRM:",["Demin delivery 160/44 m³/h (QW-150/-80)","Delivery pressure 5.3 bar","Return temp 47.4/43 °C","Delivery temp 38 °C","Tank capacity 2,000 L (528 gal)","HX flow 204 m³/h /side","HX hot 46.4→38 °C","HX cold 35→43.4 °C","HX pressure 0.5 / 3.4 bar","Deionizer 1 m³/h @ 5.4 bar","Main pump 102 m³/h @ 6.4 bar / 30 kW","Emergency pump 24 m³/h @ 2.7 bar / 3 kW","460 V / 60 Hz","Bearing limit ~70 °C","Resin replace >100 % make-up freq","HX plate clean ~3 months","O-ring stretch 5 % / 10 %","Tightening M4-M20 (1.2-80 Nm)"]],
+ ["STR","Streams / materials","STR:",["De-ionized / demineralized water","Industrial cooling water (raw)","Make-up demineralized water","Compressed air","Ion-exchange resin","Grease (bearings)","Detergent / flushing fluid"]],
+ ["INS","Instruments","INS:",["Pressure switch (PIS)","Temperature transmitter","Thermo controller","Conductivity transmitter","Electric level indicators","Sight glass (optical level)","Empty-tank detection sensor","Flow transmitter (FISH)","Pressure gauge / manometer","Megger (tool)","Contact thermometer (tool)","Revolution counter (tool)","Digital tester (tool)"]],
+ ["FM","Failure modes","FM:",["Cavitation","Noise & vibration","Excessive motor-pump temperature","Bearing over-temperature (>70 °C)","Leaks (gaskets / seals / welds / flanges)","Lack of pressure","Central-unit stop","Pump-motor fails to start","Air in circuit / foaming","Saturated resin (deionizer)","Damaged impeller / worn shaft seal","Hose deterioration / kink","Condensation / corrosion (long stop)","HX plate fouling / scaling","Empty tank / low level"]],
+ ["MOD","Operating modes","MOD:",["Commissioning / no-load test","Steady automatic","Manual / local","Production change (no setup)","Normal stop","Emergency stop (alarm 2 / 3)","Long-period standstill (>1 month)","Maintenance / LOTO","Flushing","Backup / standby pump"]],
+ ["DSC","Disciplines","DSC:",["Hydraulic / rotating","Chemical / water treatment","Mechanical","Electrical","Automation","Safety","Welding"]],
+ ["ACT","Actors / roles","ACT:",["Danieli Customers' Assistance","Danieli Hydraulics (HYD) — approved","Danieli Manuals Office (MUM/DCS)","Department foreman","Operators / maintenance operators","Lubricant supplier (LLD)","Component OEMs (pump / HX / deionizer)"]],
+ ["DOC","Source documents","DOC:",["UPC45E-JA01-H7101-UB010 (manual)","DPC45E-JA01-P7100-YD901 (P&ID)","000-000-289-825 (assembly)","000-000-289-836 (wiring)","000-000-408-238 (tank assembly)","000-000-452-587 (electric system)","8.973505.F (loose material)","Std 0.000.001 (fluids / LLD)","Std 2.1.001 (painting)","Std 2.4.305 (cooling water)","Std 2.4.306 (compressed air)","Std 2.4.603 (torques)","Std 2.4.106 / 2.8.006 (welding)","SSR / RPR / NGI / DDS / LUB"]]];
+const BUCKETS_WCU=[
+ {title:"Content errors & contradictions",note:"text that misstates the machine",dot:"var(--t-fm)",items:[
+   ["Main-pump quantity vs 2+1","Data sheet lists main pump <b>Quantity 4</b> but describes <b>2 in operation + 1 stand-by</b> (= 3); §1.2 composition only says “centrifugal pumps (one is a stand-by).” Count and configuration disagree.","§1.1 (DS) / §1.2","high"],
+   ["Emergency pump count: 1 vs “one is a stand-by”","§1.1 data sheet gives the emergency pump <b>Quantity 1</b>, but the §1.2 composition text reads “<b>Emergency pumps (one is a stand-by)</b>,” implying two. Same contradiction class as the main-pump count.","§1.1 vs §1.2","med"],
+   ["Tank fluid: demin vs industrial water","§1.1 Tank-unit row gives fluid type <b>“Industrial cooling water”</b>, but §1.2 says the tank <b>contains the de-ionized water</b> and the whole deionizer branch exists to keep that internal water pure. The internal-loop fluid is demineralized; the spec-sheet label is wrong.","§1.1 vs §1.2","high"],
+   ["“EW-80” pressure row mislabelled","In the <b>Main demineralized water delivery</b> block every row reads QW-xx except “Water pressure at <b>EW-80</b> 5.3 bar”. EW is the emergency circuit; this should read QW-80.","§1.1","med"],
+   ["Wiring-diagram “C-200”","§10.1 lists “…WCU <b>C-200</b> - wiring diagram”; the machine is WCU <b>C-2000</b> everywhere else (a dropped zero).","§10.1","low"]]},
+ {title:"Transcription, spelling & garbled rows",note:"source artifacts; design values unaffected",dot:"var(--t-prm)",items:[
+   ["Garbled anomaly row","§6.5 anomaly reads “<b>The pump does not The pump does not correct functioning</b>” — duplicated / unfinished cell.","§6.5","low"],
+   ["Assembly item number “002” twice","The §2 assembly table tags <b>both</b> the heat-exchanger unit and the piping unit as “(item 002)”; Fig. 2.0.a shows ITEM001/002/003, so the piping unit should be <b>item 003</b>.","§2 (table vs Fig. 2.0.a)","low"],
+   ["“polyaniline tank”","§1.2 calls the deionizer vessel a “<b>polyaniline</b> tank for a deionizer process” — almost certainly the ion-exchange <b>resin</b> vessel.","§1.2","low"],
+   ["“re-denegation”","§9.2 repeatedly warns against accidental “<b>re-denegation</b>” — should read re-energization.","§9.2","low"],
+   ["“propely”","§4.3.1 “auxiliary systems … have been <b>propely</b> started and set up.”","§4.3.1","low"]]},
+ {title:"Gaps, caveats & modelling notes",note:"not errors, but flagged for the graph",dot:"#939BA2",items:[
+   ["Item/drawing-tagged, not per-component plant tags","Like the CLO HPUs (and unlike the WTP per-pump tags), the WCU is one composed unit identified by <b>item number</b> (001/002/003), <b>drawing number</b> and <b>pump model</b> (92SV2N / 15SV02N) — not unique component tags. Federation runs through the §10 drawing register; reusable knowledge sits on the <b>equipment-class</b> layer.","§1.1 / §2 / §10","gap"],
+   ["Q-HEAT users not enumerated","The cooled apparatus — Q-HEAT switchboards, heating coils and inductor QW100 — is the reason the unit exists, but its individual loads/duties aren’t enumerated here; this manual documents the cooling unit, not the Q-HEAT loads.","§1 / §1.2","gap"],
+   ["Setpoints deferred to drawings","Tank temperature, pump-stop temperature switch, HX start/stop temperature switch and all valve pressures are “<b>at value indicated in the drawings</b>”; pump start-up, HX cleaning and resin spec defer to manufacturer docs.","§4.3.1 / §7","gap"],
+   ["Resin-replacement baseline missing","Resin is replaced when make-up treatment frequency rises <b>>100 %</b> vs the new-resin baseline — but that baseline frequency is never given numerically.","§7.2.1-12","gap"],
+   ["Pneumatic parts not in the data sheet","Air filters, pressure regulators, lubricators and cocks are described in maintenance (§7.2.1-6) but not enumerated/tagged in §1.1 — drawing-sourced.","§7.2.1-6","gap"]]}];
+const edgeStyleWCU=(kind,lbl)=>{const l=(lbl||"").toLowerCase();return "edge "+(kind==="cools"?"doses":(kind==="doses"?"doses":(kind==="feeds"&&/return|recirc|bypass|make-?up|clean/.test(l)?"carries":(kind==="carries"?"":kind))));};
+
+const DATA={
+  wtp:{TYPE:TYPE_WTP,NODES:NODES_WTP,CIRCUITS:CIRCUITS_WTP,INV:INV_WTP,BUCKETS:BUCKETS_WTP,
+       activeCir:"CW",edgeStyle:edgeStyleWTP,extPanel:extWTP,
+       counts:(x)=>[["Object types","14"],["Drawn nodes",Object.keys(x.NODES).length],["Tagged assets","~55"],["Equipment classes",x.clsOrder.length],["Parameters",x.invC.PRM],["Contradictions","7"],["Data flags",x.nFlags]]},
+  clo:{TYPE:TYPE_CLO,NODES:NODES_CLO,CIRCUITS:CIRCUITS_CLO,INV:INV_CLO,BUCKETS:BUCKETS_CLO,
+       activeCir:"RM",edgeStyle:edgeStyleCLO,extPanel:extCLO,
+       counts:(x)=>[["Object types","14"],["Drawn nodes",Object.keys(x.NODES).length],["Tagged sub-assemblies",x.invC.AST],["Equipment classes",x.clsOrder.length],["Parameters",x.invC.PRM],["Content errors","3"],["Data flags",x.nFlags]]},
+  wcu:{TYPE:TYPE_CLO,NODES:NODES_WCU,CIRCUITS:CIRCUITS_WCU,INV:INV_WCU,BUCKETS:BUCKETS_WCU,
+       activeCir:"QW",edgeStyle:edgeStyleWCU,extPanel:(name)=>`Cross-system user <b>${name}</b> \u2014 cooled by this WCU, not part of it.`,
+       counts:(x)=>[["Object types","14"],["Drawn nodes",Object.keys(x.NODES).length],["Tagged sub-assemblies",x.invC.AST],["Equipment classes",x.clsOrder.length],["Parameters",x.invC.PRM],["Content errors","5"],["Data flags",x.nFlags]]}};
+
+/* ============================== RENDERER ============================== */
+const SVGNS="http://www.w3.org/2000/svg";
+function renderOntology(root, D){
+  const TYPE=D.TYPE, NODES=D.NODES, CIRCUITS=D.CIRCUITS;
+  const svg=root.querySelector(".svg"), panel=root.querySelector(".panel"), gtitle=root.querySelector(".gtitle");
+  const ctabs=root.querySelector(".ctabs"), cmap=root.querySelector(".cmap");
+  const invEl=root.querySelector(".inv"), flagsRoot=root.querySelector(".flags"), cs=root.querySelector(".countstrip");
+  const COLGAP=190,ROWH=58,TOP=46,LEFT=24,NW=156,NH=34;
+  const cirKeys=Object.keys(CIRCUITS);
+  let activeCir=D.activeCir||cirKeys[0], pos={}, lastEdgeEls=[];
+
+  function layout(cir){pos={};const C=CIRCUITS[cir];C.cols.forEach((col,ci)=>col.n.forEach((id,ri)=>{pos[id]={x:LEFT+ci*COLGAP,y:TOP+ri*ROWH};}));
+    return {w:LEFT+C.cols.length*COLGAP+20,h:TOP+Math.max(...C.cols.map(c=>c.n.length))*ROWH+24};}
+  function ctr(id){const p=pos[id];return {x:p.x+NW/2,y:p.y+NH/2};}
+  function drawCir(){const C=CIRCUITS[activeCir],dim=layout(activeCir);
+    svg.setAttribute("viewBox",`0 0 ${dim.w} ${dim.h}`);svg.style.minWidth=Math.max(dim.w,720)+"px";svg.style.height=dim.h+"px";svg.innerHTML="";
+    gtitle.innerHTML=`<b>${C.name}</b> \u00b7 ${C.pfd}`;
+    C.cols.forEach((col,ci)=>{const t=document.createElementNS(SVGNS,"text");t.setAttribute("class","collabel");t.setAttribute("x",LEFT+ci*COLGAP);t.setAttribute("y",22);t.textContent=col.l;svg.appendChild(t);});
+    const edgeEls=[];lastEdgeEls=edgeEls;
+    C.e.forEach(([a,b,kind,lbl])=>{if(!pos[a]||!pos[b])return;const ca=ctr(a),cb=ctr(b);const p=document.createElementNS(SVGNS,"path");
+      const x1=ca.x+(cb.x>=ca.x?NW/2:-NW/2),x2=cb.x+(cb.x>=ca.x?-NW/2:NW/2),mx=(x1+x2)/2;
+      p.setAttribute("d",`M ${x1} ${ca.y} C ${mx} ${ca.y}, ${mx} ${cb.y}, ${x2} ${cb.y}`);
+      p.setAttribute("class",D.edgeStyle(kind,lbl));p.dataset.a=a;p.dataset.b=b;svg.appendChild(p);edgeEls.push(p);
+      if(lbl){const t=document.createElementNS(SVGNS,"text");t.setAttribute("class","elabel");t.setAttribute("x",mx);t.setAttribute("y",(ca.y+cb.y)/2-3);t.setAttribute("text-anchor","middle");t.textContent=lbl;svg.appendChild(t);}});
+    C.cols.forEach(col=>col.n.forEach(id=>{const n=NODES[id];if(!n)return;const p=pos[id],col0=TYPE[n.t].c;
+      const g=document.createElementNS(SVGNS,"g");g.setAttribute("class","node");g.setAttribute("transform",`translate(${p.x},${p.y})`);g.setAttribute("tabindex","0");g.dataset.id=id;
+      const r=document.createElementNS(SVGNS,"rect");r.setAttribute("width",NW);r.setAttribute("height",NH);r.setAttribute("rx",4);r.setAttribute("fill",n.t==="EXT"?"#F4F6F7":"#fff");r.setAttribute("stroke",col0);r.setAttribute("stroke-width",1.4);if(n.t==="EXT")r.setAttribute("stroke-dasharray","4 2");g.appendChild(r);
+      const t1=document.createElementNS(SVGNS,"text");t1.setAttribute("class","nid");t1.setAttribute("x",8);t1.setAttribute("y",13);t1.setAttribute("fill",col0);t1.textContent=n.cid.length>21?n.cid.slice(0,20)+"\u2026":n.cid;g.appendChild(t1);
+      const t2=document.createElementNS(SVGNS,"text");t2.setAttribute("class","nlbl");t2.setAttribute("x",8);t2.setAttribute("y",26);t2.setAttribute("fill","#1A1D21");t2.textContent=n.label.length>23?n.label.slice(0,22)+"\u2026":n.label;g.appendChild(t2);
+      g.addEventListener("click",()=>selNode(id,edgeEls));g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();selNode(id,edgeEls);}});svg.appendChild(g);}));}
+  function selNode(id,edgeEls){const C=CIRCUITS[activeCir],rel=new Set([id]);
+    edgeEls.forEach(p=>{if(p.dataset.a===id||p.dataset.b===id){p.classList.add("hl");p.classList.remove("dim");rel.add(p.dataset.a);rel.add(p.dataset.b);}else{p.classList.add("dim");p.classList.remove("hl");}});
+    svg.querySelectorAll(".node").forEach(g=>{g.classList.toggle("dim",!rel.has(g.dataset.id));g.classList.toggle("sel",g.dataset.id===id);});
+    const n=NODES[id];const al=(n.al||[]).map(a=>`<div class="alias"><span class="ak">${a[0]}</span><span class="av">${a[1]}</span><span class="src">\u00b7 ${a[2]}</span></div>`).join("");
+    const links=C.e.filter(e=>e[0]===id||e[1]===id).map(e=>{const out=e[0]===id,o=out?e[1]:e[0];return `<span class="rel">${out?"":"\u2190 "}<b>${e[2]}</b>${out?" \u2192":""} ${NODES[o]?NODES[o].cid:o}</span>`;}).join("");
+    const cirs=Object.keys(CIRCUITS).filter(c=>CIRCUITS[c].cols.some(col=>col.n.includes(id)));
+    panel.innerHTML=`<div class="pid"><span class="ptype" style="background:${TYPE[n.t].c}">${TYPE[n.t].l}</span><span class="pcid">${n.cid}</span></div><h3>${n.label}</h3>
+      ${n.ext?`<div class="props" style="margin-bottom:8px;">${D.extPanel(n.ext)}</div>`:""}
+      ${n.cls?`<div class="psub">Equipment class</div><span class="clschip">${n.cls}</span>`:""}
+      ${al?`<div class="psub">Federated aliases</div>${al}`:""}
+      ${n.props?`<div class="psub">Properties</div><div class="props">${n.props}</div>`:""}
+      ${links?`<div class="psub">Links (this circuit)</div><div class="rels">${links}</div>`:""}
+      <div class="psub">Appears in</div><div class="rels">${cirs.map(c=>`<span class="rel">${c}</span>`).join("")}</div>`;panel.classList.add("show");}
+
+  /* circuit tabs + graph (or empty state) */
+  if(cirKeys.length){
+    cirKeys.forEach(c=>{const b=document.createElement("button");b.className="tab"+(c===activeCir?" on":"");b.textContent=c;
+      b.onclick=()=>{activeCir=c;panel.classList.remove("show");[...ctabs.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");drawCir();};ctabs.appendChild(b);});
+    drawCir();
+  }else{
+    const ph=document.createElement("button");ph.className="tab placeholder";ph.textContent="No circuits yet";ph.disabled=true;ctabs.appendChild(ph);
+    gtitle.innerHTML=`<b>${D.emptyTitle||"Awaiting manual"}</b>`;
+    const e=document.createElement("div");e.className="emptyslot";e.textContent=D.emptyMsg||"This view populates when the manual is ingested.";
+    root.querySelector(".svgscroll").replaceChildren(e);
+  }
+
+  /* equipment-class map */
+  const byClass={};
+  Object.values(NODES).forEach(n=>{if(n.cls)(byClass[n.cls]=byClass[n.cls]||[]).push(n.al&&n.al[0]?n.al[0][1]:n.label);});
+  const clsOrder=Object.keys(byClass).sort((a,b)=>byClass[b].length-byClass[a].length);
+  if(clsOrder.length){
+    clsOrder.forEach(cls=>{const r=document.createElement("div");r.className="cmrow";
+      r.innerHTML=`<div class="cc">${cls}</div><div class="ci">${byClass[cls].map(i=>`<span class="it">${i}</span>`).join("")}<span class="n">\u00d7${byClass[cls].length}</span></div>`;cmap.appendChild(r);});
+  }else{cmap.classList.add("isempty");cmap.innerHTML='<div class="emptyslot">No equipment classes yet \u2014 derived from the instance inventory once the manual is ingested.</div>';}
+
+  /* full inventory */
+  let invC={};
+  if(D.INV&&D.INV.length){
+    D.INV.forEach(([t,name,pfx,items])=>{invC[t]=items.length;const d=document.createElement("details");
+      d.innerHTML=`<summary><span class="sw" style="background:${TYPE[t]?TYPE[t].c:'#888'}"></span><span class="nm">${name}</span> <span class="pfx">${pfx}</span><span class="ct">${items.length}</span></summary><div class="invbody">${items.map(i=>`<span class="invitem">${i}</span>`).join("")}</div>`;invEl.appendChild(d);});
+  }else{invEl.classList.add("isempty");invEl.innerHTML='<div class="emptyslot">No instance inventory yet \u2014 awaiting the WCU manual.</div>';}
+
+  /* data-quality flags */
+  let nFlags=0;
+  if(D.BUCKETS&&D.BUCKETS.length){
+    D.BUCKETS.forEach(b=>{nFlags+=b.items.length;
+      const rows=b.items.map((it,i)=>`<div class="flag"><div class="fn">${String(i+1).padStart(2,"0")}</div><div class="ft"><span class="ftt">${it[0]}</span> \u2014 ${it[1]} <span class="cite">[${it[2]}]</span></div><span class="conf ${confClass(it[3])}">${it[3]}</span></div>`).join("");
+      const bk=document.createElement("div");bk.className="fbucket";
+      bk.innerHTML=`<div class="fbhead"><span class="bdot" style="background:${b.dot}"></span><span class="bt">${b.title}</span><span class="bc">${b.items.length} \u00b7 ${b.note}</span></div><div class="flags">${rows}</div>`;flagsRoot.appendChild(bk);});
+  }else{flagsRoot.classList.add("isempty");flagsRoot.innerHTML='<div class="emptyslot">No data-quality flags yet \u2014 generated during ingestion review.</div>';}
+
+  /* count strip */
+  cs.innerHTML=D.counts({NODES,clsOrder,invC,nFlags}).map(([l,v])=>`<span class="cpill"><b>${v}</b> ${l}</span>`).join("");
+}
+
+/* ============================== INIT ============================== */
+renderOntology(document.getElementById("view-wtp"),DATA.wtp);
+renderOntology(document.getElementById("view-clo"),DATA.clo);
+renderOntology(document.getElementById("view-wcu"),DATA.wcu);
+document.querySelectorAll(".mtab").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
+
+/* hover tooltips on type-system rows (global, all views) */
+(function(){const tip=document.createElement("div");tip.className="tip";document.body.appendChild(tip);
+  document.querySelectorAll("[data-tip]").forEach(el=>{
+    el.addEventListener("mouseenter",()=>{tip.textContent=el.dataset.tip;const r=el.getBoundingClientRect();
+      tip.style.left=Math.max(8,Math.min(r.left,window.innerWidth-292))+"px";tip.style.top=(r.bottom+6)+"px";tip.classList.add("show");});
+    el.addEventListener("mouseleave",()=>tip.classList.remove("show"));});})();
+</script>
+</body>
+</html>
