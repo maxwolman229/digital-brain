@@ -9,31 +9,46 @@ import {
 
 export const prerender = false
 
-function redirectTo(location, status = 303) {
+function redirect(path) {
   return new Response(null, {
-    status,
+    status: 303,
     headers: {
-      Location: location,
+      'cache-control': 'no-store',
+      location: path,
     },
   })
 }
 
-export async function POST({ request, cookies, url }) {
-  requireDanieliShareConfig()
+function notConfiguredResponse() {
+  return new Response('Danieli share is not configured.', {
+    status: 500,
+    headers: {
+      'cache-control': 'no-store',
+      'content-type': 'text/plain; charset=utf-8',
+    },
+  })
+}
 
-  const formData = await request.formData()
-  const password = String(formData.get('password') || '')
-  const next = safeDanieliRedirect(formData.get('next') || '/danieli/')
+export function GET() {
+  return redirect('/danieli/')
+}
+
+export async function POST({ request, cookies, url }) {
+  try {
+    requireDanieliShareConfig()
+  } catch {
+    return notConfiguredResponse()
+  }
+
+  const form = await request.formData()
+  const password = String(form.get('password') || '')
+  const nextPath = safeDanieliRedirect(String(form.get('next') || ''))
 
   if (!isDanieliPasswordValid(password)) {
-    return redirectTo(`/danieli/?error=1&next=${encodeURIComponent(next)}`)
+    return redirect(`/danieli/?error=1&next=${encodeURIComponent(nextPath)}`)
   }
 
   cookies.set(DANIELI_COOKIE_NAME, createDanieliAccessToken(), getDanieliCookieOptions(url))
 
-  return redirectTo(next)
-}
-
-export function GET() {
-  return redirectTo('/danieli/')
+  return redirect(nextPath)
 }

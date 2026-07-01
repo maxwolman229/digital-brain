@@ -1,55 +1,161 @@
 import assert from 'node:assert/strict'
-import { access, readdir, readFile } from 'node:fs/promises'
-import { constants } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import path from 'node:path'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import {
+  DANIELI_COOKIE_NAME,
+  createDanieliAccessToken,
+} from '../src/lib/danieliShare.js'
 
-const projectRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)))
-const repoRoot = path.resolve(projectRoot, '../..')
-const routePath = path.join(projectRoot, 'src/pages/danieli/[slug].js')
-const sourceDir = path.join(projectRoot, 'src/danieli-html')
-const protectedFile = 'danieli-md1-ontology-and-kcards_7_1-v0.html'
+const scriptDir = dirname(fileURLToPath(import.meta.url))
+const marketingRoot = resolve(scriptDir, '..')
+const routePath = resolve(marketingRoot, 'src/pages/danieli/[slug].js')
+const documentHtmlPath = resolve(
+  marketingRoot,
+  'src/danieli-html/danieli-md1-ontology-and-kcards_7_1-v0.html'
+)
+const shareHelperUrl = pathToFileURL(resolve(marketingRoot, 'src/lib/danieliShare.js')).href
 
-async function readRequired(file, label) {
-  try {
-    return await readFile(file, 'utf8')
-  } catch (error) {
-    throw new assert.AssertionError({
-      message: `Missing ${label}: ${path.relative(projectRoot, file)}`,
-      actual: error.code,
-      expected: 'file to exist',
-    })
+const route = readFileSync(routePath, 'utf8')
+const documentHtml = readFileSync(documentHtmlPath, 'utf8')
+
+assert.match(route, /export const prerender = false/)
+assert.match(route, /danieli-md1-ontology-and-kcards_7_1-v0\.html\?raw/)
+assert.match(route, /getDanieliDocument/)
+assert.match(route, /isDanieliAccessTokenValid/)
+assert.match(route, /DANIELI_COOKIE_NAME/)
+assert.match(route, /location: path/)
+assert.doesNotMatch(route, /new URL\(path, baseUrl\)/)
+assert.match(route, /cache-control/)
+assert.match(route, /no-store/)
+assert.match(route, /x-robots-tag/)
+assert.match(route, /noindex, nofollow/)
+assert.doesNotMatch(route, /danieli-access-6_25-v0\.html/)
+
+const routeModule = await importRouteModule(route)
+const routeModuleWithoutHtml = await importRouteModule(route, { omitDocumentHtml: true })
+
+await checkUnknownSlugResponse(routeModule)
+await checkUnauthenticatedRedirect(routeModule)
+await checkInvalidCookieRedirect(routeModule)
+await checkAuthenticatedDocumentResponse(routeModule)
+await checkMissingDocumentHtmlFailsClosed(routeModuleWithoutHtml)
+
+console.log('Danieli protected document route check passed.')
+
+async function importRouteModule(source, { omitDocumentHtml = false } = {}) {
+  let transformedSource = source
+    .replace(
+      /import\s+ontologyAndKcardsHtml\s+from\s+['"]\.\.\/\.\.\/danieli-html\/danieli-md1-ontology-and-kcards_7_1-v0\.html\?raw['"]/,
+      `const ontologyAndKcardsHtml = ${JSON.stringify(documentHtml)}`
+    )
+    .replace(
+      /from\s+['"]\.\.\/\.\.\/lib\/danieliShare\.js['"]/,
+      `from ${JSON.stringify(shareHelperUrl)}`
+    )
+
+  if (omitDocumentHtml) {
+    transformedSource = transformedSource.replace(
+      /const DOCUMENT_HTML = \{\s*'ontology-and-kcards': ontologyAndKcardsHtml,\s*\}/,
+      'const DOCUMENT_HTML = {}'
+    )
+    assert.match(transformedSource, /const DOCUMENT_HTML = \{\}/)
+  }
+
+  assert.notEqual(transformedSource, source, 'route source was not transformed for behavior checks')
+
+  return import(`data:text/javascript;charset=utf-8,${encodeURIComponent(transformedSource)}`)
+}
+
+function makeRequestContext({ slug, cookieValue, url = 'https://localhost/danieli/ontology-and-kcards/' }) {
+  return {
+    params: { slug },
+    cookies: {
+      get(name) {
+        assert.equal(name, DANIELI_COOKIE_NAME)
+        return cookieValue ? { value: cookieValue } : undefined
+      },
+    },
+    url: new URL(url),
   }
 }
 
-const route = await readRequired(routePath, 'protected document route')
+async function checkUnknownSlugResponse({ GET }) {
+  const response = GET(makeRequestContext({ slug: 'missing-document' }))
 
-assert.match(route, /export\s+const\s+prerender\s*=\s*false/, '[slug].js must run on demand')
-assert.match(route, /getDanieliDocument/, '[slug].js must resolve documents from the allowlist')
-assert.match(route, /isDanieliAccessTokenValid/, '[slug].js must verify the signed cookie')
-assert.match(route, /safeDanieliRedirect/, '[slug].js must redirect through the safe redirect helper')
-assert.match(route, /import\.meta\.glob/, '[slug].js must load protected HTML from a non-public source directory')
-assert.match(route, /\?raw/, '[slug].js must bundle protected HTML as server-only raw text')
-assert.match(route, /text\/html;\s*charset=utf-8/, '[slug].js must return HTML with an explicit UTF-8 content type')
-assert.doesNotMatch(route, /docs\/html/, '[slug].js must not serve directly from docs/html')
+  assert.equal(response.status, 404)
+  assert.equal(response.headers.get('cache-control'), 'no-store')
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8')
+  assert.equal(await response.text(), 'Not found')
+}
 
-await access(path.join(sourceDir, protectedFile), constants.R_OK)
-const sourceFiles = await readdir(sourceDir)
-assert.deepEqual(
-  sourceFiles.filter((file) => file.endsWith('.html')),
-  [protectedFile],
-  'Only the refreshed 7_1 protected HTML should be shipped in src/danieli-html'
-)
+async function checkUnauthenticatedRedirect({ GET }) {
+  const response = GET(makeRequestContext({
+    slug: 'ontology-and-kcards',
+    url: 'https://md1.app/danieli/ontology-and-kcards/?next=https://evil.example/',
+  }))
 
-await assert.rejects(
-  access(path.join(projectRoot, 'public', protectedFile), constants.R_OK),
-  /ENOENT/,
-  'Protected Danieli HTML must not be placed under public/'
-)
-await assert.rejects(
-  access(path.join(repoRoot, 'apps/app/public', protectedFile), constants.R_OK),
-  /ENOENT/,
-  'Protected Danieli HTML must not be placed under the product app public directory'
-)
+  await assertRedirectsToDanieliLogin(response)
+}
 
-console.log('Danieli protected document check passed.')
+async function checkInvalidCookieRedirect({ GET }) {
+  const response = GET(makeRequestContext({
+    slug: 'ontology-and-kcards',
+    cookieValue: 'tampered.token',
+  }))
+
+  await assertRedirectsToDanieliLogin(response)
+}
+
+async function assertRedirectsToDanieliLogin(response) {
+  assert.equal(response.status, 303)
+  assert.equal(response.headers.get('cache-control'), 'no-store')
+  assert.equal(
+    response.headers.get('location'),
+    '/danieli/?next=%2Fdanieli%2Fontology-and-kcards%2F'
+  )
+  assert.notEqual(await response.text(), documentHtml)
+}
+
+async function checkAuthenticatedDocumentResponse({ GET }) {
+  const originalSecret = process.env.DANIELI_SHARE_COOKIE_SECRET
+  process.env.DANIELI_SHARE_COOKIE_SECRET = 'local-cookie-secret-with-enough-entropy'
+
+  try {
+    const token = createDanieliAccessToken()
+    const response = GET(makeRequestContext({ slug: 'ontology-and-kcards', cookieValue: token }))
+
+    assert.equal(response.status, 200)
+    assert.equal(response.headers.get('cache-control'), 'no-store, private')
+    assert.equal(response.headers.get('content-type'), 'text/html; charset=utf-8')
+    assert.equal(response.headers.get('x-robots-tag'), 'noindex, nofollow')
+    assert.equal(await response.text(), documentHtml)
+  } finally {
+    if (originalSecret === undefined) {
+      delete process.env.DANIELI_SHARE_COOKIE_SECRET
+    } else {
+      process.env.DANIELI_SHARE_COOKIE_SECRET = originalSecret
+    }
+  }
+}
+
+async function checkMissingDocumentHtmlFailsClosed({ GET }) {
+  const originalSecret = process.env.DANIELI_SHARE_COOKIE_SECRET
+  process.env.DANIELI_SHARE_COOKIE_SECRET = 'local-cookie-secret-with-enough-entropy'
+
+  try {
+    const token = createDanieliAccessToken()
+    const response = GET(makeRequestContext({ slug: 'ontology-and-kcards', cookieValue: token }))
+
+    assert.equal(response.status, 500)
+    assert.equal(response.headers.get('cache-control'), 'no-store')
+    assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8')
+    assert.notEqual(await response.text(), documentHtml)
+  } finally {
+    if (originalSecret === undefined) {
+      delete process.env.DANIELI_SHARE_COOKIE_SECRET
+    } else {
+      process.env.DANIELI_SHARE_COOKIE_SECRET = originalSecret
+    }
+  }
+}

@@ -9,102 +9,71 @@ import {
 
 export const prerender = false
 
-const token = Astro.cookies.get(DANIELI_COOKIE_NAME)?.value
-const hasAccess = isDanieliAccessTokenValid(token)
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+
+const cookie = Astro.cookies.get(DANIELI_COOKIE_NAME)?.value
+const isAuthorized = isDanieliAccessTokenValid(cookie)
+
+if (isAuthorized) {
+  const response = Astro.redirect(DANIELI_DOCUMENTS[0]?.path || '/danieli/', 303)
+  response.headers.set('Cache-Control', 'no-store')
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+  return response
+}
+
 const hasError = Astro.url.searchParams.get('error') === '1'
-const next = safeDanieliRedirect(Astro.url.searchParams.get('next') || '/danieli/')
+const nextPath = safeDanieliRedirect(
+  Astro.url.searchParams.get('next'),
+  DANIELI_DOCUMENTS[0]?.path || '/danieli/'
+)
 ---
 
 <BaseLayout
-  title="Danieli Review Access | MD1"
-  description="Password-protected Danieli review materials for MD1."
   current="danieli"
   showCta={false}
+  title="Danieli | MD1 Client Share"
+  description="Temporary MD1 client review materials for Danieli."
 >
-  <section class="min-h-[calc(100vh-9rem)] border-b border-[var(--md1-border)] bg-[var(--md1-off-white)]">
-    <div class="mx-auto grid min-h-[calc(100vh-9rem)] max-w-6xl items-center gap-12 px-5 py-14 md:grid-cols-[0.95fr_1.05fr] md:px-10">
-      <div>
-        <p class="mono mb-4 text-xs uppercase tracking-[0.16em] text-[rgba(18,35,58,0.54)]">
-          Client review workspace
-        </p>
-        <h1 class="max-w-2xl text-4xl font-bold leading-[0.98] tracking-normal text-[var(--md1-ink)] md:text-6xl">
-          Danieli Review Access
-        </h1>
-        <p class="mt-6 max-w-xl text-base leading-7 text-[var(--md1-ink-muted)] md:text-lg">
-          Protected MD1 ontology and K-card review materials for the Danieli MIDA system work.
-        </p>
+  <section class="min-h-[calc(100vh-156px)] border-b border-[var(--md1-border)] px-6 py-20 md:px-10">
+    <div class="mx-auto max-w-3xl">
+      <div class="mono mb-6 text-xs font-medium uppercase tracking-[0.14em] text-[rgba(18,35,58,0.58)]">
+        Danieli Client Share
       </div>
+      <h1 class="max-w-2xl text-4xl font-normal leading-tight md:text-5xl">
+        MD1 review materials
+      </h1>
 
-      {
-        hasAccess ? (
-          <div class="border border-[var(--md1-ink)] bg-white">
-            <div class="border-b border-[var(--md1-border)] px-5 py-4">
-              <p class="mono text-[0.68rem] uppercase tracking-[0.14em] text-[rgba(18,35,58,0.5)]">
-                Available documents
-              </p>
-            </div>
-            <div class="divide-y divide-[var(--md1-border)]">
-              {DANIELI_DOCUMENTS.map((document) => (
-                <a
-                  href={document.path}
-                  class="group grid gap-3 px-5 py-5 transition-colors hover:bg-[var(--md1-off-white-2)] focus-visible:bg-[var(--md1-off-white-2)] focus-visible:outline-2 focus-visible:outline-[var(--md1-accent)]"
-                >
-                  <span class="text-xl font-semibold text-[var(--md1-ink)]">{document.title}</span>
-                  <span class="text-sm leading-6 text-[var(--md1-ink-muted)]">
-                    WTP, CLO, and WCU ontology maps, object inventories, data-quality flags, and K-card structure.
-                  </span>
-                  <span class="mono text-xs uppercase tracking-[0.12em] text-[var(--md1-ink)]">
-                    Open protected page
-                  </span>
-                </a>
-              ))}
-            </div>
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--md1-border)] px-5 py-4">
-              <span class="text-sm text-[var(--md1-ink-muted)]">Access is scoped to this browser.</span>
-              <a
-                href="/danieli/logout"
-                class="border border-[var(--md1-ink)] px-4 py-2 text-sm font-medium text-[var(--md1-ink)] transition-colors hover:bg-[var(--md1-ink)] hover:text-[var(--md1-off-white)] focus-visible:bg-[var(--md1-ink)] focus-visible:text-[var(--md1-off-white)] focus-visible:outline-2 focus-visible:outline-[var(--md1-accent)]"
-              >
-                Sign out
-              </a>
-            </div>
-          </div>
-        ) : (
-          <form action="/danieli/session" method="post" class="border border-[var(--md1-ink)] bg-white">
-            <div class="border-b border-[var(--md1-border)] px-5 py-4">
-              <p class="mono text-[0.68rem] uppercase tracking-[0.14em] text-[rgba(18,35,58,0.5)]">
-                Shared access code
-              </p>
-            </div>
-            <div class="grid gap-5 px-5 py-6">
-              <input type="hidden" name="next" value={next} />
-              <label class="grid gap-2">
-                <span class="text-sm font-medium text-[var(--md1-ink)]">Access code</span>
-                <input
-                  name="password"
-                  type="password"
-                  autocomplete="current-password"
-                  required
-                  class="w-full border border-[var(--md1-border)] bg-[var(--md1-off-white)] px-4 py-3 text-base text-[var(--md1-ink)] outline-none transition-colors focus:border-[var(--md1-ink)]"
-                />
-              </label>
-              {
-                hasError && (
-                  <p class="border border-[#b23b30] bg-[#fbe9e7] px-3 py-2 text-sm font-medium text-[#8f2e25]">
-                    Incorrect code. Please try again.
-                  </p>
-                )
-              }
-              <button
-                type="submit"
-                class="border border-[var(--md1-ink)] bg-[var(--md1-ink)] px-5 py-3 text-left text-sm font-semibold text-[var(--md1-off-white)] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md1-accent)]"
-              >
-                Continue to review materials
-              </button>
-            </div>
-          </form>
-        )
-      }
+      <form method="post" action="/danieli/session" class="mt-10 max-w-md">
+        <input type="hidden" name="next" value={nextPath} />
+        <label for="danieli-password" class="block text-sm font-medium text-[var(--md1-ink)]">
+          Access code
+        </label>
+        <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+          <input
+            id="danieli-password"
+            name="password"
+            type="password"
+            autocomplete="off"
+            aria-invalid={hasError ? 'true' : undefined}
+            aria-describedby={hasError ? 'danieli-password-error' : undefined}
+            required
+            autofocus
+            class="min-h-12 flex-1 border border-[var(--md1-border)] bg-white px-4 text-base text-[var(--md1-ink)] outline-none focus:border-[var(--md1-ink)]"
+          />
+          <button
+            type="submit"
+            class="min-h-12 bg-[var(--md1-ink)] px-6 text-sm font-medium text-[var(--md1-off-white)] transition-opacity hover:opacity-85"
+          >
+            Enter
+          </button>
+        </div>
+        {hasError && (
+          <p id="danieli-password-error" role="alert" class="mt-3 text-sm font-medium text-[#b23b30]">
+            Incorrect code
+          </p>
+        )}
+      </form>
     </div>
   </section>
 </BaseLayout>

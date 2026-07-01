@@ -6,7 +6,6 @@ export const DANIELI_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
 const TOKEN_AUDIENCE = 'danieli-share'
 const REDIRECT_BASE = 'https://md1.app'
-const ALLOWED_REDIRECT_HOSTS = new Set(['md1.app', 'www.md1.app', 'localhost', '127.0.0.1'])
 
 export const DANIELI_DOCUMENTS = [
   {
@@ -87,66 +86,79 @@ export function isDanieliAccessTokenValid(token, env = process.env, now = Math.f
     return false
   }
 
-  const [encodedPayload, signature, extra] = String(token).split('.')
-
-  if (!encodedPayload || !signature || extra !== undefined) {
-    return false
-  }
-
-  let payload
-
   try {
-    payload = Buffer.from(encodedPayload, 'base64url').toString('utf8')
+    const tokenParts = String(token).split('.')
+
+    if (tokenParts.length !== 2) {
+      return false
+    }
+
+    const [encodedPayload, signature] = tokenParts
+
+    if (!encodedPayload || !signature) {
+      return false
+    }
+
+    const payload = Buffer.from(encodedPayload, 'base64url').toString('utf8')
+    const expectedSignature = signPayload(payload, secret)
+
+    if (!safeCompare(signature, expectedSignature)) {
+      return false
+    }
+
+    const [audience, issuedAtRaw] = payload.split('.')
+    const issuedAt = Number(issuedAtRaw)
+
+    if (audience !== TOKEN_AUDIENCE || !Number.isFinite(issuedAt)) {
+      return false
+    }
+
+    if (issuedAt > now + 60) {
+      return false
+    }
+
+    return now - issuedAt <= DANIELI_COOKIE_MAX_AGE
   } catch {
     return false
   }
-
-  const [audience, issuedAtValue, unexpected] = payload.split('.')
-  const issuedAt = Number(issuedAtValue)
-
-  if (audience !== TOKEN_AUDIENCE || unexpected !== undefined || !Number.isInteger(issuedAt)) {
-    return false
-  }
-
-  if (issuedAt > now + 60 || now - issuedAt > DANIELI_COOKIE_MAX_AGE) {
-    return false
-  }
-
-  return safeCompare(signature, signPayload(payload, secret))
 }
 
-export function safeDanieliRedirect(value) {
-  if (!value) {
-    return '/danieli/'
-  }
+function normalizeDanieliRedirect(value) {
+  const candidate = typeof value === 'string' ? value.trim() : ''
 
-  let url
+  if (!candidate) {
+    return null
+  }
 
   try {
-    url = new URL(String(value), REDIRECT_BASE)
+    const parsed = new URL(candidate, REDIRECT_BASE)
+
+    if (parsed.origin !== REDIRECT_BASE) {
+      return null
+    }
+
+    const path = `${parsed.pathname}${parsed.search}`
+
+    if (path === '/danieli') {
+      return '/danieli/'
+    }
+
+    if (!path.startsWith('/danieli/')) {
+      return null
+    }
+
+    if (path.startsWith('/danieli/session') || path.startsWith('/danieli/logout')) {
+      return null
+    }
+
+    return path
   } catch {
-    return '/danieli/'
+    return null
   }
+}
 
-  if (!['http:', 'https:'].includes(url.protocol) || !ALLOWED_REDIRECT_HOSTS.has(url.hostname)) {
-    return '/danieli/'
-  }
-
-  const pathname = url.pathname === '/danieli' ? '/danieli/' : url.pathname
-
-  if (!pathname.startsWith('/danieli/')) {
-    return '/danieli/'
-  }
-
-  if (pathname === '/danieli/session' || pathname.startsWith('/danieli/session/')) {
-    return '/danieli/'
-  }
-
-  if (pathname === '/danieli/logout' || pathname.startsWith('/danieli/logout/')) {
-    return '/danieli/'
-  }
-
-  return `${pathname}${url.search}`
+export function safeDanieliRedirect(value, fallback = '/danieli/') {
+  return normalizeDanieliRedirect(value) || normalizeDanieliRedirect(fallback) || '/danieli/'
 }
 
 export function getDanieliCookieOptions(url) {

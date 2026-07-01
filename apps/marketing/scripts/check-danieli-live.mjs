@@ -16,11 +16,11 @@ async function request(path, options = {}) {
 const gate = await request('/danieli/')
 const gateHtml = await gate.text()
 assert.equal(gate.status, 200, 'GET /danieli/ should render the gate')
-assert.match(gateHtml, /Danieli Review Access/, 'The gate should have a client-friendly title')
+assert.match(gateHtml, /MD1 review materials/, 'The gate should have a client-friendly title')
 assert.match(gateHtml, /name="password"/, 'The gate should include a password field')
 
 const blocked = await request('/danieli/ontology-and-kcards/')
-assert.equal(blocked.status, 302, 'The protected document should redirect without a cookie')
+assert.equal(blocked.status, 303, 'The protected document should redirect without a cookie')
 assert.match(
   blocked.headers.get('location') || '',
   /^\/danieli\/\?next=%2Fdanieli%2Fontology-and-kcards%2F/,
@@ -66,7 +66,7 @@ const logout = await request('/danieli/logout', {
     Cookie: cookie.split(';')[0],
   },
 })
-assert.equal(logout.status, 302, 'Logout should redirect')
+assert.equal(logout.status, 303, 'Logout should redirect')
 assert.match(
   logout.headers.get('set-cookie') || '',
   /md1_danieli_share=deleted; Path=\/danieli; Expires=Thu, 01 Jan 1970 00:00:00 GMT/i,

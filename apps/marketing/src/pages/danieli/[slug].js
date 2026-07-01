@@ -1,34 +1,34 @@
+import ontologyAndKcardsHtml from '../../danieli-html/danieli-md1-ontology-and-kcards_7_1-v0.html?raw'
 import {
   DANIELI_COOKIE_NAME,
   getDanieliDocument,
   isDanieliAccessTokenValid,
-  safeDanieliRedirect,
 } from '../../lib/danieliShare.js'
 
 export const prerender = false
 
-const protectedHtml = import.meta.glob('../../danieli-html/*.html', {
-  eager: true,
-  import: 'default',
-  query: '?raw',
-})
+const DOCUMENT_HTML = {
+  'ontology-and-kcards': ontologyAndKcardsHtml,
+}
 
-function redirectTo(location) {
+function redirect(path) {
   return new Response(null, {
-    status: 302,
+    status: 303,
     headers: {
-      Location: location,
+      'cache-control': 'no-store',
+      location: path,
     },
   })
 }
 
-export function GET({ params, cookies, url }) {
+export function GET({ params, cookies }) {
   const document = getDanieliDocument(params.slug)
 
   if (!document) {
     return new Response('Not found', {
       status: 404,
       headers: {
+        'cache-control': 'no-store',
         'content-type': 'text/plain; charset=utf-8',
       },
     })
@@ -37,27 +37,26 @@ export function GET({ params, cookies, url }) {
   const token = cookies.get(DANIELI_COOKIE_NAME)?.value
 
   if (!isDanieliAccessTokenValid(token)) {
-    const next = safeDanieliRedirect(`${url.pathname}${url.search}`)
-
-    return redirectTo(`/danieli/?next=${encodeURIComponent(next)}`)
+    return redirect(`/danieli/?next=${encodeURIComponent(document.path)}`)
   }
 
-  const html = protectedHtml[`../../danieli-html/${document.sourceFile}`]
+  const documentHtml = DOCUMENT_HTML[document.slug]
 
-  if (!html) {
-    return new Response('Protected document unavailable', {
+  if (!documentHtml) {
+    return new Response('Document unavailable', {
       status: 500,
       headers: {
+        'cache-control': 'no-store',
         'content-type': 'text/plain; charset=utf-8',
       },
     })
   }
 
-  return new Response(html, {
-    status: 200,
+  return new Response(documentHtml, {
     headers: {
-      'cache-control': 'private, no-store',
+      'cache-control': 'no-store, private',
       'content-type': 'text/html; charset=utf-8',
+      'x-robots-tag': 'noindex, nofollow',
     },
   })
 }

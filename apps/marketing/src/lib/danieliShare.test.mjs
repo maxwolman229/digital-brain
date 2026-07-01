@@ -59,11 +59,9 @@ test('creates and verifies a signed access token', () => {
   assert.equal(isDanieliAccessTokenValid(token, env, issuedAt), true)
   assert.equal(isDanieliAccessTokenValid(token, env, issuedAt + DANIELI_COOKIE_MAX_AGE - 1), true)
   assert.equal(isDanieliAccessTokenValid(token, env, issuedAt + DANIELI_COOKIE_MAX_AGE + 1), false)
+  assert.equal(isDanieliAccessTokenValid(`${token}.extra`, env, issuedAt), false)
   assert.equal(isDanieliAccessTokenValid(`${token}tampered`, env, issuedAt), false)
-  assert.equal(
-    isDanieliAccessTokenValid(token, { ...env, DANIELI_SHARE_COOKIE_SECRET: 'different-secret' }, issuedAt),
-    false
-  )
+  assert.equal(isDanieliAccessTokenValid(token, { ...env, DANIELI_SHARE_COOKIE_SECRET: 'different-secret' }, issuedAt), false)
 })
 
 test('rejects malformed and future-dated access tokens', () => {
@@ -77,20 +75,11 @@ test('rejects malformed and future-dated access tokens', () => {
 
 test('allows only safe redirects inside the Danieli share area', () => {
   assert.equal(safeDanieliRedirect('/danieli/ontology-and-kcards/'), '/danieli/ontology-and-kcards/')
-  assert.equal(
-    safeDanieliRedirect('/danieli/ontology-and-kcards/?view=wcu&tab=QW'),
-    '/danieli/ontology-and-kcards/?view=wcu&tab=QW'
-  )
-  assert.equal(
-    safeDanieliRedirect('https://md1.app/danieli/ontology-and-kcards/'),
-    '/danieli/ontology-and-kcards/'
-  )
-  assert.equal(
-    safeDanieliRedirect('http://localhost:4321/danieli/ontology-and-kcards/'),
-    '/danieli/ontology-and-kcards/'
-  )
+  assert.equal(safeDanieliRedirect('/danieli/ontology-and-kcards/?tab=cards'), '/danieli/ontology-and-kcards/?tab=cards')
+  assert.equal(safeDanieliRedirect('https://md1.app/danieli/ontology-and-kcards/'), '/danieli/ontology-and-kcards/')
   assert.equal(safeDanieliRedirect('/danieli'), '/danieli/')
   assert.equal(safeDanieliRedirect('/platform/'), '/danieli/')
+  assert.equal(safeDanieliRedirect('/platform/', 'https://evil.example/'), '/danieli/')
   assert.equal(safeDanieliRedirect('https://evil.example/danieli/'), '/danieli/')
   assert.equal(safeDanieliRedirect('/danieli/session'), '/danieli/')
   assert.equal(safeDanieliRedirect('/danieli/logout'), '/danieli/')
